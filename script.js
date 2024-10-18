@@ -2,12 +2,10 @@
  * @class       : script
  * @author      : user (user@fedora)
  * @created     : 星期五 10月 18, 2024 10:29:51 WITA
- * Modified    : 2024-10-18 13:32:48
+ * Modified    : 2024-10-18 13:40:20
  * @description : script
  */
 
-export default class script {
-}
 
 / script.js
 document.addEventListener("DOMContentLoaded", function() {

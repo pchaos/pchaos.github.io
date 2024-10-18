@@ -2,7 +2,7 @@
  * @class       : script
  * @author      : user (user@fedora)
  * @created     : 星期五 10月 18, 2024 10:29:51 WITA
- * Modified    : 2024-10-18 12:38:57
+ * Modified    : 2024-10-18 13:32:48
  * @description : script
  */
 
@@ -51,16 +51,25 @@ document.addEventListener("DOMContentLoaded", function() {
             }
         }
 
-
 function loadMobileStyles() {
     if (isMobileBrowser()) {
-        // 创建一个新的 link 元素
+        console.log("手机浏览器检测到，准备加载样式文件...");
+        
         const link = document.createElement('link');
         link.rel = 'stylesheet';
         link.href = 'styles.tab.phone.css'; // 指定要加载的 CSS 文件
 
-        // 将 link 元素添加到 head 中
+        link.onload = function() {
+            console.log("样式文件加载成功！");
+        };
+
+        link.onerror = function() {
+            console.error("样式文件加载失败！");
+        };
+
         document.head.appendChild(link);
+    } else {
+        console.log("不是手机浏览器，不加载样式文件。");
     }
 }
 

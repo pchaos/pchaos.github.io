@@ -2,7 +2,7 @@
  * @class       : script
  * @author      : user (user@fedora)
  * @created     : 星期五 10月 18, 2024 10:29:51 WITA
- * Modified    : 2024-10-18 12:16:06
+ * Modified    : 2024-10-18 12:38:57
  * @description : script
  */
 
@@ -64,6 +64,10 @@ function loadMobileStyles() {
     }
 }
 
+  function myOnLoad() {
+redirectToMobile();
+loadMobileStyles();
+  }
           // 页面加载时执行重定向检查
-        window.onload = redirectToMobile;
+        window.onload = myOnLoad;
 });

@@ -2,39 +2,61 @@
  * @class       : script
  * @author      : user (user@fedora)
  * @created     : 星期五 10月 18, 2024 10:29:51 WITA
- * Modified    : 2024-10-18 13:40:20
+ * Modified    : 2024-10-19 00:11:32
  * @description : script
  */
 
 
-/ script.js
 document.addEventListener("DOMContentLoaded", function() {
+  // html中记住最后一次点击的tab,下次打开同样的url,自动切换到最后记录的tab
     const lastTab = localStorage.getItem('activeTab') || 'index' || 'main';
+  console.log("最后保存的tab：",lastTab);
     activateTab(lastTab);
-    
-    document.querySelectorAll('.tab-link').forEach(link => {
+        // 为每个导航标题添加点击事件
+    document.querySelectorAll('.navI-radio').forEach(link => {
         link.addEventListener('click', function() {
-            const tabId = this.getAttribute('data-tab');
+            const tabId = this.getAttribute('id');
             activateTab(tabId);
-            localStorage.setItem('activeTab', tabId);
+            localStorage.setItem('activeTab', tabId); // 保存当前选中的标签到 localStorage
         });
     });
+});
 
-    function activateTab(tabId) {
-        document.querySelectorAll('.tab').forEach(tab => {
-            tab.classList.remove('active');
-        });
-        document.querySelectorAll('.tab-link').forEach(link => {
-            link.classList.remove('active');
-        });
-        document.getElementById(tabId).classList.add('active');
-        document.querySelector(`.tab-link[data-tab="${tabId}"]`).classList.add('active');
+function activateTab(tabId) {
+    // 检查 tabId 是否有效
+    const tabContent = document.getElementById(tabId);
+    if (!tabContent) {
+        console.error(`无效的 tabId: ${tabId}`);
+        return; // 如果 tabId 无效，则退出函数
     }
+
+    // 隐藏所有标签内容
+    document.querySelectorAll('.navI-radio').forEach(tab => {
+        tab.classList.remove('active');
+    });
+
+    // 移除所有标签链接的激活状态
+    document.querySelectorAll('.navI-radio').forEach(link => {
+        link.classList.remove('active');
+    });
+
+    // 显示当前选中的标签内容并激活对应链接
+    tabContent.classList.add('active');
+
+    const activeLink = document.querySelector(`.navI-radio[id="${tabId}"]`);
+    if (activeLink) {
+        activeLink.classList.add('active');
+    } else {
+        console.warn(`未找到对应的链接: ${tabId}`);
+    }
+}
 
   function isMobileBrowser() {
     const userAgent = navigator.userAgent || navigator.vendor || window.opera;
-    return /android|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent);
+  console.log(userAgent);
+    return /android|iphone|ipad|ipod|blackberry|iemobile|opera mini|AppleWebKit/i.test(userAgent);
 }
+
   function redirectToMobile() {
             const userAgent = navigator.userAgent || navigator.vendor || window.opera;
             const currentUrl = window.location.href;
@@ -51,7 +73,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
 function loadMobileStyles() {
     if (isMobileBrowser()) {
-        console.log("手机浏览器检测到，准备加载样式文件...");
+        console.log("检测到使用手机浏览器，准备加载样式文件...");
         
         const link = document.createElement('link');
         link.rel = 'stylesheet';
@@ -75,6 +97,6 @@ function loadMobileStyles() {
 redirectToMobile();
 loadMobileStyles();
   }
+
           // 页面加载时执行重定向检查
         window.onload = myOnLoad;
-});

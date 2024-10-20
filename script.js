@@ -2,7 +2,7 @@
  * @class       : script
  * @author      : user (user@fedora)
  * @created     : 星期五 10月 18, 2024 10:29:51 WITA
- * Modified    : 2024-10-20 23:40:20
+ * Modified    : 2024-10-21 00:16:45
  * @description : script
  */
 
@@ -72,14 +72,17 @@ function activateTab(tabId) {
         }
 
     function changeStylesheet() {
-        var link = document.createElement("link");
-        link.type = "text/css";
-        link.rel = "stylesheet";
-        link.href = "styles.tab.phone.css";
+        // var link = document.createElement("link");
+        // link.type = "text/css";
+        // link.rel = "stylesheet";
+        // link.id = "stylesheet";
+        // link.href = "styles.tab.phone.css";
         // 获取 link 标签
             var oldLink = document.getElementById("stylesheet");
             if (oldLink) {
-                oldLink.parentNode.removeChild(oldLink);
+        document.getElementById("stylesheet").setAttribute("href", "styles.tab.phone.css");
+                // oldLink.parentNode.removeChild(oldLink);
+                console.log("已替换旧样式文件");
             }
     }
 
@@ -88,6 +91,11 @@ function loadMobileStyles() {
         console.log("检测到使用手机浏览器，准备加载样式文件...");
         
         changeStylesheet();
+
+        var link = document.getElementById("stylesheet");
+if (link) {
+    console.log("已删除旧样式文件");
+    console.log(link.href);
         link.onload = function() {
             console.log("样式文件加载成功！");
         };
@@ -95,16 +103,20 @@ function loadMobileStyles() {
         link.onerror = function() {
             console.error("样式文件加载失败！");
         };
+    }
 
-        document.head.appendChild(link);
     } else {
         console.log("不是手机浏览器，不加载样式文件。");
     }
 }
 
+document.addEventListener("DOMContentLoaded", () => {
+    console.log("DOM fully loaded and parsed");
+loadMobileStyles();
+});
+
   function myOnLoad() {
 redirectToMobile();
-loadMobileStyles();
   }
 
           // 页面加载时执行重定向检查

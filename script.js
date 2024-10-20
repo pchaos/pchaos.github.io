@@ -2,7 +2,7 @@
  * @class       : script
  * @author      : user (user@fedora)
  * @created     : 星期五 10月 18, 2024 10:29:51 WITA
- * Modified    : 2024-10-20 23:29:44
+ * Modified    : 2024-10-20 23:37:25
  * @description : script
  */
 
@@ -72,20 +72,21 @@ function activateTab(tabId) {
         }
 
     function changeStylesheet() {
+        var link = document.createElement("link");
+        link.type = "text/css";
+        link.rel = "stylesheet";
+        link.href = "styles.tab.phone.css";
         // 获取 link 标签
-        var link = document.getElementById("stylesheet");
-        // 修改 href 属性
-        link.setAttribute("href", "styles.tab.phone.css");
+            var oldLink = document.getElementById("stylesheet");
+            if (oldLink) {
+                oldLink.parentNode.removeChild(oldLink);
+            }
     }
 
 function loadMobileStyles() {
     if (isMobileBrowser()) {
         console.log("检测到使用手机浏览器，准备加载样式文件...");
 
-        var link = document.createElement("link");
-        link.type = "text/css";
-        link.rel = "stylesheet";
-        link.href = "styles.tab.phone.css";
         
         changeStylesheet();
         link.onload = function() {

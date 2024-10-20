@@ -2,7 +2,7 @@
  * @class       : script
  * @author      : user (user@fedora)
  * @created     : 星期五 10月 18, 2024 10:29:51 WITA
- * Modified    : 2024-10-19 00:11:32
+ * Modified    : 2024-10-20 23:22:35
  * @description : script
  */
 
@@ -71,14 +71,18 @@ function activateTab(tabId) {
             }
         }
 
+    function changeStylesheet() {
+        // 获取 link 标签
+        var link = document.getElementById("stylesheet");
+        // 修改 href 属性
+        link.setAttribute("href", "styles.tab.phone.css");
+    }
+
 function loadMobileStyles() {
     if (isMobileBrowser()) {
         console.log("检测到使用手机浏览器，准备加载样式文件...");
         
-        const link = document.createElement('link');
-        link.rel = 'stylesheet';
-        link.href = 'styles.tab.phone.css'; // 指定要加载的 CSS 文件
-
+        changeStylesheet();
         link.onload = function() {
             console.log("样式文件加载成功！");
         };

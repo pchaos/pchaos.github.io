@@ -2,7 +2,7 @@
  * @class       : script
  * @author      : user (user@fedora)
  * @created     : 星期五 10月 18, 2024 10:29:51 WITA
- * Modified    : 2024-10-20 23:37:25
+ * Modified    : 2024-10-20 23:40:20
  * @description : script
  */
 
@@ -86,7 +86,6 @@ function activateTab(tabId) {
 function loadMobileStyles() {
     if (isMobileBrowser()) {
         console.log("检测到使用手机浏览器，准备加载样式文件...");
-
         
         changeStylesheet();
         link.onload = function() {

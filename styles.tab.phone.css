@@ -151,6 +151,7 @@ td:hover {
     display: block;
     line-height: 40px;
     text-align: center;
+    color: blue ;
     cursor: pointer;
     border-left: 1px solid #cecece;
     border-bottom: 1px solid #cecece;

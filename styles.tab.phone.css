@@ -97,12 +97,12 @@ input {
 table {
     width: 95%;
     /*align-items: center;*/
-    font-size: 42px;
+    font-size: 40px;
 }
 
 table td {
     color: inherit;
-    font-size: 42px;
+    font-size: 40px;
     text-align: center;
 }
 
@@ -136,7 +136,7 @@ td:hover {
 
 .nav {
     margin-left: -1px;
-    font: 42px "微软雅黑";
+    font: 40px "微软雅黑";
     overflow: hidden;
     background-color: #f1f1f1;
 }

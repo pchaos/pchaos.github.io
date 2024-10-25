@@ -70,6 +70,8 @@ html {
 
 body, table {
   margin: 0 auto;
+  font-size: 20px;
+
 }
 
 .Main1 {
@@ -97,12 +99,11 @@ input {
 table {
     width: 95%;
     /*align-items: center;*/
-    font-size: 32px;
 }
 
 table td {
     color: inherit;
-    font-size: 32px;
+    /* font-size: 32px; */
     text-align: center;
 }
 
@@ -118,9 +119,9 @@ a {
     word-spacing: 4px;
 }
 
-        a:visited {
-            color: purple; /* 已访问链接颜色 */
-        }
+a:visited {
+    color: purple; /* 已访问链接颜色 */
+}
 
 tr:nth-child(even) {
     background-color: #f2f2f2;
@@ -154,7 +155,7 @@ td:hover {
     display: block;
     line-height: 32px;
     text-align: center;
-    color: blue ;
+    color: green ;
     cursor: pointer;
     border-left: 1px solid #cecece;
     border-bottom: 1px solid #cecece;
@@ -190,5 +191,18 @@ td:hover {
 
 .navI-radio:checked ~ .navI-txt {
     z-index: 1;
+}
+
+#currentSize {
+    display: block; /* 确保元素是可见的 */
+    margin-top: 10px;
+    font-weight: bold;
+}
+
+.changeFontSize {
+    display: flex; /* 使用 flexbox 布局 */
+    align-items: center; /* 垂直居中对齐 */
+    gap: 12px; /* 按钮之间的间距 */
+  font-size: 12px;
 }
 

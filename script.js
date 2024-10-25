@@ -2,7 +2,7 @@
  * @class       : script
  * @author      : user (user@fedora)
  * @created     : 星期五 10月 18, 2024 10:29:51 WITA
- * Modified    : 2024-10-25 11:59:43
+ * Modified    : 2024-10-25 16:37:30
  * @description : script
  */
 
@@ -111,35 +111,53 @@ if (link) {
     }
 }
 
+let currentFontSize = 16; // 默认中等字体大小（以像素为单位）
+
 function changeFontSize(size) {
-  console.log("changeFontSize(size):", size);
-  const textElements = document.querySelectorAll('#scaleableText'); // 选择所有具有 'scaleableText' 类的元素
     const sizeDisplay = document.getElementById('currentSize');
-    // 根据传入的参数设置字体大小
-    let fontSize;
+
     switch(size) {
         case 'small':
-            fontSize = '12px';
+            currentFontSize = 12; // 设置为小字体
             sizeDisplay.innerText = '当前字体大小: 小';
             break;
         case 'medium':
-            fontSize = '16px';
+            currentFontSize = 16; // 设置为中等字体
             sizeDisplay.innerText = '当前字体大小: 中等';
             break;
         case 'large':
-            fontSize = '20px';
+            currentFontSize = 20; // 设置为大字体
             sizeDisplay.innerText = '当前字体大小: 大';
             break;
         default:
             return; // 如果没有匹配的选项，直接返回
     }
 
-  console.log("textElements:", textElements); 
+    updateFontSizes();
+}
+
+function increaseFontSize() {
+    currentFontSize *= 1.15; // 增加15%
+    updateFontSizes();
+}
+
+function decreaseFontSize() {
+    currentFontSize /= 1.15; // 减少15%
+    updateFontSizes();
+}
+
+function updateFontSizes() {
+    const textElements = document.querySelectorAll('#scaleableText'); // 使用 ID 选择器
+
     // 遍历所有选中的元素并设置其字体大小
     textElements.forEach(element => {
-        element.style.fontSize = fontSize;
+        element.style.fontSize = currentFontSize + 'px'; // 确保单位正确
     });
- }
+
+    // 更新显示的当前字体大小
+    const sizeDisplay = document.getElementById('currentSize');
+    sizeDisplay.innerText = `当前字体大小: ${Math.round(currentFontSize)}px`; // 四舍五入显示
+}
 
 document.addEventListener("DOMContentLoaded", () => {
     console.log("DOM fully loaded and parsed");

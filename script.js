@@ -2,7 +2,7 @@
  * @class       : script
  * @author      : user (user@fedora)
  * @created     : 星期五 10月 18, 2024 10:29:51 WITA
- * Modified    : 2024-10-25 16:37:30
+ * Modified    : 2024-10-25 17:08:54
  * @description : script
  */
 
@@ -118,15 +118,15 @@ function changeFontSize(size) {
 
     switch(size) {
         case 'small':
-            currentFontSize = 12; // 设置为小字体
+            currentFontSize = 20; // 设置为小字体
             sizeDisplay.innerText = '当前字体大小: 小';
             break;
         case 'medium':
-            currentFontSize = 16; // 设置为中等字体
+            currentFontSize = 22; // 设置为中等字体
             sizeDisplay.innerText = '当前字体大小: 中等';
             break;
         case 'large':
-            currentFontSize = 20; // 设置为大字体
+            currentFontSize = 25; // 设置为大字体
             sizeDisplay.innerText = '当前字体大小: 大';
             break;
         default:

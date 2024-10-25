@@ -202,7 +202,11 @@ td:hover {
 .changeFontSize {
     display: flex; /* 使用 flexbox 布局 */
     align-items: center; /* 垂直居中对齐 */
+    justify-content: flex-end; /* 内容靠右对齐 */
     gap: 12px; /* 按钮之间的间距 */
-  font-size: 12px;
+    font-size: 12px;
+}
+.changeFontSize:hover{
+    font-size: larger;
 }
 

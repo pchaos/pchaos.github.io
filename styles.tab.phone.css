@@ -113,11 +113,14 @@ table td {
 
 a {
     text-decoration: none;
-    color: inherit;
+    color: blue;
     letter-spacing: 2px;
     word-spacing: 4px;
 }
 
+        a:visited {
+            color: purple; /* 已访问链接颜色 */
+        }
 
 tr:nth-child(even) {
     background-color: #f2f2f2;

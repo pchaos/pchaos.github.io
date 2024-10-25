@@ -2,7 +2,7 @@
  * @class       : script
  * @author      : user (user@fedora)
  * @created     : 星期五 10月 18, 2024 10:29:51 WITA
- * Modified    : 2024-10-21 00:22:21
+ * Modified    : 2024-10-25 11:59:43
  * @description : script
  */
 
@@ -110,6 +110,36 @@ if (link) {
         console.log("不是手机浏览器，不加载样式文件。");
     }
 }
+
+function changeFontSize(size) {
+  console.log("changeFontSize(size):", size);
+  const textElements = document.querySelectorAll('#scaleableText'); // 选择所有具有 'scaleableText' 类的元素
+    const sizeDisplay = document.getElementById('currentSize');
+    // 根据传入的参数设置字体大小
+    let fontSize;
+    switch(size) {
+        case 'small':
+            fontSize = '12px';
+            sizeDisplay.innerText = '当前字体大小: 小';
+            break;
+        case 'medium':
+            fontSize = '16px';
+            sizeDisplay.innerText = '当前字体大小: 中等';
+            break;
+        case 'large':
+            fontSize = '20px';
+            sizeDisplay.innerText = '当前字体大小: 大';
+            break;
+        default:
+            return; // 如果没有匹配的选项，直接返回
+    }
+
+  console.log("textElements:", textElements); 
+    // 遍历所有选中的元素并设置其字体大小
+    textElements.forEach(element => {
+        element.style.fontSize = fontSize;
+    });
+ }
 
 document.addEventListener("DOMContentLoaded", () => {
     console.log("DOM fully loaded and parsed");

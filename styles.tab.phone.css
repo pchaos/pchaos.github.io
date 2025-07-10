@@ -1,4 +1,4 @@
-/* Modified: 2024-10-29 11:46:47*/
+/* Modified: 2025-07-10 18:54:08*/
 
 /* * { */
 /* scrollbar-width: thin; */
@@ -143,7 +143,9 @@ td:hover {
 
 .navI {
   float: left;
-  width: 25%;
+  /* width: 25%; */
+  /* width根据需要调整,100/n */
+  width: 20%;
   box-sizing: border-box;
 }
 

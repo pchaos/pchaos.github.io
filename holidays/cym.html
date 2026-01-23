@@ -136,9 +136,9 @@
         const displayText = document.getElementById('displayText');
         const kidsContainer = document.getElementById('kidsContainer');
         
-        // 从URL参数获取文字（默认"CYM"）
+        // 从URL参数获取文字（默认"CMY"）
         const urlParams = new URLSearchParams(window.location.search);
-        const displayString = urlParams.get('text') || 'CYM';
+        const displayString = urlParams.get('text') || 'CMY';
         displayText.textContent = displayString;
         
         // 根据文字长度调整字体大小

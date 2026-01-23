@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>电子烟花秀 - 自定义文字（循环播放）</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-family: 'Arial', sans-serif;
+            transition: background-color 2s ease-in-out;
+        }
+        
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+        
+        .content-container {
+            position: absolute;
+            z-index: 2;
+            opacity: 0;
+            transition: opacity 2s ease-in-out;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .display-text {
+            font-size: 120px;
+            font-weight: bold;
+            color: #ffffff;
+            text-shadow: 
+                3px 3px 0 #2980b9,
+                6px 6px 0 #1c5a7a,
+                9px 9px 0 #143a52,
+                12px 12px 20px rgba(0,0,0,0.8);
+            transform: perspective(500px) rotateX(10deg);
+            letter-spacing: 8px;
+            margin-bottom: 40px;
+        }
+        
+        .kids-container {
+            width: 280px;
+            height: 210px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .kids-svg {
+            width: 100%;
+            height: 100%;
+            filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.3));
+        }
+        
+        .kid-body {
+            fill: none;
+            stroke: #ffffff;
+            stroke-width: 3;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+        
+        .kid-face {
+            fill: #fff9e6;
+        }
+        
+        .boy-hair {
+            fill: #2c3e50;
+        }
+        
+        .girl-hair {
+            fill: #8b4513;
+        }
+        
+        .girl-dress {
+            fill: #e74c3c;
+        }
+        
+        .boy-shirt {
+            fill: #3498db;
+        }
+        
+        .hand-connection {
+            stroke: #ffcc00;
+            stroke-width: 4;
+            stroke-linecap: round;
+            animation: handGlow 2s ease-in-out infinite alternate;
+        }
+        
+        @keyframes handGlow {
+            0% { stroke-width: 4; opacity: 0.7; }
+            100% { stroke-width: 6; opacity: 1; }
+        }
+        
+        .boy {
+            animation: floatBoy 3s ease-in-out infinite alternate;
+        }
+        
+        .girl {
+            animation: floatGirl 3s ease-in-out infinite alternate;
+        }
+        
+        @keyframes floatBoy {
+            0% { transform: translateY(0px) rotate(1deg); }
+            100% { transform: translateY(-5px) rotate(-1deg); }
+        }
+        
+        @keyframes floatGirl {
+            0% { transform: translateY(0px) rotate(-1deg); }
+            100% { transform: translateY(-5px) rotate(1deg); }
+        }
+    </style>
+</head>
+<body>
+    <canvas id="fireworksCanvas"></canvas>
+    <div class="content-container" id="contentContainer">
+        <div class="display-text" id="displayText"></div>
+        <div class="kids-container" id="kidsContainer"></div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('fireworksCanvas');
+        const ctx = canvas.getContext('2d');
+        const contentContainer = document.getElementById('contentContainer');
+        const displayText = document.getElementById('displayText');
+        const kidsContainer = document.getElementById('kidsContainer');
+        
+        // 从URL参数获取文字（默认"CMY"）
+        const urlParams = new URLSearchParams(window.location.search);
+        const displayString = urlParams.get('text') || '2026 Happy!';
+        displayText.textContent = displayString;
+        
+        // 根据文字长度调整字体大小
+        if (displayString.length > 6) displayText.style.fontSize = '80px';
+        else if (displayString.length > 3) displayText.style.fontSize = '100px';
+        
+        // 设置画布大小
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        
+        // 背景颜色数组 - 使用鲜艳、对比度高的颜色
+        const backgroundColors = [
+            '#0a192f',  // 深蓝色
+            '#9b59b6',  // 鲜艳紫色
+            '#e74c3c',  // 鲜艳红色
+            '#1abc9c',  // 青绿色
+            '#f39c12',  // 橙色
+            '#2ecc71',  // 绿色
+            '#3498db',  // 蓝色
+            '#e84393',  // 粉红色
+            '#00cec9',  // 青色
+            '#fd79a8',  // 浅粉红
+            '#6c5ce7',  // 蓝紫色
+            '#00b894'   // 深绿色
+        ];
+        
+        let currentBgColorIndex = 0;
+        let currentBgColor = backgroundColors[currentBgColorIndex];
+        
+        // 程序状态
+        let state = 'FIREWORKS'; // 初始状态为烟花
+        let stateStartTime = Date.now();
+        const STATE_DURATION = 10000; // 每个状态持续时间10秒
+        
+        // 烟花数组
+        let fireworks = [];
+        
+        // 星星数组
+        let stars = [];
+        
+        // 创建卡通牵手小孩SVG（一男一女）
+        function createKidsSVG() {
+            kidsContainer.innerHTML = ''; // 清空容器
+            const svgNS = "http://www.w3.org/2000/svg";
+            const svg = document.createElementNS(svgNS, "svg");
+            svg.setAttribute("class", "kids-svg");
+            svg.setAttribute("viewBox", "0 0 400 300");
+            
+            // 男孩（左）
+            const boyGroup = document.createElementNS(svgNS, "g");
+            boyGroup.setAttribute("class", "boy");
+            
+            // 男孩的短发
+            const boyHair = document.createElementNS(svgNS, "rect");
+            boyHair.setAttribute("class", "boy-hair");
+            boyHair.setAttribute("x", "100");
+            boyHair.setAttribute("y", "80");
+            boyHair.setAttribute("width", "40");
+            boyHair.setAttribute("height", "20");
+            boyHair.setAttribute("rx", "10");
+            boyGroup.appendChild(boyHair);
+            
+            // 男孩的脸
+            const boyFace = document.createElementNS(svgNS, "circle");
+            boyFace.setAttribute("class", "kid-face");
+            boyFace.setAttribute("cx", "120");
+            boyFace.setAttribute("cy", "100");
+            boyFace.setAttribute("r", "20");
+            boyGroup.appendChild(boyFace);
+            
+            // 男孩的眼睛
+            const boyEyeLeft = document.createElementNS(svgNS, "circle");
+            boyEyeLeft.setAttribute("fill", "#000");
+            boyEyeLeft.setAttribute("cx", "113");
+            boyEyeLeft.setAttribute("cy", "95");
+            boyEyeLeft.setAttribute("r", "4");
+            boyGroup.appendChild(boyEyeLeft);
+            
+            const boyEyeRight = document.createElementNS(svgNS, "circle");
+            boyEyeRight.setAttribute("fill", "#000");
+            boyEyeRight.setAttribute("cx", "127");
+            boyEyeRight.setAttribute("cy", "95");
+            boyEyeRight.setAttribute("r", "4");
+            boyGroup.appendChild(boyEyeRight);
+            
+            // 男孩的嘴巴
+            const boyMouth = document.createElementNS(svgNS, "path");
+            boyMouth.setAttribute("class", "kid-body");
+            boyMouth.setAttribute("d", "M115,110 Q120,115 125,110");
+            boyGroup.appendChild(boyMouth);
+            
+            // 男孩的身体（衬衫）
+            const boyShirt = document.createElementNS(svgNS, "rect");
+            boyShirt.setAttribute("class", "boy-shirt");
+            boyShirt.setAttribute("x", "110");
+            boyShirt.setAttribute("y", "120");
+            boyShirt.setAttribute("width", "20");
+            boyShirt.setAttribute("height", "40");
+            boyShirt.setAttribute("rx", "5");
+            boyGroup.appendChild(boyShirt);
+            
+            // 男孩的手臂
+            const boyArmLeft = document.createElementNS(svgNS, "line");
+            boyArmLeft.setAttribute("class", "kid-body");
+            boyArmLeft.setAttribute("x1", "120");
+            boyArmLeft.setAttribute("y1", "130");
+            boyArmLeft.setAttribute("x2", "100");
+            boyArmLeft.setAttribute("y2", "150");
+            boyGroup.appendChild(boyArmLeft);
+            
+            const boyArmRight = document.createElementNS(svgNS, "line");
+            boyArmRight.setAttribute("class", "kid-body");
+            boyArmRight.setAttribute("x1", "120");
+            boyArmRight.setAttribute("y1", "130");
+            boyArmRight.setAttribute("x2", "140");
+            boyArmRight.setAttribute("y2", "150");
+            boyGroup.appendChild(boyArmRight);
+            
+            // 男孩的腿
+            const boyLegLeft = document.createElementNS(svgNS, "line");
+            boyLegLeft.setAttribute("class", "kid-body");
+            boyLegLeft.setAttribute("x1", "120");
+            boyLegLeft.setAttribute("y1", "160");
+            boyLegLeft.setAttribute("x2", "110");
+            boyLegLeft.setAttribute("y2", "190");
+            boyGroup.appendChild(boyLegLeft);
+            
+            const boyLegRight = document.createElementNS(svgNS, "line");
+            boyLegRight.setAttribute("class", "kid-body");
+            boyLegRight.setAttribute("x1", "120");
+            boyLegRight.setAttribute("y1", "160");
+            boyLegRight.setAttribute("x2", "130");
+            boyLegRight.setAttribute("y2", "190");
+            boyGroup.appendChild(boyLegRight);
+            
+            svg.appendChild(boyGroup);
+            
+            // 女孩（右）
+            const girlGroup = document.createElementNS(svgNS, "g");
+            girlGroup.setAttribute("class", "girl");
+            
+            // 女孩的长发
+            const girlHair = document.createElementNS(svgNS, "path");
+            girlHair.setAttribute("class", "girl-hair");
+            girlHair.setAttribute("d", "M280,80 C270,60 250,60 240,80 C230,100 240,120 260,120 C280,120 290,100 280,80 Z");
+            girlGroup.appendChild(girlHair);
+            
+            // 女孩的脸
+            const girlFace = document.createElementNS(svgNS, "circle");
+            girlFace.setAttribute("class", "kid-face");
+            girlFace.setAttribute("cx", "280");
+            girlFace.setAttribute("cy", "100");
+            girlFace.setAttribute("r", "20");
+            girlGroup.appendChild(girlFace);
+            
+            // 女孩的眼睛
+            const girlEyeLeft = document.createElementNS(svgNS, "circle");
+            girlEyeLeft.setAttribute("fill", "#000");
+            girlEyeLeft.setAttribute("cx", "273");
+            girlEyeLeft.setAttribute("cy", "95");
+            girlEyeLeft.setAttribute("r", "4");
+            girlGroup.appendChild(girlEyeLeft);
+            
+            const girlEyeRight = document.createElementNS(svgNS, "circle");
+            girlEyeRight.setAttribute("fill", "#000");
+            girlEyeRight.setAttribute("cx", "287");
+            girlEyeRight.setAttribute("cy", "95");
+            girlEyeRight.setAttribute("r", "4");
+            girlGroup.appendChild(girlEyeRight);
+            
+            // 女孩的嘴巴
+            const girlMouth = document.createElementNS(svgNS, "path");
+            girlMouth.setAttribute("class", "kid-body");
+            girlMouth.setAttribute("d", "M275,110 Q280,115 285,110");
+            girlGroup.appendChild(girlMouth);
+            
+            // 女孩的裙子
+            const girlDress = document.createElementNS(svgNS, "path");
+            girlDress.setAttribute("class", "girl-dress");
+            girlDress.setAttribute("d", "M260,120 L280,140 L300,120 L290,180 L270,180 Z");
+            girlGroup.appendChild(girlDress);
+            
+            // 女孩的手臂
+            const girlArmLeft = document.createElementNS(svgNS, "line");
+            girlArmLeft.setAttribute("class", "kid-body");
+            girlArmLeft.setAttribute("x1", "280");
+            girlArmLeft.setAttribute("y1", "130");
+            girlArmLeft.setAttribute("x2", "260");
+            girlArmLeft.setAttribute("y2", "150");
+            girlGroup.appendChild(girlArmLeft);
+            
+            const girlArmRight = document.createElementNS(svgNS, "line");
+            girlArmRight.setAttribute("class", "kid-body");
+            girlArmRight.setAttribute("x1", "280");
+            girlArmRight.setAttribute("y1", "130");
+            girlArmRight.setAttribute("x2", "300");
+            girlArmRight.setAttribute("y2", "150");
+            girlGroup.appendChild(girlArmRight);
+            
+            // 女孩的辫子
+            const girlBraid = document.createElementNS(svgNS, "path");
+            girlBraid.setAttribute("class", "girl-hair");
+            girlBraid.setAttribute("d", "M300,100 L310,90 L320,100 L330,90 L340,100");
+            girlBraid.setAttribute("stroke-width", "2");
+            girlBraid.setAttribute("fill", "none");
+            girlGroup.appendChild(girlBraid);
+            
+            svg.appendChild(girlGroup);
+            
+            // 牵手连接线
+            const handLine = document.createElementNS(svgNS, "path");
+            handLine.setAttribute("class", "hand-connection");
+            handLine.setAttribute("d", "M140,150 C170,140 200,140 230,150");
+            handLine.setAttribute("fill", "none");
+            svg.appendChild(handLine);
+            
+            // 牵手点
+            const handPoint1 = document.createElementNS(svgNS, "circle");
+            handPoint1.setAttribute("fill", "#ffcc00");
+            handPoint1.setAttribute("cx", "140");
+            handPoint1.setAttribute("cy", "145");
+            handPoint1.setAttribute("r", "5");
+            svg.appendChild(handPoint1);
+            
+            const handPoint2 = document.createElementNS(svgNS, "circle");
+            handPoint2.setAttribute("fill", "#ffcc00");
+            handPoint2.setAttribute("cx", "230");
+            handPoint2.setAttribute("cy", "145");
+            handPoint2.setAttribute("r", "5");
+            svg.appendChild(handPoint2);
+            
+            kidsContainer.appendChild(svg);
+        }
+        
+        // 粒子类
+        class Particle {
+            constructor(x, y, color) {
+                this.x = x;
+                this.y = y;
+                this.color = color;
+                this.velocity = {
+                    x: (Math.random() - 0.5) * 8,
+                    y: (Math.random() - 0.5) * 8 - 2
+                };
+                this.alpha = 1;
+                this.decay = Math.random() * 0.015 + 0.005;
+                this.size = Math.random() * 3 + 1;
+            }
+            
+            update() {
+                this.velocity.y += 0.1; // 重力
+                this.x += this.velocity.x;
+                this.y += this.velocity.y;
+                this.alpha -= this.decay;
+                this.size *= 0.99;
+            }
+            
+            draw() {
+                ctx.save();
+                ctx.globalAlpha = this.alpha;
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+        
+        // 烟花类
+        class Firework {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.color = `hsl(${Math.random() * 360}, 100%, 50%)`; // 随机颜色
+                this.particles = [];
+                this.createParticles();
+            }
+            
+            createParticles() {
+                const particleCount = 150;
+                for (let i = 0; i < particleCount; i++) {
+                    this.particles.push(new Particle(this.x, this.y, this.color));
+                }
+            }
+            
+            update() {
+                this.particles.forEach((particle, index) => {
+                    particle.update();
+                    if (particle.alpha <= 0) {
+                        this.particles.splice(index, 1);
+                    }
+                });
+            }
+            
+            draw() {
+                this.particles.forEach(particle => {
+                    particle.draw();
+                });
+            }
+        }
+        
+        // 创建随机烟花
+        function createRandomFirework() {
+            const x = Math.random() * canvas.width;
+            const y = Math.random() * canvas.height * 0.6 + canvas.height * 0.2;
+            fireworks.push(new Firework(x, y));
+        }
+        
+        // 创建星星背景
+        function createStars() {
+            stars = [];
+            const starCount = 200;
+            for (let i = 0; i < starCount; i++) {
+                stars.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    size: Math.random() * 2 + 0.5,
+                    brightness: Math.random() * 0.8 + 0.2,
+                    twinkleSpeed: Math.random() * 0.05 + 0.02
+                });
+            }
+        }
+        
+        // 绘制星星
+        function drawStars() {
+            stars.forEach(star => {
+                const brightness = star.brightness + Math.sin(Date.now() * star.twinkleSpeed) * 0.3;
+                ctx.save();
+                ctx.globalAlpha = Math.max(0, brightness);
+                ctx.fillStyle = '#ffffff';
+                ctx.beginPath();
+                ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            });
+        }
+        
+        // 改变背景颜色
+        function changeBackgroundColor() {
+            currentBgColorIndex = (currentBgColorIndex + 1) % backgroundColors.length;
+            currentBgColor = backgroundColors[currentBgColorIndex];
+            
+            // 更新页面背景色
+            document.body.style.backgroundColor = currentBgColor;
+            
+            // 在控制台输出当前背景颜色，便于调试
+            console.log(`背景颜色已改变为: ${currentBgColor}`);
+        }
+        
+        // 切换到烟花状态
+        function enterFireworksState() {
+            state = 'FIREWORKS';
+            stateStartTime = Date.now();
+            
+            // 改变背景颜色
+            changeBackgroundColor();
+            
+            // 隐藏小孩图片
+            contentContainer.style.opacity = '0';
+            
+            // 清空星星
+            stars = [];
+            
+            // 清空烟花数组
+            fireworks = [];
+        }
+        
+        // 切换到小孩图片状态
+        function enterKidsState() {
+            state = 'KIDS';
+            stateStartTime = Date.now();
+            
+            // 改变背景颜色
+            changeBackgroundColor();
+            
+            // 显示小孩图片
+            contentContainer.style.opacity = '1';
+            
+            // 创建小孩SVG
+            createKidsSVG();
+            
+            // 创建星星背景
+            createStars();
+        }
+        
+        // 动画循环
+        function animate() {
+            const currentTime = Date.now();
+            const stateElapsed = currentTime - stateStartTime;
+            
+            // 清除画布并绘制当前背景颜色
+            ctx.fillStyle = currentBgColor + '15';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // 检查状态是否需要切换
+            if (stateElapsed >= STATE_DURATION) {
+                if (state === 'FIREWORKS') {
+                    enterKidsState();
+                } else {
+                    enterFireworksState();
+                }
+            }
+            
+            // 根据当前状态绘制内容
+            if (state === 'FIREWORKS') {
+                // 随机生成新烟花
+                if (Math.random() < 0.08) {
+                    createRandomFirework();
+                }
+                
+                // 更新和绘制所有烟花
+                fireworks.forEach((firework, index) => {
+                    firework.update();
+                    firework.draw();
+                    
+                    // 移除没有粒子的烟花
+                    if (firework.particles.length === 0) {
+                        fireworks.splice(index, 1);
+                    }
+                });
+            } else if (state === 'KIDS') {
+                // 绘制星星
+                drawStars();
+            }
+            
+            requestAnimationFrame(animate);
+        }
+        
+        // 窗口大小调整
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            
+            // 如果当前是小孩图片状态，重新创建星星
+            if (state === 'KIDS') {
+                createStars();
+            }
+        });
+        
+        // 启动动画
+        animate();
+        
+        // 初始状态为烟花状态
+        enterFireworksState();
+        
+        // 设置初始页面背景色
+        document.body.style.backgroundColor = currentBgColor;
+    </script>
+</body>
+</html>

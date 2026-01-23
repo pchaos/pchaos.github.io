@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>电子烟花秀 - 自定义文字（循环播放）</title>
+    <!-- 引入CSS文件 -->
+    <link rel="stylesheet" href="fireworks_style.css">
+</head>
+<body>
+    <canvas id="fireworksCanvas"></canvas>
+    <div class="content-container" id="contentContainer">
+        <div class="display-text" id="displayText"></div>
+        <div class="kids-container" id="kidsContainer"></div>
+    </div>
+
+    <!-- 控制面板 -->
+    <div class="control-panel" id="controlPanel">
+        <button class="close-panel-btn" id="closePanelBtn" title="关闭面板">×</button>
+        <h3>电子烟花秀控制面板</h3>
+        
+        <label for="textInput">输入要显示的文字：</label>
+        <input type="text" id="textInput" placeholder="请输入要显示的文字，如：新年快乐" value="2026 Happy!" maxlength="50">
+        
+        <label for="kidsCount">选择小人个数：</label>
+        <select id="kidsCount">
+            <option value="1">1个</option>
+            <option value="2" selected>2个</option>
+            <option value="3">3个</option>
+            <option value="4">4个</option>
+            <option value="5">5个</option>
+            <option value="6">6个</option>
+            <option value="7">7个</option>
+            <option value="8">8个</option>
+            <option value="9">9个</option>
+            <option value="10">10个</option>
+        </select>
+        
+        <button id="generateBtn">生成Base64链接</button>
+        
+        <div class="url-display" id="urlDisplay">
+            <p>生成的URL将显示在这里：</p>
+            <div id="urlResult"></div>
+        </div>
+        
+        <button id="copyBtn" class="copy-btn" style="display: none;">复制链接</button>
+        
+        <div id="statusMessage" class="status-message"></div>
+    </div>
+
+    <!-- 显示控制面板的按钮 - 默认隐藏 -->
+    <button class="toggle-panel-btn" id="togglePanelBtn" title="显示/隐藏控制面板">控制面板</button>
+
+    <!-- 引入JavaScript模块 -->
+    <script src="kidsManager.js"></script>
+    <script src="fireworksManager.js"></script>
+    <script src="main.js"></script>
+</body>
+</html>

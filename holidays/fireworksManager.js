@@ -1,4 +1,5 @@
 // fireworksManager.js - 烟花管理模块
+
 class FireworksManager {
   constructor(canvas) {
     this.canvas = canvas;
@@ -21,83 +22,84 @@ class FireworksManager {
       "#00b894",
     ];
     this.currentBgColor = this.backgroundColors[this.currentBgColorIndex];
-  }
 
-  // 粒子类
-  Particle = class {
-    constructor(x, y, color) {
-      this.x = x;
-      this.y = y;
-      this.color = color;
-      this.velocity = {
-        x: (Math.random() - 0.5) * 8,
-        y: (Math.random() - 0.5) * 8 - 2,
-      };
-      this.alpha = 1;
-      this.decay = Math.random() * 0.015 + 0.005;
-      this.size = Math.random() * 3 + 1;
-    }
-
-    update() {
-      this.velocity.y += 0.1; // 重力
-      this.x += this.velocity.x;
-      this.y += this.velocity.y;
-      this.alpha -= this.decay;
-      this.size *= 0.99;
-    }
-
-    draw(ctx) {
-      ctx.save();
-      ctx.globalAlpha = this.alpha;
-      ctx.fillStyle = this.color;
-      ctx.beginPath();
-      ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
-    }
-  };
-
-  // 烟花类
-  Firework = class {
-    constructor(x, y) {
-      this.x = x;
-      this.y = y;
-      this.color = `hsl(${Math.random() * 360}, 100%, 50%)`; // 随机颜色
-      this.particles = [];
-      this.createParticles();
-    }
-
-    createParticles() {
-      const particleCount = 150;
-      for (let i = 0; i < particleCount; i++) {
-        this.particles.push(
-          new FireworksManager.prototype.Particle(this.x, this.y, this.color),
-        );
+    // 粒子类
+    this.Particle = class {
+      constructor(x, y, color) {
+        this.x = x;
+        this.y = y;
+        this.color = color;
+        this.velocity = {
+          x: (Math.random() - 0.5) * 8,
+          y: (Math.random() - 0.5) * 8 - 2,
+        };
+        this.alpha = 1;
+        this.decay = Math.random() * 0.015 + 0.005;
+        this.size = Math.random() * 3 + 1;
       }
-    }
 
-    update() {
-      this.particles.forEach((particle, index) => {
-        particle.update();
-        if (particle.alpha <= 0) {
-          this.particles.splice(index, 1);
+      update() {
+        this.velocity.y += 0.1; // 重力
+        this.x += this.velocity.x;
+        this.y += this.velocity.y;
+        this.alpha -= this.decay;
+        this.size *= 0.99;
+      }
+
+      draw(ctx) {
+        ctx.save();
+        ctx.globalAlpha = this.alpha;
+        ctx.fillStyle = this.color;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+    };
+
+    // 烟花类
+    this.Firework = class {
+      constructor(x, y, manager) {
+        this.x = x;
+        this.y = y;
+        this.color = `hsl(${Math.random() * 360}, 100%, 50%)`; // 随机颜色
+        this.particles = [];
+        this.manager = manager;
+        this.createParticles();
+      }
+
+      createParticles() {
+        const particleCount = 150;
+        for (let i = 0; i < particleCount; i++) {
+          this.particles.push(
+            new this.manager.Particle(this.x, this.y, this.color),
+          );
         }
-      });
-    }
+      }
 
-    draw(ctx) {
-      this.particles.forEach((particle) => {
-        particle.draw(ctx);
-      });
-    }
-  };
+      update() {
+        this.particles.forEach((particle, index) => {
+          particle.update();
+          if (particle.alpha <= 0) {
+            this.particles.splice(index, 1);
+          }
+        });
+      }
+
+      draw(ctx) {
+        this.particles.forEach((particle) => {
+          particle.draw(ctx);
+        });
+      }
+    };
+  }
 
   // 创建随机烟花
   createRandomFirework() {
     const x = Math.random() * this.canvas.width;
     const y =
       Math.random() * this.canvas.height * 0.6 + this.canvas.height * 0.2;
-    this.fireworks.push(new this.Firework(x, y));
+    this.fireworks.push(new this.Firework(x, y, this));
   }
 
   // 创建星星背景

@@ -38,6 +38,9 @@
         
         <button id="generateBtn">生成Base64链接</button>
         
+<!-- 新增：生成纯预览链接 -->
+<button id="generatePreviewBtn" style="background: linear-gradient(45deg, #e74c3c, #c0392b);">生成预览链接</button>
+
         <div class="url-display" id="urlDisplay">
             <p>生成的URL将显示在这里：</p>
             <div id="urlResult"></div>
@@ -55,5 +58,10 @@
     <script src="kidsManager.js"></script>
     <script src="fireworksManager.js"></script>
     <script src="main.js"></script>
+<!-- 隐形控制面板切换器（左下角 10x10px） -->
+<div id="hiddenPanelToggle" 
+     style="position: fixed; bottom: 10px; left: 10px; width: 10px; height: 10px; 
+            cursor: pointer; z-index: 999; background: transparent; 
+            pointer-events: auto;"></div>
 </body>
 </html>

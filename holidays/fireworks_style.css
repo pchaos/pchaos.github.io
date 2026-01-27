@@ -1,4 +1,5 @@
 /* fireworks_style.css - 电子烟花秀样式文件 */
+
 body {
   margin: 0;
   padding: 0;
@@ -12,6 +13,7 @@ body {
   transition: background-color 2s ease-in-out;
 }
 
+/* 画布铺满背景 */
 canvas {
   position: absolute;
   top: 0;
@@ -19,7 +21,9 @@ canvas {
   z-index: 1;
 }
 
-.content-container {
+/* 内容容器（文字 + 小人） */
+.content-container,
+#contentContainer {
   position: absolute;
   z-index: 2;
   opacity: 0;
@@ -30,7 +34,9 @@ canvas {
   justify-content: center;
 }
 
-.display-text {
+/* 显示文字 */
+.display-text,
+#displayText {
   font-size: 120px;
   font-weight: bold;
   color: #ffffff;
@@ -44,7 +50,9 @@ canvas {
   margin-bottom: 40px;
 }
 
-.kids-container {
+/* 小人容器 */
+.kids-container,
+#kidsContainer {
   width: 100%;
   height: 210px;
   display: flex;
@@ -59,6 +67,7 @@ canvas {
 }
 
 /* 小人相关样式 */
+
 .kid-body {
   fill: none;
   stroke: #ffffff;
@@ -125,6 +134,7 @@ canvas {
 }
 
 /* 控制面板样式 */
+
 .control-panel {
   position: fixed;
   top: 20px;
@@ -284,6 +294,8 @@ canvas {
   border: 1px solid #e74c3c;
 }
 
+/* 控制面板开关按钮 */
+
 .toggle-panel-btn {
   position: fixed;
   top: 20px;
@@ -336,6 +348,7 @@ canvas {
 }
 
 /* 响应式调整 */
+
 @media (max-width: 768px) {
   .control-panel {
     top: 10px;
@@ -345,7 +358,8 @@ canvas {
     padding: 15px;
   }
 
-  .display-text {
+  .display-text,
+  #displayText {
     font-size: 80px;
   }
 
@@ -358,12 +372,33 @@ canvas {
 }
 
 @media (max-width: 480px) {
-  .display-text {
+  .display-text,
+  #displayText {
     font-size: 60px;
   }
 
-  .kids-container {
+  .kids-container,
+  #kidsContainer {
     width: 100%;
     height: 150px;
   }
+}
+
+/* 隐形控制面板切换器 */
+#hiddenPanelToggle {
+  position: fixed !important;
+  bottom: 10px !important;
+  left: 10px !important;
+  width: 10px !important;
+  height: 10px !important;
+  z-index: 999 !important;
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
+}
+
+/* 确保鼠标指针无任何提示 */
+#hiddenPanelToggle:hover {
+  cursor: pointer !important; /* 还是显示 pointer，方便你开发调试 */
+  /* 正式发布时可以改成 cursor: default; */
 }

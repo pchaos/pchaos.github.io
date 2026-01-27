@@ -114,10 +114,13 @@ document.addEventListener("DOMContentLoaded", function () {
     const encodedText = base64Encode(inputText);
     const encodedCount = base64Encode(count.toString());
 
-    const baseUrl = window.location.origin + window.location.pathname;
-    const newUrl = `${baseUrl}?text=${encodedText}&count=${encodedCount}&showPanel=true`;
+    // 取当前地址问号前的部分，兼容 file:// 和 http://
+    const currentUrl = window.location.href.split("?")[0];
+    const newUrl = `${currentUrl}?text=${encodedText}&count=${encodedCount}&showPanel=true`;
 
+    // 建议顺便包成可点击链接
     urlResult.innerHTML = `<a href="${newUrl}" target="_blank">${newUrl}</a>`;
+
     copyBtn.style.display = "block";
 
     displayString = inputText;
@@ -129,6 +132,30 @@ document.addEventListener("DOMContentLoaded", function () {
     kidsManager.createKidsSVG(kidsCount);
 
     showStatus("链接生成成功！点击上方链接查看效果", "success");
+  }
+
+  // 新函数：生成不带面板的纯预览链接
+  function generatePreviewUrl() {
+    const inputText = textInput.value.trim();
+    const count = parseInt(kidsCountSelect.value);
+    if (!inputText) {
+      showStatus("请输入要显示的文字", "error");
+      return;
+    }
+
+    const encodedText = base64Encode(inputText);
+    const encodedCount = base64Encode(count.toString());
+    const currentUrl = window.location.href.split("?")[0];
+    const newUrl = `${currentUrl}?text=${encodedText}&count=${encodedCount}`; // 不带 showPanel
+
+    urlResult.innerHTML = `<a href="${newUrl}" target="_blank">${newUrl}</a>`;
+    copyBtn.style.display = "block";
+    displayString = inputText;
+    displayText.textContent = displayString;
+    kidsCount = count;
+    adjustFontSize();
+    kidsManager.createKidsSVG(kidsCount);
+    showStatus("预览链接生成成功！对方点击即可观看", "success");
   }
 
   // 复制链接到剪贴板
@@ -222,6 +249,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // 事件监听器
   generateBtn.addEventListener("click", generateUrl);
+  generatePreviewBtn.addEventListener("click", generatePreviewUrl);
   copyBtn.addEventListener("click", copyToClipboard);
   togglePanelBtn.addEventListener("click", toggleControlPanel);
   closePanelBtn.addEventListener("click", toggleControlPanel);
@@ -230,6 +258,13 @@ document.addEventListener("DOMContentLoaded", function () {
     if (e.key === "Enter") {
       generateUrl();
     }
+  });
+
+  // 新增：隐形左下角切换器
+  const hiddenPanelToggle = document.getElementById("hiddenPanelToggle");
+  hiddenPanelToggle.addEventListener("click", function (e) {
+    e.stopPropagation(); // 防止冒泡
+    toggleControlPanel();
   });
 
   // 页面加载完成后开始动画

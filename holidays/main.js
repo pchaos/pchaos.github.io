@@ -97,8 +97,22 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // 切换控制面板
   function toggleControlPanel() {
-    controlPanel.classList.toggle("show");
-    togglePanelBtn.classList.add("show");
+    // 统一控制：控制模式是否开启
+    const isShowing = controlPanel.classList.toggle("show");
+
+    // 控制右上角面板：用 .show 控制显示/隐藏
+    // controlPanel.show 的样式在 CSS 里已经写好
+
+    // 控制左上角按钮：控制模式开时显示，关时隐藏
+    if (isShowing) {
+      togglePanelBtn.classList.add("show");
+    } else {
+      togglePanelBtn.classList.remove("show");
+    }
+
+    // 左下角激活区域：始终保留，不在这里处理隐藏
+    // const hiddenToggle = document.getElementById("hiddenPanelToggle");
+    // if (hiddenToggle) hiddenToggle.style.display = "block";
   }
 
   // 生成链接

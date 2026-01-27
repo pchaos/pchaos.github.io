@@ -18,18 +18,42 @@ class KidsManager {
 
     const kidSpacing = svgWidth / (kidsCount + 1);
 
+    // 当人数超过 6 时，选出两个“成人”索引（居中两个）
+    let adultIndexes = [];
+    if (kidsCount > 6) {
+      const mid = Math.floor(kidsCount / 2);
+      adultIndexes = [mid - 1, mid]; // 例如 7 人时是 2、3 索引，8 人时是 3、4
+    }
+
     for (let i = 0; i < kidsCount; i++) {
       const x = kidSpacing * (i + 1);
       const isBoy = i % 2 === 0;
-      const isSmall = i >= 2; // 超过2个小人时，多余的小人缩小一半
+
+      let scaleType = "normal"; // normal / small / adult
+
+      if (kidsCount > 6 && adultIndexes.includes(i)) {
+        scaleType = "adult"; // 这两个是成人，放大
+      } else if (i >= 2) {
+        scaleType = "small"; // 其余从第三个开始，还是小人
+      }
 
       const kidGroup = document.createElementNS(svgNS, "g");
-      kidGroup.setAttribute("class", isSmall ? "small-kid" : "kid");
+      kidGroup.setAttribute(
+        "class",
+        scaleType === "small"
+          ? "small-kid"
+          : scaleType === "adult"
+            ? "adult"
+            : "kid",
+      );
 
+      const isSmall = scaleType === "small";
+
+      // 在 createBoy / createGirl 里根据 adult 调整比例
       if (isBoy) {
-        this.createBoy(svgNS, kidGroup, x, isSmall);
+        this.createBoy(svgNS, kidGroup, x, isSmall, scaleType === "adult");
       } else {
-        this.createGirl(svgNS, kidGroup, x, isSmall);
+        this.createGirl(svgNS, kidGroup, x, isSmall, scaleType === "adult");
       }
 
       svg.appendChild(kidGroup);
@@ -56,9 +80,20 @@ class KidsManager {
   }
 
   // 创建男孩
-  createBoy(svgNS, group, x, isSmall) {
-    const scale = isSmall ? 0.5 : 1;
-    const size = isSmall ? 0.7 : 1;
+  createBoy(svgNS, group, x, isSmall, isAdult = false) {
+    let scale = 1;
+    let size = 1;
+
+    if (isAdult) {
+      scale = 1.5; // 成人整体高一点
+      size = 1.3; // 头和身体稍微大一点
+    } else if (isSmall) {
+      scale = 0.5;
+      size = 0.7;
+    } else {
+      scale = 1;
+      size = 1;
+    }
 
     // 男孩的短发
     const hair = document.createElementNS(svgNS, "rect");
@@ -148,9 +183,20 @@ class KidsManager {
   }
 
   // 创建女孩
-  createGirl(svgNS, group, x, isSmall) {
-    const scale = isSmall ? 0.5 : 1;
-    const size = isSmall ? 0.7 : 1;
+  createGirl(svgNS, group, x, isSmall, isAdult = false) {
+    let scale = 1;
+    let size = 1;
+
+    if (isAdult) {
+      scale = 1.5;
+      size = 1.3;
+    } else if (isSmall) {
+      scale = 0.5;
+      size = 0.7;
+    } else {
+      scale = 1;
+      size = 1;
+    }
 
     // 女孩的长发
     const hair = document.createElementNS(svgNS, "path");

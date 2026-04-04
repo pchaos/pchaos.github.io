@@ -1,5 +1,7 @@
  # https://pchaos.github.io/exchanges/hw.txt
 
+https://hw.sxsc.eu.cc/hwdata/sub
+
 vless://258ca28a-d982-4a40-b620-7c1c81108060@104.19.55.36:443?encryption=none&security=tls&sni=b.rack.sxsc.dpdns.org&fp=chrome&alpn=h3&insecure=0&allowInsecure=0&ech=cloudflare-ech.com%2Bhttps%3A%2F%2F223.5.5.5%2Fdns-query&type=ws&host=b.rack.sxsc.dpdns.org&path=%2F%3Fed%3D2048#%E7%A7%BB%E5%8A%A8-HKG-443-WS-TLS
 
 vless://258ca28a-d982-4a40-b620-7c1c81108060@104.17.147.208:443?encryption=none&security=tls&sni=b.rack.sxsc.dpdns.org&fp=chrome&alpn=h3&insecure=0&allowInsecure=0&ech=cloudflare-ech.com%2Bhttps%3A%2F%2F223.5.5.5%2Fdns-query&type=ws&host=b.rack.sxsc.dpdns.org&path=%2F%3Fed%3D2048#%E8%81%94%E9%80%9A-SJC-443-WS-TLS

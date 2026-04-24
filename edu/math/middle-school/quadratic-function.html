@@ -256,6 +256,8 @@
     <div class="container">
         <h1>📐 二次函数图像</h1>
         
+        <div class="version" style="position:absolute;top:5px;right:25px;font-size:11px;color:#999;z-index:5;">v1.0</div>
+        
         <div class="theme-selector">
             <select id="theme-select" onchange="changeTheme(this.value)">
                 <option value="default">默认</option>
@@ -388,8 +390,8 @@ function draw() {
             // 零值隐藏逻辑
             const termB = document.getElementById('term-b');
             const termC = document.getElementById('term-c');
-            if (termB) termB.style.display = Math.abs(b) < 0.001 ? 'none' : 'inline';
-            if (termC) termC.style.display = Math.abs(c) < 0.001 ? 'none' : 'inline';
+            if (termB) termB.style.display = Math.abs(b) < 0.0001 ? 'none' : 'inline';
+            if (termC) termC.style.display = Math.abs(c) < 0.0001 ? 'none' : 'inline';
 
             ctx.clearRect(0, 0, width, height);
 

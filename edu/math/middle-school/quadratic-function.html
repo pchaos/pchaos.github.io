@@ -385,6 +385,12 @@ function draw() {
             const cStr = c >= 0 ? `+ ${cAbs}` : `− ${cAbs}`;
             document.getElementById('formula-c').textContent = cStr;
 
+            // 零值隐藏逻辑
+            const termB = document.getElementById('term-b');
+            const termC = document.getElementById('term-c');
+            if (termB) termB.style.display = Math.abs(b) < 0.001 ? 'none' : 'inline';
+            if (termC) termC.style.display = Math.abs(c) < 0.001 ? 'none' : 'inline';
+
             ctx.clearRect(0, 0, width, height);
 
             // 网格
@@ -499,6 +505,8 @@ function draw() {
             document.getElementById('axis').textContent = a !== 0 ? `x = ${vertexX.toFixed(2)}` : '无';
             document.getElementById('direction').textContent = a > 0 ? '向上' : (a < 0 ? '向下' : '直线');
             document.getElementById('y-intercept').textContent = `(0, ${c.toFixed(1)})`;
+            
+
         }
 
         aSlider.addEventListener('input', draw);

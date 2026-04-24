@@ -286,7 +286,7 @@
         </div>
 
         <div class="formula">
-            y = <span class="var-a" id="formula-a">1</span>x³ <span id="formula-b">+ 0x²</span> <span id="formula-c">+ 0x</span> <span id="formula-d">+ 0</span>
+            y = <span class="var-a" id="formula-a">1</span>x³ <span id="term-b"><span id="formula-b">+ 0x²</span></span> <span id="term-c"><span id="formula-c">+ 0x</span></span> <span id="term-d"><span id="formula-d">+ 0</span></span>
         </div>
 
         <div class="controls">
@@ -378,25 +378,25 @@
 
             document.getElementById('formula-a').textContent = a.toFixed(1);
             
-            // 零值隐藏逻辑
-            const formula_b = document.getElementById('formula-b');
-            const formula_c = document.getElementById('formula-c');
-            const formula_d = document.getElementById('formula-d');
-            
             const bAbs = Math.abs(b).toFixed(1);
-            const bStr = b !== 0 ? (b >= 0 ? `+ ${bAbs}x²` : `− ${bAbs}x²`) : '';
-            formula_b.textContent = bStr;
-            formula_b.style.display = b !== 0 ? 'inline' : 'none';
+            const bStr = b >= 0 ? `+ ${bAbs}x²` : `− ${bAbs}x²`;
+            document.getElementById('formula-b').textContent = bStr;
             
             const cAbs = Math.abs(c).toFixed(1);
-            const cStr = c !== 0 ? (c >= 0 ? `+ ${cAbs}x` : `− ${cAbs}x`) : '';
-            formula_c.textContent = cStr;
-            formula_c.style.display = c !== 0 ? 'inline' : 'none';
+            const cStr = c >= 0 ? `+ ${cAbs}x` : `− ${cAbs}x`;
+            document.getElementById('formula-c').textContent = cStr;
             
             const dAbs = Math.abs(d).toFixed(1);
-            const dStr = d !== 0 ? (d >= 0 ? `+ ${dAbs}` : `− ${dAbs}`) : '';
-            formula_d.textContent = dStr;
-            formula_d.style.display = d !== 0 ? 'inline' : 'none';
+            const dStr = d >= 0 ? `+ ${dAbs}` : `− ${dAbs}`;
+            document.getElementById('formula-d').textContent = dStr;
+
+            // Zero-value hiding logic (with tolerance for floating point)
+            const termB = document.getElementById('term-b');
+            const termC = document.getElementById('term-c');
+            const termD = document.getElementById('term-d');
+            if (termB) termB.style.display = Math.abs(b) < 0.001 ? 'none' : 'inline';
+            if (termC) termC.style.display = Math.abs(c) < 0.001 ? 'none' : 'inline';
+            if (termD) termD.style.display = Math.abs(d) < 0.001 ? 'none' : 'inline';
 
             ctx.clearRect(0, 0, width, height);
 
@@ -506,8 +506,70 @@
             // 属性更新
             document.getElementById('y-intercept').textContent = `(0, ${d.toFixed(1)})`;
             document.getElementById('monotonic').textContent = a > 0 ? '递增' : (a < 0 ? '递减' : '直线');
-            document.getElementById('x-intercepts').textContent = '需计算';
-            document.getElementById('extreme').textContent = '需计算';
+            
+            // x 轴截距：解三次方程 ax³ + bx² + cx + d = 0
+            // 使用数值方法求根（牛顿迭代法）
+            function solveCubic(a, b, c, d) {
+                // 将方程转化为标准形式 x³ + px + q = 0
+                const p = c/a - (b*b)/(3*a*a);
+                const q = (2*b*b*b)/(27*a*a*a) - (b*c)/(3*a*a) + d/a;
+                
+                // 判别式 Δ = (q/2)² + (p/3)³
+                const delta = (q/2)*(q/2) + (p/3)*(p/3)*(p/3);
+                
+                if (delta > 0) {
+                    // 一个实根
+                    const u = Math.cbrt(-q/2 + Math.sqrt(delta));
+                    const v = Math.cbrt(-q/2 - Math.sqrt(delta));
+                    return [u + v - b/(3*a)];
+                } else if (delta === 0) {
+                    // 三个实根（至少两个相等）
+                    const u = Math.cbrt(-q/2);
+                    return [2*u - b/(3*a), -u - b/(3*a)];
+                } else {
+                    // 三个不同的实根
+                    const r = Math.sqrt(-(p/3)*(p/3)*(p/3));
+                    const phi = Math.acos(-q/(2*r));
+                    const x1 = 2 * Math.cbrt(r) * Math.cos(phi/3) - b/(3*a);
+                    const x2 = 2 * Math.cbrt(r) * Math.cos((phi + 2*Math.PI)/3) - b/(3*a);
+                    const x3 = 2 * Math.cbrt(r) * Math.cos((phi + 4*Math.PI)/3) - b/(3*a);
+                    return [x1, x2, x3];
+                }
+            }
+            
+            if (a !== 0) {
+                try {
+                    const roots = solveCubic(a, b, c, d).filter(x => Math.abs(x) < 100).slice(0, 3);
+                    if (roots.length > 0) {
+                        const xIntercepts = roots.map(x => `(${x.toFixed(2)}, 0)`).join(', ');
+                        document.getElementById('x-intercepts').textContent = xIntercepts;
+                    } else {
+                        document.getElementById('x-intercepts').textContent = '无实数解';
+                    }
+                } catch(e) {
+                    document.getElementById('x-intercepts').textContent = '需计算';
+                }
+            } else {
+                document.getElementById('x-intercepts').textContent = '需计算';
+            }
+            
+            // 极值点：求导数 f'(x) = 3ax² + 2bx + c = 0
+            // 解二次方程求极值点 x 坐标
+            const A = 3 * a;
+            const B = 2 * b;
+            const C = c;
+            const disc = B * B - 4 * A * C;
+            
+            if (a !== 0 && disc >= 0) {
+                const x1 = (-B + Math.sqrt(disc)) / (2 * A);
+                const x2 = (-B - Math.sqrt(disc)) / (2 * A);
+                const y1 = a*x1*x1*x1 + b*x1*x1 + c*x1 + d;
+                const y2 = a*x2*x2*x2 + b*x2*x2 + c*x2 + d;
+                document.getElementById('extreme').textContent = 
+                    `(${x1.toFixed(2)}, ${y1.toFixed(2)}), (${x2.toFixed(2)}, ${y2.toFixed(2)})`;
+            } else {
+                document.getElementById('extreme').textContent = '无极值';
+            }
         }
 
         aSlider.addEventListener('input', draw);

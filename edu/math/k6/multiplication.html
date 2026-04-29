@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>九九乘法表 - 互动练习</title>
+  <style>
+    :root{
+      --bg: #f6f7fb;
+      --card: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --cell: #ffffff;
+      --diag: #ffd54f;
+      --shadow: 0 6px 20px rgba(0,0,0,.08);
+      --gradient-start: #e8f0ff;
+      --gradient-end: #d0e1ff;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans CJK SC', 'PingFang SC', 'Hiragino Sans GB', Arial, sans-serif; background:var(--bg); color:var(--text)}
+    .wrap{ max-width: 1100px; margin: 20px auto; padding: 0 12px; }
+    header{ text-align:center; margin-bottom: 8px; }
+    h1{ font-size: 28px; margin:0; }
+    .sub{ color: #555; font-size: 13px; margin-top:6px; }
+    .card{ background: var(--card); border-radius:14px; padding:14px; box-shadow: var(--shadow); border:1px solid #eee; }
+
+    .grid{ display:grid; grid-template-columns: repeat(9, 1fr); gap:6px; width: 100%; margin: 14px auto; }
+    .cell{ position:relative; display:flex; align-items:center; justify-content:center; aspect-ratio:1/1; border-radius:8px; font-weight:700; font-size:14px; border:1px solid #e5e7eb; user-select:none; cursor:pointer; background: #fff; }
+    .cell.active{ outline:3px solid rgba(30,136,229,.6); outline-offset:-3px; }
+    .cell.diagonal{ border:2px solid #f59e0b; background: #fffaf0; }
+    .cell:hover{ filter: brightness(1.02); }
+    .cell-input{ width: 88%; height: 60%; text-align: center; font-size: 14px; border-radius:6px; border:1px solid #ddd; }
+    .cell-hint{ position:absolute; bottom:4px; right:6px; font-size:10px; color:#555; }
+    .cell-feedback{ position:absolute; top:4px; left:6px; font-size:11px; padding:2px 6px; border-radius:6px; background: rgba(0,0,0,.05); }
+    .cell-feedback.correct{ background: rgba(16,185,129,.25); color:#0f5132; }
+    .cell-feedback.wrong{ background: rgba(239,68,68,.25); color:#9b1c1c; }
+
+    .toolbar{ display:flex; justify-content:center; gap:12px; flex-wrap:wrap; align-items:center; margin:6px 0 6px; }
+    button{ padding:8px 12px; border-radius:8px; border:1px solid #ddd; background:#fff; cursor:pointer; font-weight:600; }
+    button.primary{ background:#4f46e5; color:#fff; border:none; }
+    button.ghost{ background:#fff; }
+
+    .legend{ text-align:center; font-size:12px; color:#555; margin-top:8px; }
+
+    @media (max-width: 900px){ .grid{ grid-template-columns: repeat(9, 1fr); gap:4px; } }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>九九乘法表</h1>
+      <div class="sub">点击单元格高亮行/列；悬停显示算式。对角线单元使用特殊颜色。</div>
+    </header>
+
+    <section class="card" aria-label="九九乘法表区域">
+      <div class="toolbar">
+        <button id="testModeBtn" type="button">测试模式</button>
+        <button id="showAnsBtn" type="button">显示答案</button>
+        <span id="hint" style="color:#555; font-size:12px;">提示：在测试模式中隐藏若干格，请填写正确答案。</span>
+      </div>
+
+      <div class="grid" id="grid9"></div>
+      <div class="legend" aria-label="图例">
+        <span class=" diag" style="display:inline-block; width:12px; height:12px; border-radius:3px; background:#ffd54f;"></span> 对角线(i×i)
+      </div>
+    </section>
+  </div>
+
+  <script>
+    (function(){
+      const grid = document.getElementById('grid9');
+      const testBtn = document.getElementById('testModeBtn');
+      const showBtn = document.getElementById('showAnsBtn');
+      const hint = document.getElementById('hint');
+      let hiddenMode = false;
+      let hiddenSet = new Set();
+      let activeCell = null;
+
+      function createGrid(){
+        grid.innerHTML = '';
+        for(let i=1;i<=9;i++){
+          for(let j=1;j<=9;j++){
+            const val = i*j;
+            const cell = document.createElement('div');
+            cell.className = 'cell' + (i===j ? ' diagonal' : '');
+            cell.dataset.row = i; cell.dataset.col = j; cell.dataset.value = val;
+            cell.title = `${i} × ${j} = ${val}`; // hover equation
+            cell.textContent = val;
+            // color gradient by product
+            const t = (val - 1) / 80;
+            const light = 70 - t * 28;
+            cell.style.backgroundColor = `hsl(210, 60%, ${light}%)`;
+            cell.addEventListener('click', ()=>{
+              if(activeCell && activeCell !== cell){ activeCell.classList.remove('active'); }
+              if(activeCell === cell){ activeCell = null; cell.classList.remove('active'); }
+              else { activeCell = cell; cell.classList.add('active'); }
+              // highlight entire row and column
+              highlightRowCol(i, j);
+            });
+            grid.appendChild(cell);
+          }
+        }
+      }
+
+      function highlightRowCol(r, c){
+        const cells = grid.querySelectorAll('.cell');
+        cells.forEach((cell)=>{
+          const row = Number(cell.dataset.row);
+          const col = Number(cell.dataset.col);
+          if(row === r || col === c){ cell.style.outline = '2px solid rgba(30,136,229,.6)'; }
+          else { cell.style.outline = 'none'; }
+        });
+      }
+
+      function resetNumbers() {
+        const cells = grid.querySelectorAll('.cell');
+        cells.forEach((cell)=>{
+          const r = Number(cell.dataset.row);
+          const c = Number(cell.dataset.col);
+          const val = r * c;
+          cell.textContent = val;
+          cell.title = `${r} × ${c} = ${val}`;
+          const t = (val - 1) / 80;
+          const light = 70 - t * 28;
+          cell.style.backgroundColor = `hsl(210, 60%, ${light}%)`;
+          cell.classList.remove('hidden');
+          // remove inputs if present
+          const inp = cell.querySelector('input');
+          if(inp){ inp.remove(); }
+          cell.querySelectorAll('.cell-feedback').forEach(el => el.remove());
+        });
+        hiddenSet.clear(); hiddenMode = false;
+      }
+
+      function startTestMode(){
+        resetNumbers();
+        // choose ~25% cells to hide
+        const total = 81; const toHide = Math.max(12, Math.floor(total * 0.25));
+        hiddenSet.clear();
+        while(hiddenSet.size < toHide){ hiddenSet.add(Math.floor(Math.random()*total)); }
+        const all = grid.querySelectorAll('.cell');
+        all.forEach((cell, idx)=>{
+          if(hiddenSet.has(idx)){
+            const r = Number(cell.dataset.row); const c = Number(cell.dataset.col); const prod = r * c;
+            cell.textContent = '';
+            const input = document.createElement('input'); input.type = 'text'; input.className = 'cell-input'; input.style.width = '100%'; input.style.height = '70%'; input.style.textAlign = 'center'; input.style.fontSize = '14px'; input.dataset.expected = prod; input.placeholder = '?';
+            cell.appendChild(input);
+            const feedback = document.createElement('span'); feedback.className = 'cell-feedback'; cell.appendChild(feedback);
+            input.addEventListener('input', ()=>{
+              const val = parseInt(input.value, 10);
+              if(!Number.isNaN(val) && val === Number(input.dataset.expected)){
+                feedback.textContent = '正确'; feedback.className = 'cell-feedback correct';
+              } else {
+                feedback.textContent = '错误'; feedback.className = 'cell-feedback wrong';
+              }
+            });
+            // keep hover equation via title
+            cell.title = `${r} × ${c} = ${prod}`;
+          } else {
+            // ensure number displayed for non-hidden cells
+            const r = Number(cell.dataset.row); const c = Number(cell.dataset.col); const val = r*c; cell.textContent = val;
+          }
+        });
+        hiddenMode = true;
+      }
+
+      function revealAnswers(){
+        // fill in all hidden cells with correct answers
+        const all = grid.querySelectorAll('.cell');
+        all.forEach((cell, idx)=>{
+          const r = Number(cell.dataset.row); const c = Number(cell.dataset.col); const prod = r*c;
+          // remove inputs/feedback if exist
+          cell.innerHTML = '';
+          cell.textContent = prod;
+          cell.title = `${r} × ${c} = ${prod}`;
+          const t = (prod - 1) / 80; const light = 70 - t * 28; cell.style.backgroundColor = `hsl(210, 60%, ${light}%)`;
+        });
+        hiddenMode = false;
+        hiddenSet.clear();
+      }
+
+      testBtn.addEventListener('click', ()=>{
+        if(!hiddenMode){ startTestMode(); } else { startTestMode(); }
+      });
+      showBtn.addEventListener('click', ()=>{ revealAnswers(); });
+
+      createGrid();
+    })();
+  </script>
+</body>
+</html>

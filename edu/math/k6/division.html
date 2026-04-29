@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>除法的意义 — 可视化</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: "PingFang SC", "Microsoft YaHei", sans-serif; background: #f5f7fa; color: #333; min-height: 100vh; }
+.container { max-width: 900px; margin: 0 auto; padding: 24px 16px; }
+h1 { text-align: center; font-size: 1.8em; margin-bottom: 8px; color: #2c3e50; }
+.subtitle { text-align: center; color: #7f8c8d; margin-bottom: 24px; font-size: 0.95em; }
+.controls { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; margin-bottom: 20px; }
+.control-group { background: #fff; border-radius: 12px; padding: 14px 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+.control-group label { display: block; font-weight: 600; margin-bottom: 6px; font-size: 0.9em; color: #555; }
+.control-group .value { font-size: 1.6em; font-weight: 700; color: #2980b9; margin: 0 4px; }
+.control-group input[type="range"] { width: 160px; accent-color: #2980b9; }
+.tabs { display: flex; gap: 8px; justify-content: center; margin-bottom: 20px; }
+.tab { padding: 10px 22px; border: 2px solid #bdc3c7; border-radius: 24px; cursor: pointer; font-size: 0.95em; transition: all 0.2s; background: #fff; }
+.tab:hover { border-color: #3498db; }
+.tab.active { background: #3498db; color: #fff; border-color: #3498db; }
+.viz-area { background: #fff; border-radius: 16px; padding: 28px; box-shadow: 0 4px 16px rgba(0,0,0,0.08); min-height: 340px; }
+.viz-title { font-size: 1.15em; font-weight: 600; color: #2c3e50; margin-bottom: 6px; }
+.viz-desc { color: #7f8c8d; font-size: 0.9em; margin-bottom: 18px; line-height: 1.6; }
+.equation { text-align: center; font-size: 1.8em; font-weight: 700; margin: 16px 0; color: #e74c3c; letter-spacing: 2px; }
+.equation span { color: #2980b9; }
+/* 等分除法 */
+.division-grid { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; margin: 20px 0; }
+.group-box { border: 3px solid #3498db; border-radius: 12px; padding: 12px; min-width: 70px; text-align: center; background: #ebf5fb; }
+.group-box .group-label { font-size: 0.75em; color: #2980b9; margin-bottom: 8px; font-weight: 600; }
+.group-box .dots { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+.dot { width: 22px; height: 22px; border-radius: 50%; background: #e74c3c; display: inline-flex; align-items: center; justify-content: center; color: #fff; font-size: 0.65em; font-weight: 700; animation: popIn 0.3s ease-out; }
+@keyframes popIn { 0% { transform: scale(0); } 80% { transform: scale(1.15); } 100% { transform: scale(1); } }
+/* 包含除法 */
+.contains-row { display: flex; align-items: center; gap: 8px; justify-content: center; flex-wrap: wrap; margin: 12px 0; }
+.item-block { width: 36px; height: 36px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; color: #fff; font-size: 0.85em; }
+.item-block.apple { background: #e74c3c; }
+.item-block.banana { background: #f39c12; }
+.item-block.grape { background: #8e44ad; }
+.bracket { font-size: 2em; color: #27ae60; font-weight: 300; line-height: 1; }
+.bracket-label { font-size: 0.7em; color: #27ae60; font-weight: 600; text-align: center; }
+/* 量度除法 */
+.measure-bar { position: relative; height: 50px; background: #ecf0f1; border-radius: 10px; margin: 16px 0; overflow: hidden; }
+.measure-fill { height: 100%; background: linear-gradient(90deg, #3498db, #2ecc71); border-radius: 10px; display: flex; align-items: center; justify-content: flex-end; padding-right: 10px; color: #fff; font-weight: 700; font-size: 0.9em; transition: width 0.5s ease; }
+.measure-marks { display: flex; position: absolute; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none; }
+.measure-mark { border-right: 2px dashed rgba(0,0,0,0.3); display: flex; align-items: flex-end; justify-content: center; padding-bottom: 4px; font-size: 0.65em; color: #555; }
+.summary { background: #fef9e7; border-left: 4px solid #f1c40f; padding: 14px 18px; border-radius: 0 8px 8px 0; margin-top: 20px; font-size: 0.9em; line-height: 1.7; }
+.summary strong { color: #e67e22; }
+.remainder-tag { display: inline-block; background: #e74c3c; color: #fff; padding: 2px 10px; border-radius: 12px; font-size: 0.8em; margin-left: 8px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>🧮 除法的意义</h1>
+  <p class="subtitle">拖动滑块，直观理解三种除法含义</p>
+
+  <div class="controls">
+    <div class="control-group">
+      <label>🍎 总数（被除数）</label>
+      <input type="range" id="totalSlider" min="2" max="24" value="12">
+      <span class="value" id="totalVal">12</span>
+    </div>
+    <div class="control-group">
+      <label>📐 每份数 / 每组大小（除数）</label>
+      <input type="range" id="divisorSlider" min="2" max="12" value="4">
+      <span class="value" id="divisorVal">4</span>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" data-mode="equal-share">等分除法</div>
+    <div class="tab" data-mode="contain">包含除法</div>
+    <div class="tab" data-mode="measure">量度除法</div>
+  </div>
+
+  <div class="viz-area" id="vizArea">
+    <!-- 动态内容 -->
+  </div>
+</div>
+
+<script>
+const totalSlider = document.getElementById('totalSlider');
+const divisorSlider = document.getElementById('divisorSlider');
+const totalVal = document.getElementById('totalVal');
+const divisorVal = document.getElementById('divisorVal');
+const vizArea = document.getElementById('vizArea');
+let currentMode = 'equal-share';
+
+const fruits = ['🍎','🍌','🍇','🍊','🫐','🥝','🍑','🍋','🍉','🥭','🍓','🍒'];
+
+function update() {
+  const total = parseInt(totalSlider.value);
+  const divisor = parseInt(divisorSlider.value);
+  totalVal.textContent = total;
+  divisorVal.textContent = divisor;
+  // 确保除数不超过总数
+  if (divisor > total) {
+    divisorSlider.value = total;
+    update();
+    return;
+  }
+
+  if (currentMode === 'equal-share') renderEqualShare(total, divisor);
+  else if (currentMode === 'contain') renderContain(total, divisor);
+  else renderMeasure(total, divisor);
+}
+
+function renderEqualShare(total, divisor) {
+  const quotient = Math.floor(total / divisor);
+  const remainder = total % divisor;
+  let groupsHTML = '';
+  for (let g = 0; g < divisor; g++) {
+    let dotsHTML = '';
+    for (let d = 0; d < quotient; d++) {
+      dotsHTML += `<div class="dot" style="animation-delay:${(g*quotient+d)*0.05}s">${fruits[(g*quotient+d) % fruits.length]}</div>`;
+    }
+    if (g < remainder) {
+      dotsHTML += `<div class="dot" style="background:#f39c12;animation-delay:${(g*quotient+quotient)*0.05}s">${fruits[(g*quotient+quotient) % fruits.length]}</div>`;
+    }
+    const count = quotient + (g < remainder ? 1 : 0);
+    groupsHTML += `<div class="group-box"><div class="group-label">第${g+1}份</div><div class="dots">${dotsHTML}</div></div>`;
+  }
+
+  let remHTML = remainder > 0 ? `<span class="remainder-tag">余 ${remainder}</span>` : '';
+  let result = remainder > 0 ? `${quotient} 余 ${remainder}` : `${quotient}`;
+
+  vizArea.innerHTML = `
+    <div class="viz-title">🟢 等分除法 — 平均分成若干份，求每份多少</div>
+    <div class="viz-desc">把 <strong>${total}</strong> 个物品<strong>平均分成 ${divisor} 份</strong>，每份有多少？</div>
+    <div class="division-grid">${groupsHTML}</div>
+    <div class="equation">${total} ÷ ${divisor} = <span>${result}</span> ${remHTML}</div>
+    <div class="summary">
+      <strong>含义：</strong>把 ${total} 平均分成 ${divisor} 份，每份 ${quotient} 个${remainder > 0 ? `，还多出 ${remainder} 个分不完` : ''}。<br>
+      <strong>关键：</strong>除数 = 份数，商 = 每份的数量。${remainder > 0 ? ' 有余数说明不能正好分完。' : ''}
+    </div>`;
+}
+
+function renderContain(total, divisor) {
+  const quotient = Math.floor(total / divisor);
+  const remainder = total % divisor;
+  const colors = ['apple','banana','grape'];
+  let groupsHTML = '';
+  for (let g = 0; g < quotient; g++) {
+    let itemsHTML = '';
+    for (let d = 0; d < divisor; d++) {
+      const idx = (g * divisor + d);
+      itemsHTML += `<div class="item-block ${colors[g % 3]}">${fruits[idx % fruits.length]}</div>`;
+    }
+    groupsHTML += `
+      <div style="display:flex;flex-direction:column;align-items:center;margin:0 8px;">
+        <div class="bracket">⟨</div>
+        <div class="contains-row" style="margin:0">${itemsHTML}</div>
+        <div class="bracket-label">第${g+1}组</div>
+      </div>`;
+  }
+  // 余下的
+  let remItemsHTML = '';
+  for (let d = 0; d < remainder; d++) {
+    remItemsHTML += `<div class="item-block" style="background:#bdc3c7;opacity:0.6">${fruits[(quotient*divisor+d) % fruits.length]}</div>`;
+  }
+  let remHTML = remainder > 0 ? `<div style="text-align:center;margin:8px 0;color:#95a5a6;font-size:0.85em">还剩 ${remainder} 个，不够再分一组${remItemsHTML}</div><span class="remainder-tag">余 ${remainder}</span>` : '';
+
+  let result = remainder > 0 ? `${quotient} 余 ${remainder}` : `${quotient}`;
+
+  vizArea.innerHTML = `
+    <div class="viz-title">🔵 包含除法 — 每组固定数量，求能分几组</div>
+    <div class="viz-desc">有 <strong>${total}</strong> 个物品，<strong>每组 ${divisor} 个</strong>，能分几组？</div>
+    <div style="display:flex;flex-wrap:wrap;justify-content:center;align-items:flex-start;gap:8px;margin:16px 0">${groupsHTML}</div>
+    ${remainder > 0 ? remItemsHTML ? `<div style="display:flex;justify-content:center;gap:6px;margin:8px 0;opacity:0.5">${remItemsHTML}</div>` : '' : ''}
+    <div class="equation">${total} ÷ ${divisor} = <span>${result}</span> ${remainder > 0 ? `<span class="remainder-tag">余 ${remainder}</span>` : ''}</div>
+    <div class="summary">
+      <strong>含义：</strong>${total} 里面有 <strong>${quotient} 个 ${divisor}</strong>${remainder > 0 ? `，还多出 ${remainder} 个` : ''}。<br>
+      <strong>关键：</strong>除数 = 每组的数量，商 = 组数。${remainder > 0 ? ' 余数 < 除数，说明剩下的不够再分一组。' : ''}
+    </div>`;
+}
+
+function renderMeasure(total, divisor) {
+  const quotient = Math.floor(total / divisor);
+  const remainder = total % divisor;
+  const pctFull = (total / 24) * 100;
+  const pctPerUnit = (divisor / total) * 100;
+
+  let marksHTML = '';
+  for (let i = 1; i <= quotient; i++) {
+    const left = (i * divisor / total) * pctFull;
+    marksHTML += `<div class="measure-mark" style="left:${left}%;width:${pctPerUnit}%">${i*divisor}</div>`;
+  }
+
+  let remText = remainder > 0 ? `，多出 ${remainder} 量不完一个完整的 ${divisor}` : '';
+
+  vizArea.innerHTML = `
+    <div class="viz-title">🟡 量度除法 — 用除数作为"尺子"去量被除数</div>
+    <div class="viz-desc">用长度为 <strong>${divisor}</strong> 的"尺子"去量 <strong>${total}</strong>，能量几次？</div>
+    <div class="measure-bar" style="width:100%">
+      <div class="measure-fill" style="width:${pctFull}%">${total}</div>
+      <div class="measure-marks">${marksHTML}</div>
+    </div>
+    <div style="text-align:center;margin:10px 0;font-size:0.9em;color:#555">
+      ${Array(quotient).fill(0).map((_,i) => `<span style="display:inline-block;background:#2ecc71;color:#fff;padding:4px 12px;border-radius:16px;margin:4px;font-size:0.85em">第${i+1}次量：${divisor}</span>`).join('')}
+      ${remainder > 0 ? `<span style="display:inline-block;background:#e74c3c;color:#fff;padding:4px 12px;border-radius:16px;margin:4px;font-size:0.85em">剩余：${remainder}</span>` : ''}
+    </div>
+    <div class="equation">${total} ÷ ${divisor} = <span>${quotient > 0 ? quotient : 0}</span>${remainder > 0 ? ` 余 <span>${remainder}</span>` : ''}</div>
+    <div class="summary">
+      <strong>含义：</strong>用"${divisor}"作标准去量"${total}"，量了 <strong>${quotient} 次</strong>${remText}。<br>
+      <strong>关键：</strong>商表示"量了几次"，余数表示"最后量不完的部分"。<br>
+      <strong>关系：</strong>${quotient} × ${divisor} + ${remainder} = ${quotient * divisor + remainder} = ${total} ✅
+    </div>`;
+}
+
+// Tab switching
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    currentMode = tab.dataset.mode;
+    update();
+  });
+});
+
+totalSlider.addEventListener('input', update);
+divisorSlider.addEventListener('input', update);
+
+update();
+</script>
+</body>
+</html>

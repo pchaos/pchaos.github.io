@@ -1,0 +1,1232 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <title>三角形内角和</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="template.js"></script>
+  <style>
+/* ====== 页面主题：清新几何 · 儿童友好 ====== */
+:root {
+  --geo-blue: #4f8ef7;
+  --geo-green: #34d399;
+  --geo-orange: #f97316;
+  --geo-pink: #f472b6;
+  --geo-purple: #a78bfa;
+  --geo-bg: #f0f9ff;
+  --geo-card: #ffffff;
+  --geo-text: #1e293b;
+  --geo-muted: #64748b;
+  --geo-radius: 14px;
+}
+
+body {
+  background: linear-gradient(145deg, #f0f9ff 0%, #e0f2fe 100%);
+  min-height: 100vh;
+  font-family: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+
+/* ---- 标题装饰 ---- */
+h1 {
+  font-size: 28px;
+  font-weight: 800;
+  text-align: center;
+  margin-bottom: 4px;
+  background: linear-gradient(135deg, var(--geo-blue), var(--geo-purple));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: 2px;
+}
+
+.subtitle {
+  text-align: center;
+  font-size: 15px;
+  color: var(--geo-muted);
+  margin-bottom: 20px;
+}
+
+/* ---- 控制工具栏 ---- */
+.control-bar {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.control-bar .btn {
+  padding: 8px 22px;
+  border: none;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all .2s ease;
+  touch-action: manipulation;
+}
+
+.btn-blue {
+  background: var(--geo-blue);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(79,142,247,.3);
+}
+.btn-blue:hover { background: #3b7ae6; transform: translateY(-1px); }
+
+.btn-green {
+  background: var(--geo-green);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(52,211,153,.3);
+}
+.btn-green:hover { background: #2bc48a; transform: translateY(-1px); }
+
+.btn-outline {
+  background: transparent;
+  color: var(--geo-muted);
+  border: 2px solid #e2e8f0 !important;
+}
+.btn-outline:hover { border-color: var(--geo-blue) !important; color: var(--geo-blue); }
+
+/* ---- 主卡片 ---- */
+.geo-card {
+  background: var(--geo-card);
+  border-radius: var(--geo-radius);
+  padding: 24px;
+  margin-bottom: 16px;
+  box-shadow: 0 4px 20px rgba(0,0,0,.06);
+}
+
+/* ---- Canvas 画布区 ---- */
+.canvas-wrap {
+  position: relative;
+  text-align: center;
+  margin: 0 auto;
+  max-width: 600px;
+}
+
+.canvas-wrap canvas {
+  width: 100%;
+  height: auto;
+  border-radius: 12px;
+  background: #fafcff;
+  box-shadow: inset 0 2px 8px rgba(0,0,0,.04);
+  cursor: grab;
+  touch-action: none;
+}
+.canvas-wrap canvas:active { cursor: grabbing; }
+
+/* 拖放提示 */
+.drag-hint {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(255,255,255,.85);
+  backdrop-filter: blur(4px);
+  padding: 4px 14px;
+  border-radius: 999px;
+  font-size: 12px;
+  color: var(--geo-muted);
+  pointer-events: none;
+  white-space: nowrap;
+  border: 1px solid rgba(226,232,240,.6);
+}
+@media (max-width: 480px) {
+  .drag-hint { font-size: 10px; padding: 3px 10px; }
+}
+
+/* ---- 角度展示区 ---- */
+.angle-row {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-top: 16px;
+}
+
+.angle-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #f8fafc;
+  border-radius: 999px;
+  padding: 8px 18px;
+  font-size: 15px;
+  font-weight: 600;
+  border: 2px solid #e2e8f0;
+  transition: all .3s ease;
+}
+
+.angle-badge .dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.angle-badge .angle-val {
+  font-family: "Courier New", monospace;
+  font-size: 17px;
+  min-width: 36px;
+  text-align: center;
+}
+.angle-badge .deg { color: var(--geo-muted); font-size: 13px; }
+
+/* ---- 结果条 ---- */
+.sum-bar {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  background: linear-gradient(135deg, #ecfdf5, #d1fae5);
+  border: 2px solid #a7f3d0;
+  border-radius: 999px;
+  padding: 10px 28px;
+  margin-top: 12px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #065f46;
+  transition: all .3s ease;
+}
+
+.sum-bar .sum-val {
+  font-family: "Courier New", monospace;
+  font-size: 22px;
+  color: #059669;
+  min-width: 40px;
+  text-align: center;
+}
+
+.sum-bar .sum-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 15px;
+}
+.sum-bar .sum-check.ok { color: #059669; }
+.sum-bar .sum-check.ko { color: #dc2626; }
+
+/* ---- 步骤描述 ---- */
+.step-desc {
+  text-align: center;
+  font-size: 14px;
+  line-height: 2;
+  color: var(--geo-muted);
+  background: #f8fafc;
+  border-radius: 10px;
+  padding: 14px;
+  margin-top: 12px;
+}
+.step-desc b { color: var(--geo-blue); font-weight: 700; }
+.step-desc .hl-green { color: var(--geo-green); font-weight: 700; }
+.step-desc .hl-orange { color: var(--geo-orange); font-weight: 700; }
+.step-desc .hl-pink { color: var(--geo-pink); font-weight: 700; }
+
+/* ---- 知识卡片 ---- */
+.knowledge-box {
+  margin-top: 16px;
+  padding: 16px 20px;
+  background: linear-gradient(135deg, #eff6ff, #eef2ff);
+  border-radius: 12px;
+  border-left: 4px solid var(--geo-blue);
+  font-size: 14px;
+  line-height: 1.8;
+  color: #1e293b;
+}
+.knowledge-box .kb-title {
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--geo-blue);
+  margin-bottom: 4px;
+}
+.knowledge-box .kb-title .icon { margin-right: 6px; }
+
+/* ---- 步进演示（动手撕角） ---- */
+.tear-demo {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin: 16px 0;
+}
+.tear-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 10px;
+  border-radius: 12px;
+  background: #f8fafc;
+  border: 2px solid #e2e8f0;
+  transition: all .3s ease;
+  min-width: 120px;
+}
+.tear-step.active {
+  border-color: var(--geo-blue);
+  background: #eff6ff;
+  box-shadow: 0 0 0 3px rgba(79,142,247,.15);
+}
+.tear-step .ts-num {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  background: var(--geo-blue);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.tear-step .ts-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--geo-text);
+  text-align: center;
+}
+
+/* ---- 证明模块 ---- */
+.proof-overlay {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  background: transparent;
+}
+
+.proof-step-box {
+  margin-top: 12px;
+  padding: 14px 16px;
+  border-radius: 10px;
+  font-size: 14px;
+  line-height: 2;
+  transition: all .3s ease;
+}
+.proof-step-box.step-1 { background: #fef2f2; border-left: 4px solid #ef4444; }
+.proof-step-box.step-2 { background: #fff7ed; border-left: 4px solid #f97316; }
+.proof-step-box.step-3 { background: #fefce8; border-left: 4px solid #eab308; }
+.proof-step-box.step-4 { background: #ecfdf5; border-left: 4px solid #22c55e; }
+.proof-step-box.step-done { background: #eff6ff; border-left: 4px solid var(--geo-blue); }
+
+.proof-step-box .ps-title {
+  font-weight: 700;
+  font-size: 15px;
+  margin-bottom: 2px;
+}
+.proof-step-box .ps-title .ps-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  font-size: 12px;
+  color: #fff;
+  margin-right: 6px;
+}
+.proof-step-box .ps-desc { color: var(--geo-text); }
+.proof-step-box .ps-desc b { font-weight: 700; }
+.proof-step-box .ps-formula {
+  font-family: "Courier New", monospace;
+  font-size: 16px;
+  font-weight: 700;
+  text-align: center;
+  padding: 6px 0;
+}
+
+.proof-nav {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 10px;
+}
+.proof-nav .btn {
+  padding: 6px 18px;
+  border: none;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all .2s ease;
+}
+
+.legend-row {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  font-size: 12px;
+  color: var(--geo-muted);
+  margin-top: 6px;
+}
+.legend-row .lg {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.legend-row .lg-swatch {
+  width: 20px; height: 4px;
+  border-radius: 2px;
+}
+
+/* ---- 响应式 ---- */
+@media (max-width: 640px) {
+  .geo-card { padding: 16px; }
+  h1 { font-size: 22px; }
+  .angle-badge { font-size: 13px; padding: 6px 14px; }
+  .sum-bar { font-size: 15px; padding: 8px 18px; }
+  .sum-bar .sum-val { font-size: 18px; }
+  .tear-step { min-width: 80px; padding: 8px; }
+}
+  </style>
+</head>
+<body>
+<div class="container">
+<!-- ====== 标题区 ====== -->
+<h1>📐 三角形内角和</h1>
+<p class="subtitle">拖动三角形的三个顶点，看看三个角加起来是多少？</p>
+
+<!-- ====== 控制栏 ====== -->
+<div class="control-bar">
+  <button class="btn btn-green" id="btnRandom">🔄 随机三角形</button>
+  <button class="btn btn-outline" id="btnProof">📐 证明</button>
+  <button class="btn btn-outline" id="btnTorn">✂️ 拼角演示</button>
+  <button class="btn btn-outline" id="btnReset">↩ 重置</button>
+</div>
+
+<!-- ====== 画布区 ====== -->
+<div class="geo-card">
+  <div class="canvas-wrap">
+    <canvas id="triangleCanvas" width="560" height="340"></canvas>
+    <div class="drag-hint">👆 拖动小圆点改变形状</div>
+  </div>
+</div>
+
+<!-- ====== 角度显示 ====== -->
+<div class="geo-card" style="padding: 16px 20px;">
+  <div class="angle-row">
+    <div class="angle-badge" id="angleA">
+      <span class="dot" style="background: var(--geo-blue);"></span>
+      ∠A = <span class="angle-val" id="valA">60</span><span class="deg">°</span>
+    </div>
+    <div class="angle-badge" id="angleB">
+      <span class="dot" style="background: var(--geo-orange);"></span>
+      ∠B = <span class="angle-val" id="valB">60</span><span class="deg">°</span>
+    </div>
+    <div class="angle-badge" id="angleC">
+      <span class="dot" style="background: var(--geo-green);"></span>
+      ∠C = <span class="angle-val" id="valC">60</span><span class="deg">°</span>
+    </div>
+  </div>
+  <div class="sum-bar" id="sumBar">
+    <span>∠A + ∠B + ∠C =</span>
+    <span class="sum-val" id="sumVal">180</span>
+    <span>°</span>
+    <span class="sum-check ok" id="sumCheck">✓ 等于 180°</span>
+  </div>
+</div>
+
+<!-- ====== 步骤描述 ====== -->
+<div class="geo-card step-desc" id="stepDesc">
+  💡 三角形的三个内角之和 <b>总是 180°</b>。<br>
+  <span style="font-size:13px;">试试拖动顶点，无论三角形怎么变，这个规律都不会变！</span>
+</div>
+
+<!-- ====== 拼角演示（撕角图，不使用时隐藏） ====== -->
+<div class="geo-card" id="tornDemo" style="display:none;">
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;font-weight:700;font-size:15px;">
+    <span>✂️ 拼一拼：把三个角撕下来拼在一起</span>
+  </div>
+  <canvas id="tornCanvas" width="560" height="200" style="width:100%;border-radius:10px;background:#fafcff;"></canvas>
+  <div class="step-desc" style="margin-top:8px;font-size:13px;">
+    三个角拼在一起正好形成一条 <b>直线</b>（平角），就是 180°！
+  </div>
+</div>
+
+<!-- ====== 知识延展 ====== -->
+<div class="geo-card knowledge-box">
+  <div class="kb-title"><span class="icon">🌟</span>你知道吗？</div>
+  三角形内角和定理：任意三角形的三个内角之和等于 <b>180°</b>（平角）。<br>
+  不管三角形长什么样——锐角三角形、直角三角形、钝角三角形——这个规律都成立！
+</div>
+
+<!-- ====== 证明模块（初始隐藏） ====== -->
+<div class="geo-card" id="proofPanel" style="display:none;">
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;font-weight:700;font-size:15px;">
+    <span>📐 证明：三角形内角和 = 180°</span>
+  </div>
+  <div class="canvas-wrap" style="position:relative;">
+    <canvas id="proofCanvas" width="560" height="300" style="width:100%;border-radius:10px;background:#fafcff;touch-action:none;"></canvas>
+  </div>
+  <div class="legend-row">
+    <span class="lg"><span class="lg-swatch" style="background:#ef4444;"></span> 平行线</span>
+    <span class="lg"><span class="lg-swatch" style="background:#f97316;"></span> 同位角</span>
+    <span class="lg"><span class="lg-swatch" style="background:#eab308;"></span> 内错角</span>
+    <span class="lg"><span class="lg-swatch" style="background:#22c55e;"></span> 推导结论</span>
+  </div>
+  <div class="proof-step-box" id="proofDesc">
+    <div class="ps-title"><span class="ps-num" style="background:#64748b;">1</span>准备证明</div>
+    <div class="ps-desc">过顶点 A 作 BC 的平行线 L。根据平行线性质，我们来证明 ∠A + ∠B + ∠C = 180°。</div>
+  </div>
+  <div class="proof-nav">
+    <button class="btn" id="proofPrev" style="background:#e2e8f0;color:#64748b;">← 上一步</button>
+    <button class="btn" id="proofNext" style="background:var(--geo-blue);color:#fff;">下一步 →</button>
+  </div>
+</div>
+</div>
+
+<script>
+// ============================================================
+//  三角形内角和可视化 — 交互逻辑
+// ============================================================
+
+var canvas = document.getElementById('triangleCanvas');
+var ctx = canvas.getContext('2d');
+var W = 560, H = 340;
+canvas.width = W; canvas.height = H;
+
+// ---- 顶点数据 ----
+var pts = [
+  { x: 280, y:  40, label: 'A', color: '#4f8ef7' },
+  { x: 100, y: 280, label: 'B', color: '#f97316' },
+  { x: 460, y: 280, label: 'C', color: '#34d399' },
+];
+var RADIUS = 8;
+var HIT_RADIUS = 18;
+var dragIdx = -1;
+var DRAG_MARGIN = 20; // 不允许拖出画布太近
+
+// 顶点位置约束
+function clampPt(p) {
+  if (p.x < DRAG_MARGIN) p.x = DRAG_MARGIN;
+  if (p.x > W - DRAG_MARGIN) p.x = W - DRAG_MARGIN;
+  if (p.y < DRAG_MARGIN) p.y = DRAG_MARGIN;
+  if (p.y > H - DRAG_MARGIN) p.y = H - DRAG_MARGIN;
+}
+
+// ---- 工具：向量角度 ----
+function angleBetween(p1, vertex, p2) {
+  var v1 = { x: p1.x - vertex.x, y: p1.y - vertex.y };
+  var v2 = { x: p2.x - vertex.x, y: p2.y - vertex.y };
+  var dot = v1.x * v2.x + v1.y * v2.y;
+  var mag1 = Math.sqrt(v1.x * v1.x + v1.y * v1.y);
+  var mag2 = Math.sqrt(v2.x * v2.x + v2.y * v2.y);
+  if (mag1 < 0.001 || mag2 < 0.001) return 60;
+  var cos = dot / (mag1 * mag2);
+  cos = Math.max(-1, Math.min(1, cos));
+  return Math.round(Math.acos(cos) * 180 / Math.PI);
+}
+
+// ---- 计算角度 ----
+function calcAngles() {
+  return {
+    A: angleBetween(pts[1], pts[0], pts[2]),
+    B: angleBetween(pts[2], pts[1], pts[0]),
+    C: angleBetween(pts[0], pts[2], pts[1]),
+  };
+}
+
+// ---- 更新显示 ----
+function update() {
+  var ang = calcAngles();
+  var sum = ang.A + ang.B + ang.C;
+
+  document.getElementById('valA').textContent = ang.A;
+  document.getElementById('valB').textContent = ang.B;
+  document.getElementById('valC').textContent = ang.C;
+  document.getElementById('sumVal').textContent = sum;
+
+  var checkEl = document.getElementById('sumCheck');
+  if (sum === 180) {
+    checkEl.textContent = '✓ 等于 180°';
+    checkEl.className = 'sum-check ok';
+    document.getElementById('sumBar').style.borderColor = '#a7f3d0';
+  } else {
+    checkEl.textContent = '≈ 180° (凑整误差)';
+    checkEl.className = 'sum-check ko';
+    document.getElementById('sumBar').style.borderColor = '#fca5a5';
+  }
+
+  draw();
+  syncTorn();
+}
+
+// ---- 绘制三角形 ----
+function draw() {
+  ctx.clearRect(0, 0, W, H);
+
+  // 画虚线网格（儿童友好）
+  ctx.strokeStyle = '#eef2f6';
+  ctx.lineWidth = 1;
+  for (var x = 0; x <= W; x += 40) {
+    ctx.beginPath();
+    ctx.moveTo(x + 0.5, 0);
+    ctx.lineTo(x + 0.5, H);
+    ctx.stroke();
+  }
+  for (var y = 0; y <= H; y += 40) {
+    ctx.beginPath();
+    ctx.moveTo(0, y + 0.5);
+    ctx.lineTo(W, y + 0.5);
+    ctx.stroke();
+  }
+
+  // 画三角形边
+  ctx.beginPath();
+  ctx.moveTo(pts[0].x, pts[0].y);
+  ctx.lineTo(pts[1].x, pts[1].y);
+  ctx.lineTo(pts[2].x, pts[2].y);
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(79,142,247,.08)';
+  ctx.fill();
+  ctx.strokeStyle = '#94a3b8';
+  ctx.lineWidth = 2.5;
+  ctx.stroke();
+
+  // 画角度弧线
+  var ang = calcAngles();
+  var arcR = 30;
+  drawAngleArc(pts[0], pts[1], pts[2], arcR, pts[0].color, ang.A);
+  drawAngleArc(pts[1], pts[2], pts[0], arcR, pts[1].color, ang.B);
+  drawAngleArc(pts[2], pts[0], pts[1], arcR, pts[2].color, ang.C);
+
+  // 画顶点
+  for (var i = 0; i < 3; i++) {
+    var p = pts[i];
+    // 外发光
+    var grad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, RADIUS + 6);
+    grad.addColorStop(0, p.color + '40');
+    grad.addColorStop(1, p.color + '00');
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, RADIUS + 6, 0, Math.PI * 2);
+    ctx.fillStyle = grad;
+    ctx.fill();
+
+    // 实心圆点
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, RADIUS, 0, Math.PI * 2);
+    ctx.fillStyle = p.color;
+    ctx.fill();
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // 标签
+    ctx.fillStyle = '#1e293b';
+    ctx.font = 'bold 18px "Noto Sans SC", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'bottom';
+    var lx = p.x, ly = p.y - RADIUS - 6;
+    // 标签背景
+    var tw = ctx.measureText(p.label).width;
+    ctx.fillStyle = 'rgba(255,255,255,.85)';
+    ctx.beginPath();
+    ctx.roundRect ? ctx.roundRect(lx - tw/2 - 5, ly - 18, tw + 10, 24, 6) : null;
+    // fallback
+    ctx.fill();
+    ctx.fillStyle = p.color;
+    ctx.font = 'bold 18px "Noto Sans SC", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'bottom';
+    ctx.fillText(p.label, lx, ly);
+  }
+}
+
+// ---- 绘制角度弧线 ----
+function drawAngleArc(vertex, p1, p2, radius, color, deg) {
+  var a1 = Math.atan2(p1.y - vertex.y, p1.x - vertex.x);
+  var a2 = Math.atan2(p2.y - vertex.y, p2.x - vertex.x);
+  // 取较小角
+  var diff = a2 - a1;
+  if (diff < 0) diff += Math.PI * 2;
+  if (diff > Math.PI) {
+    var tmp = a1; a1 = a2; a2 = tmp;
+  }
+
+  // 画弧线
+  ctx.beginPath();
+  ctx.arc(vertex.x, vertex.y, radius, a1, a2);
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2.5;
+  ctx.stroke();
+
+  // 填充透明扇形
+  ctx.beginPath();
+  ctx.moveTo(vertex.x, vertex.y);
+  ctx.arc(vertex.x, vertex.y, radius, a1, a2);
+  ctx.closePath();
+  ctx.fillStyle = color + '18';
+  ctx.fill();
+
+  // 角度数值标签
+  var mid = (a1 + a2) / 2;
+  var lr = radius + 18;
+  var lx = vertex.x + Math.cos(mid) * lr;
+  var ly = vertex.y + Math.sin(mid) * lr;
+  ctx.fillStyle = color;
+  ctx.font = 'bold 13px "Courier New", monospace';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(deg + '°', lx, ly);
+}
+
+// ---- 生成随机三角形（确保不退化） ----
+function randomTriangle() {
+  for (var attempt = 0; attempt < 50; attempt++) {
+    var x1 = 80 + Math.random() * (W - 160);
+    var y1 = 40 + Math.random() * (H - 60);
+    var x2 = 80 + Math.random() * (W - 160);
+    var y2 = 40 + Math.random() * (H - 60);
+    var x3 = 80 + Math.random() * (W - 160);
+    var y3 = 40 + Math.random() * (H - 60);
+
+    // 跳过退化三角形（面积太小）
+    var area = Math.abs((x2-x1)*(y3-y1) - (x3-x1)*(y2-y1)) / 2;
+    if (area < 800) continue;
+
+    pts[0].x = x1; pts[0].y = y1;
+    pts[1].x = x2; pts[1].y = y2;
+    pts[2].x = x3; pts[2].y = y3;
+    return;
+  }
+  // fallback
+  pts[0].x = 280; pts[0].y = 50;
+  pts[1].x = 100; pts[1].y = 280;
+  pts[2].x = 460; pts[2].y = 280;
+}
+
+// ========================================
+//  拼角演示（torn angle demo canvas）
+// ========================================
+var tCanvas = document.getElementById('tornCanvas');
+var tCtx = tCanvas.getContext('2d');
+var TW = 560, TH = 200;
+tCanvas.width = TW; tCanvas.height = TH;
+
+function syncTorn() {
+  tCtx.clearRect(0, 0, TW, TH);
+
+  var ang = calcAngles();
+  var colors = [pts[0].color, pts[1].color, pts[2].color];
+
+  // 三个角拼在一条线上
+  var baseY = 100;
+  var startX = 30;
+  var arcR = 40;
+  var lineColor = '#94a3b8';
+
+  var angles = [
+    { deg: ang.A, color: colors[0], label: '∠A=' + ang.A + '°' },
+    { deg: ang.B, color: colors[1], label: '∠B=' + ang.B + '°' },
+    { deg: ang.C, color: colors[2], label: '∠C=' + ang.C + '°' },
+  ];
+
+  var cumulative = 0;
+  for (var i = 0; i < 3; i++) {
+    var a = angles[i];
+    var rad = a.deg * Math.PI / 180;
+    var cx = startX + cumulative + arcR;
+
+    // 画扇形
+    tCtx.beginPath();
+    tCtx.moveTo(cx, baseY);
+    tCtx.arc(cx, baseY, arcR, 0, rad);
+    tCtx.closePath();
+    tCtx.fillStyle = a.color + '30';
+    tCtx.fill();
+    tCtx.strokeStyle = a.color;
+    tCtx.lineWidth = 2;
+    tCtx.stroke();
+
+    // 弧线标注
+    var mid = rad / 2;
+    var lr = arcR + 14;
+    tCtx.fillStyle = a.color;
+    tCtx.font = 'bold 11px "Courier New", monospace';
+    tCtx.textAlign = 'center';
+    tCtx.textBaseline = 'middle';
+    tCtx.fillText(a.deg + '°', cx + Math.cos(mid) * lr, baseY - Math.sin(mid) * lr);
+
+    // 从顶点到弧画虚线
+    tCtx.beginPath();
+    tCtx.moveTo(cx, baseY);
+    tCtx.lineTo(cx + Math.cos(rad) * arcR, baseY - Math.sin(rad) * arcR);
+    tCtx.strokeStyle = a.color + '60';
+    tCtx.lineWidth = 1;
+    tCtx.setLineDash([3, 3]);
+    tCtx.stroke();
+    tCtx.setLineDash([]);
+
+    cumulative += rad * arcR + 10;
+  }
+
+  // 底部直线标平角
+  tCtx.strokeStyle = lineColor;
+  tCtx.lineWidth = 1.5;
+  tCtx.beginPath();
+  tCtx.moveTo(startX, baseY);
+  tCtx.lineTo(startX + cumulative + 20, baseY);
+  tCtx.stroke();
+
+  // 平角标注
+  var midX = startX + (cumulative + 20) / 2;
+  tCtx.fillStyle = '#059669';
+  tCtx.font = 'bold 14px "Noto Sans SC", sans-serif';
+  tCtx.textAlign = 'center';
+  tCtx.textBaseline = 'top';
+  tCtx.fillText('平角 = 180°', midX, baseY + 8);
+
+  // 半圆标记
+  tCtx.beginPath();
+  tCtx.arc(startX, baseY, 10, 0, Math.PI);
+  tCtx.strokeStyle = '#94a3b8';
+  tCtx.lineWidth = 1.5;
+  tCtx.stroke();
+  tCtx.beginPath();
+  tCtx.arc(startX + cumulative + 20, baseY, 10, Math.PI, 0);
+  tCtx.stroke();
+}
+
+// ========================================
+//  鼠标/触摸交互
+// ========================================
+
+function getPos(e) {
+  var rect = canvas.getBoundingClientRect();
+  var scaleX = W / rect.width;
+  var scaleY = H / rect.height;
+  var clientX, clientY;
+  if (e.touches) {
+    clientX = e.touches[0].clientX;
+    clientY = e.touches[0].clientY;
+  } else {
+    clientX = e.clientX;
+    clientY = e.clientY;
+  }
+  return {
+    x: (clientX - rect.left) * scaleX,
+    y: (clientY - rect.top) * scaleY,
+  };
+}
+
+function hitTest(pos) {
+  for (var i = 0; i < 3; i++) {
+    var dx = pos.x - pts[i].x;
+    var dy = pos.y - pts[i].y;
+    if (dx * dx + dy * dy < HIT_RADIUS * HIT_RADIUS) return i;
+  }
+  return -1;
+}
+
+canvas.addEventListener('mousedown', function(e) {
+  var pos = getPos(e);
+  dragIdx = hitTest(pos);
+  if (dragIdx >= 0) e.preventDefault();
+});
+
+canvas.addEventListener('mousemove', function(e) {
+  if (dragIdx < 0) {
+    var pos = getPos(e);
+    canvas.style.cursor = hitTest(pos) >= 0 ? 'grab' : 'default';
+    return;
+  }
+  var pos = getPos(e);
+  pts[dragIdx].x = pos.x;
+  pts[dragIdx].y = pos.y;
+  clampPt(pts[dragIdx]);
+  update();
+});
+
+canvas.addEventListener('mouseup', function() { dragIdx = -1; });
+canvas.addEventListener('mouseleave', function() { dragIdx = -1; });
+
+// 触摸事件
+canvas.addEventListener('touchstart', function(e) {
+  var pos = getPos(e);
+  dragIdx = hitTest(pos);
+  if (dragIdx >= 0) e.preventDefault();
+}, { passive: false });
+
+canvas.addEventListener('touchmove', function(e) {
+  if (dragIdx < 0) return;
+  e.preventDefault();
+  var pos = getPos(e);
+  pts[dragIdx].x = pos.x;
+  pts[dragIdx].y = pos.y;
+  clampPt(pts[dragIdx]);
+  update();
+}, { passive: false });
+
+canvas.addEventListener('touchend', function() { dragIdx = -1; });
+
+// ---- 按钮事件 ----
+document.getElementById('btnRandom').addEventListener('click', function() {
+  randomTriangle();
+  update();
+  document.getElementById('stepDesc').innerHTML =
+    '🔄 随机生成了一个三角形！<br><span style="font-size:13px;">看看它的内角和是不是还是 180°？</span>';
+});
+
+document.getElementById('btnReset').addEventListener('click', function() {
+  pts[0] = { x: 280, y:  40, label: 'A', color: '#4f8ef7' };
+  pts[1] = { x: 100, y: 280, label: 'B', color: '#f97316' };
+  pts[2] = { x: 460, y: 280, label: 'C', color: '#34d399' };
+  document.getElementById('tornDemo').style.display = 'none';
+  update();
+  document.getElementById('stepDesc').innerHTML =
+    '💡 三角形的三个内角之和 <b>总是 180°</b>。<br>' +
+    '<span style="font-size:13px;">试试拖动顶点，无论三角形怎么变，这个规律都不会变！</span>';
+});
+
+document.getElementById('btnTorn').addEventListener('click', function() {
+  var demo = document.getElementById('tornDemo');
+  if (demo.style.display === 'none') {
+    demo.style.display = 'block';
+    syncTorn();
+    document.getElementById('stepDesc').innerHTML =
+      '✂️ 把三个角 <b style="color:#4f8ef7;">撕下来</b>，<b style="color:#f97316;">拼在</b>一起，正好是一条 <b style="color:#34d399;">直线</b>（平角）！<br>' +
+      '<span style="font-size:13px;">这就证明了三个角加起来等于 180°！拖动顶点再试试</span>';
+  } else {
+    demo.style.display = 'none';
+  }
+});
+
+// ========================================
+//  证明模块
+// ========================================
+var proofStep = 0;
+var PROOF_STEPS = 4;
+var pCanvas = document.getElementById('proofCanvas');
+var pCtx = pCanvas.getContext('2d');
+var PW = 560, PH = 300;
+pCanvas.width = PW; pCanvas.height = PH;
+
+function proofLabel(p, text, color, ox, oy) {
+  ox = ox || 0; oy = oy || 0;
+  pCtx.fillStyle = color;
+  pCtx.font = 'bold 18px "Noto Sans SC", sans-serif';
+  pCtx.textAlign = 'center';
+  pCtx.textBaseline = 'bottom';
+  var lx = p.x + ox;
+  var ly = p.y + oy;
+  pCtx.fillText(text, lx, ly);
+}
+
+function drawProofTriangle() {
+  // 在证明画布上复制当前的三角形（居中摆放）
+  var cx = 280, cy = 145;
+  var aPts = [
+    { x: pts[0].x, y: pts[0].y, label: 'A', color: pts[0].color },
+    { x: pts[1].x, y: pts[1].y, label: 'B', color: pts[1].color },
+    { x: pts[2].x, y: pts[2].y, label: 'C', color: pts[2].color },
+  ];
+  // 平移居中
+  var minX = Math.min(aPts[0].x, aPts[1].x, aPts[2].x);
+  var maxX = Math.max(aPts[0].x, aPts[1].x, aPts[2].x);
+  var minY = Math.min(aPts[0].y, aPts[1].y, aPts[2].y);
+  var maxY = Math.max(aPts[0].y, aPts[1].y, aPts[2].y);
+  var ox = cx - (minX + maxX) / 2;
+  var oy = cy - (minY + maxY) / 2;
+  for (var i = 0; i < 3; i++) {
+    aPts[i].x += ox;
+    aPts[i].y += oy;
+  }
+
+  pCtx.clearRect(0, 0, PW, PH);
+
+  // 网格
+  pCtx.strokeStyle = '#eef2f6';
+  pCtx.lineWidth = 1;
+  for (var x = 0; x <= PW; x += 40) {
+    pCtx.beginPath(); pCtx.moveTo(x + 0.5, 0); pCtx.lineTo(x + 0.5, PH); pCtx.stroke();
+  }
+  for (var y = 0; y <= PH; y += 40) {
+    pCtx.beginPath(); pCtx.moveTo(0, y + 0.5); pCtx.lineTo(PW, y + 0.5); pCtx.stroke();
+  }
+
+  var A = aPts[0], B = aPts[1], C = aPts[2];
+
+  // 过顶点 A 作 BC 的平行线 L
+  // 平行线方向向量 = (C.x - B.x, C.y - B.y), 过 A 点
+  var dx = C.x - B.x, dy = C.y - B.y;
+  var len = Math.sqrt(dx*dx + dy*dy);
+  if (len < 1) { dx = 1; dy = 0; len = 1; }
+  var nx = -dy / len, ny = dx / len; // 法向量
+  var ext = 300; // 延长长度
+
+  var L1 = { x: A.x - dx/len * ext, y: A.y - dy/len * ext };
+  var L2 = { x: A.x + dx/len * ext, y: A.y + dy/len * ext };
+
+  // ---- 第0步: 显示三角形 + 辅助线 ----
+  // 三角形填充
+  pCtx.beginPath();
+  pCtx.moveTo(A.x, A.y); pCtx.lineTo(B.x, B.y); pCtx.lineTo(C.x, C.y);
+  pCtx.closePath();
+  pCtx.fillStyle = 'rgba(79,142,247,.06)';
+  pCtx.fill();
+
+  // ---- 平行线 L (红色) ----
+  pCtx.strokeStyle = '#ef4444';
+  pCtx.lineWidth = 2.5;
+  pCtx.beginPath();
+  pCtx.moveTo(L1.x, L1.y); pCtx.lineTo(L2.x, L2.y);
+  pCtx.stroke();
+
+  // 平行线箭头标记
+  var arrY = A.y - 18;
+  var arrX1 = A.x - 40; var arrX2 = A.x + 40;
+  pCtx.fillStyle = '#ef4444';
+  pCtx.font = '14px sans-serif';
+  pCtx.textAlign = 'center';
+  pCtx.textBaseline = 'bottom';
+  pCtx.fillText('L ∥ BC', A.x, A.y - 6);
+
+  // 平行线小箭头标记 (>>)
+  var am1 = { x: A.x - 80, y: A.y - 12 };
+  var am2 = { x: A.x + 80, y: A.y - 12 };
+  pCtx.font = '16px sans-serif';
+  pCtx.fillStyle = '#ef4444';
+  pCtx.textAlign = 'center';
+  pCtx.textBaseline = 'bottom';
+  pCtx.fillText('›', am1.x - 6, am1.y);
+  pCtx.fillText('›', am1.x + 6, am1.y);
+  pCtx.fillText('›', am2.x - 6, am2.y);
+  pCtx.fillText('›', am2.x + 6, am2.y);
+  pCtx.font = '11px sans-serif';
+  pCtx.fillStyle = '#ef4444';
+  pCtx.textAlign = 'center';
+  pCtx.textBaseline = 'top';
+  pCtx.fillText('L ∥ BC', A.x, A.y + 6);
+
+  // 三角形边
+  pCtx.beginPath();
+  pCtx.moveTo(A.x, A.y); pCtx.lineTo(B.x, B.y); pCtx.lineTo(C.x, C.y);
+  pCtx.closePath();
+  pCtx.strokeStyle = '#94a3b8';
+  pCtx.lineWidth = 2;
+  pCtx.stroke();
+
+  // 顶点
+  var verts = [A, B, C];
+  for (var i = 0; i < 3; i++) {
+    var p = verts[i];
+    pCtx.beginPath(); pCtx.arc(p.x, p.y, 7, 0, Math.PI*2);
+    pCtx.fillStyle = p.color; pCtx.fill();
+    pCtx.strokeStyle = '#fff'; pCtx.lineWidth = 2; pCtx.stroke();
+    pCtx.fillStyle = p.color;
+    pCtx.font = 'bold 18px "Noto Sans SC", sans-serif';
+    pCtx.textAlign = 'center';
+    pCtx.textBaseline = 'bottom';
+    pCtx.fillText(p.label, p.x, p.y - 10);
+  }
+
+  if (proofStep === 0) {
+    // 画三个内角弧线
+    drawProofArc(A, B, C, 28, A.color);
+    drawProofArc(B, A, C, 28, B.color);
+    drawProofArc(C, A, B, 28, C.color);
+  }
+
+  if (proofStep >= 1) {
+    // ---- 第1步: 标记同位角 ----
+    // ∠B 和 ∠DAB 是同位角 (橙色)
+    var angleColor1 = '#f97316';
+
+    // 在 A 点标角 DAB (在平行线左上侧)
+    var da = { x: L1.x, y: L1.y };
+    var dab = { x: A.x - 50, y: A.y - 20 };
+    // 在 B 点画角 ABC 的弧
+    drawProofArc(B, A, C, 28, B.color);
+
+    // 标 ∠B 和 ∠DAB 同位角标记
+    drawProofArc(A, {x: A.x - 60, y: A.y - 20}, B, 24, angleColor1);
+    drawProofArc(B, C, A, 24, angleColor1);
+
+    // 同位角标记 (相同标记符号)
+    var mkR = 6;
+    // 在 B 点处标记
+    var bAng = Math.atan2(A.y - B.y, A.x - B.x);
+    var bAng2 = Math.atan2(C.y - B.y, C.x - B.x);
+    var bMid = (bAng + bAng2) / 2;
+    var bOff = 20;
+    pCtx.fillStyle = angleColor1;
+    pCtx.font = 'bold 16px sans-serif';
+    pCtx.textAlign = 'center';
+    pCtx.textBaseline = 'middle';
+    pCtx.fillText('①', B.x + Math.cos(bMid) * bOff, B.y + Math.sin(bMid) * bOff);
+
+    // 在 A 点处标记(同位角)
+    var aAng = Math.atan2(B.y - A.y, B.x - A.x);
+    var aAng2 = Math.atan2(L1.y - A.y, L1.x - A.x);
+    var aMid = (aAng + aAng2) / 2;
+    pCtx.fillText('①', A.x + Math.cos(aMid) * 24, A.y + Math.sin(aMid) * 24);
+  }
+
+  if (proofStep >= 2) {
+    // ---- 第2步: 标记内错角 ----
+    var angleColor2 = '#eab308';
+
+    // ∠C 和 ∠EAC 是内错角 (黄色)
+    drawProofArc(C, A, B, 22, C.color);
+    drawProofArc(A, {x: A.x + 60, y: A.y - 20}, C, 22, angleColor2);
+
+    // 内错角标记
+    pCtx.fillStyle = angleColor2;
+    pCtx.font = 'bold 16px sans-serif';
+    pCtx.textAlign = 'center';
+    pCtx.textBaseline = 'middle';
+
+    var cAng = Math.atan2(A.y - C.y, A.x - C.x);
+    var cAng2 = Math.atan2(B.y - C.y, B.x - C.x);
+    var cMid = (cAng + cAng2) / 2;
+    pCtx.fillText('②', C.x + Math.cos(cMid) * 20, C.y + Math.sin(cMid) * 20);
+
+    var ea = { x: L2.x, y: L2.y };
+    var aAng3 = Math.atan2(C.y - A.y, C.x - A.x);
+    var aAng4 = Math.atan2(L2.y - A.y, L2.x - A.x);
+    var aMid2 = (aAng3 + aAng4) / 2;
+    pCtx.fillText('②', A.x + Math.cos(aMid2) * 24, A.y + Math.sin(aMid2) * 24);
+  }
+
+  if (proofStep >= 3) {
+    // ---- 第3步: 推导 ----
+    // 强调平角
+    var hlColor = '#22c55e';
+
+    // 画平角弧线 (半圆) 在 A 点
+    pCtx.beginPath();
+    pCtx.arc(A.x, A.y, 22, Math.atan2(L1.y - A.y, L1.x - A.x), Math.atan2(L2.y - A.y, L2.x - A.x));
+    pCtx.strokeStyle = hlColor;
+    pCtx.lineWidth = 3;
+    pCtx.stroke();
+
+    // 标3个角都在 A 点
+    // ∠DAB (①), ∠BAC (原∠A), ∠EAC (②) 拼在一起
+    pCtx.fillStyle = '#1e293b';
+    pCtx.font = 'bold 15px "Noto Sans SC", sans-serif';
+    pCtx.textAlign = 'center';
+    pCtx.textBaseline = 'bottom';
+    pCtx.fillText('∠DAB + ∠BAC + ∠EAC = 180°', A.x, PH - 12);
+
+    // 公式标注
+    pCtx.fillStyle = '#059669';
+    pCtx.font = 'bold 20px "Courier New", monospace';
+    pCtx.textAlign = 'center';
+    pCtx.textBaseline = 'top';
+    pCtx.fillText('∠B + ∠A + ∠C = 180°', A.x, 6);
+
+    // 替换 = 标记
+    pCtx.fillStyle = '#f97316';
+    pCtx.font = '13px sans-serif';
+    pCtx.textAlign = 'center';
+    pCtx.textBaseline = 'middle';
+    // 用短横线连接线表示替换
+  }
+
+  return aPts;
+}
+
+function drawProofArc(vertex, p1, p2, radius, color) {
+  var a1 = Math.atan2(p1.y - vertex.y, p1.x - vertex.x);
+  var a2 = Math.atan2(p2.y - vertex.y, p2.x - vertex.x);
+  var diff = a2 - a1;
+  if (diff < 0) diff += Math.PI * 2;
+  if (diff > Math.PI) {
+    var tmp = a1; a1 = a2; a2 = tmp;
+  }
+  pCtx.beginPath();
+  pCtx.arc(vertex.x, vertex.y, radius, a1, a2);
+  pCtx.strokeStyle = color;
+  pCtx.lineWidth = 2.5;
+  pCtx.stroke();
+  pCtx.beginPath();
+  pCtx.moveTo(vertex.x, vertex.y);
+  pCtx.arc(vertex.x, vertex.y, radius, a1, a2);
+  pCtx.closePath();
+  pCtx.fillStyle = color + '15';
+  pCtx.fill();
+}
+
+function updateProof() {
+  drawProofTriangle();
+  var descEl = document.getElementById('proofDesc');
+  var descs = [
+    {
+      cls: 'step-1',
+      title: '作辅助线',
+      html: '过顶点 <b style="color:' + pts[0].color + ';">A</b> 作底边 <b style="color:' + pts[1].color + ';">BC</b> 的平行线 <b style="color:#ef4444;">L</b>。<br>根据平行公理：过直线外一点有且只有一条直线与这条直线平行。'
+    },
+    {
+      cls: 'step-2',
+      title: '同位角相等',
+      html: '因为 <b style="color:#ef4444;">L ∥ BC</b>，∠B 与 ∠DAB 是 <b style="color:#f97316;">同位角</b>。<br>根据平行线性质：两直线平行，<b style="color:#f97316;">同位角相等</b>。所以 ∠B = ∠DAB <span style="color:#f97316;">①</span>'
+    },
+    {
+      cls: 'step-3',
+      title: '内错角相等',
+      html: '同样因为 <b style="color:#ef4444;">L ∥ BC</b>，∠C 与 ∠EAC 是 <b style="color:#eab308;">内错角</b>。<br>根据平行线性质：两直线平行，<b style="color:#eab308;">内错角相等</b>。所以 ∠C = ∠EAC <span style="color:#eab308;">②</span>'
+    },
+    {
+      cls: 'step-done',
+      title: '结论',
+      html: '在 A 点处：∠DAB + <b style="color:' + pts[0].color + ';">∠A</b> + ∠EAC 正好组成一个 <b style="color:#22c55e;">平角</b>。<br>' +
+        '代入 <span style="color:#f97316;">①</span> 和 <span style="color:#eab308;">②</span> 得：<br>' +
+        '<div class="ps-formula" style="color:#059669;">∠B + ∠A + ∠C = 180° <span style="color:#059669;">✓</span></div>' +
+        '<b>三角形内角和定理得证！</b>'
+    }
+  ];
+  var d = descs[proofStep];
+  descEl.className = 'proof-step-box ' + d.cls;
+  descEl.innerHTML = '<div class="ps-title"><span class="ps-num" style="background:' + (proofStep === 3 ? '#22c55e' : '#64748b') + ';">' + (proofStep + 1) + '</span>' + d.title + '</div><div class="ps-desc">' + d.html + '</div>';
+
+  document.getElementById('proofPrev').style.visibility = proofStep === 0 ? 'hidden' : 'visible';
+  document.getElementById('proofNext').textContent = proofStep === PROOF_STEPS - 1 ? '✓ 完成' : '下一步 →';
+  document.getElementById('proofNext').style.background = proofStep === PROOF_STEPS - 1 ? '#22c55e' : 'var(--geo-blue)';
+}
+
+document.getElementById('btnProof').addEventListener('click', function() {
+  var panel = document.getElementById('proofPanel');
+  if (panel.style.display === 'none') {
+    panel.style.display = 'block';
+    proofStep = 0;
+    updateProof();
+    document.getElementById('stepDesc').innerHTML =
+      '📐 <b>证明模式</b>：过顶点作平行线，用平行线性质证明内角和。<br>' +
+      '<span style="font-size:13px;">点击"下一步"逐步推导，拖动顶点改变三角形后证明依然成立。</span>';
+  } else {
+    panel.style.display = 'none';
+  }
+});
+
+document.getElementById('proofPrev').addEventListener('click', function() {
+  if (proofStep > 0) { proofStep--; updateProof(); }
+});
+
+document.getElementById('proofNext').addEventListener('click', function() {
+  if (proofStep < PROOF_STEPS - 1) { proofStep++; updateProof(); }
+  else {
+    // 完成，进入循环展示完成状态
+  }
+});
+
+// 修改 btnReset 也关闭证明面板
+var origReset = document.getElementById('btnReset').addEventListener;
+document.getElementById('btnReset').addEventListener('click', function() {
+  pts[0] = { x: 280, y:  40, label: 'A', color: '#4f8ef7' };
+  pts[1] = { x: 100, y: 280, label: 'B', color: '#f97316' };
+  pts[2] = { x: 460, y: 280, label: 'C', color: '#34d399' };
+  document.getElementById('tornDemo').style.display = 'none';
+  document.getElementById('proofPanel').style.display = 'none';
+  update();
+  document.getElementById('stepDesc').innerHTML =
+    '💡 三角形的三个内角之和 <b>总是 180°</b>。<br>' +
+    '<span style="font-size:13px;">试试拖动顶点，无论三角形怎么变，这个规律都不会变！</span>';
+});
+
+// ---- 初始化 ----
+update();
+</script>
+</body>
+</html>

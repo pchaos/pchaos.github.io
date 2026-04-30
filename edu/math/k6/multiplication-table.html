@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <title>九九乘法表</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="template.js"></script>
+  <style>
+.overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.35);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 1000;
+      backdrop-filter: blur(2px);
+    }
+    .overlay.hidden { display: none; }
+    .modal {
+      background: var(--card);
+      border-radius: 14px;
+      padding: 28px 32px;
+      width: min(92vw, 400px);
+      box-shadow: 0 16px 40px rgba(0,0,0,.2);
+      text-align: center;
+    }
+    .modal h3 { font-size: 20px; margin-bottom: 16px; }
+    .modal .formula {
+      font-size: 32px; font-weight: 700; color: var(--accent);
+      margin-bottom: 20px; font-family: var(--font-mono);
+    }
+    .modal input {
+      width: 100%; padding: 12px 16px; font-size: 20px; text-align: center;
+      border: 2px solid var(--border); border-radius: 8px; outline: none;
+      font-family: var(--font-mono); transition: border-color .2s;
+    }
+    .modal input:focus { border-color: var(--accent); }
+    .modal .modal-actions { display: flex; gap: 10px; justify-content: center; margin-top: 20px; }
+    .modal .feedback { margin-top: 12px; font-size: 15px; font-weight: 600; min-height: 24px; }
+    .modal .feedback.correct { color: #059669; }
+    .modal .feedback.wrong { color: #dc2626; }
+  </style>
+</head>
+<body>
+<div class="container">
+<h1>九九乘法表</h1>
+  <div class="toolbar">
+    <button class="btn btn-primary" id="modeToggle">练习模式</button>
+    <button class="btn btn-success" id="randomBtn">随机出题</button>
+  </div>
+  <div class="card">
+    <div class="grid-fill" id="grid"></div>
+  </div>
+</div>
+<div class="overlay hidden" id="quizOverlay">
+  <div class="modal">
+    <h3>随机出题</h3>
+    <div class="formula" id="quizFormula"></div>
+    <input type="number" id="quizInput" placeholder="输入答案" />
+    <div class="feedback" id="quizFeedback"></div>
+    <div class="modal-actions">
+      <button class="btn btn-rest" id="quizCancel">跳过</button>
+      <button class="btn btn-primary" id="quizSubmit">提交</button>
+    </div>
+  </div>
+</div>
+<script>
+(function() {
+  var grid = document.getElementById('grid');
+  var modeToggle = document.getElementById('modeToggle');
+  var randomBtn = document.getElementById('randomBtn');
+  var quizOverlay = document.getElementById('quizOverlay');
+  var quizFormula = document.getElementById('quizFormula');
+  var quizInput = document.getElementById('quizInput');
+  var quizFeedback = document.getElementById('quizFeedback');
+  var quizSubmit = document.getElementById('quizSubmit');
+  var quizCancel = document.getElementById('quizCancel');
+  var mode = 'standard';
+  var cells = [];
+  function buildTable() {
+    grid.innerHTML = '';
+    cells = [];
+    for (var i = 1; i <= 9; i++) {
+      var row = document.createElement('div');
+      row.className = 'row';
+      var rowCells = [];
+      for (var j = 1; j <= i; j++) {
+        var cell = document.createElement('div');
+        cell.className = 'cell';
+        cell.dataset.i = i; cell.dataset.j = j; cell.dataset.product = i * j;
+        cell.textContent = mode === 'standard' ? j + ' × ' + i + ' = ' + (i * j) : j + ' × ' + i + ' = __';
+        if (mode === 'practice') cell.classList.add('clickable');
+        cell.addEventListener('mouseenter', function(e) { highlightCross(parseInt(e.target.dataset.i), parseInt(e.target.dataset.j)); });
+        cell.addEventListener('mouseleave', clearHighlight);
+        rowCells.push(cell); row.appendChild(cell);
+      }
+      cells.push(rowCells); grid.appendChild(row);
+    }
+    modeToggle.textContent = mode === 'standard' ? '练习模式' : '标准模式';
+    if (mode === 'practice') document.querySelectorAll('.cell').forEach(function(c) { c.removeEventListener('click', practiceClick); c.addEventListener('click', practiceClick); });
+  }
+  function practiceClick(e) {
+    var cell = e.currentTarget;
+    var i = parseInt(cell.dataset.i), j = parseInt(cell.dataset.j), product = parseInt(cell.dataset.product);
+    var text = j + ' × ' + i;
+    if (cell.classList.contains('revealed')) { cell.innerHTML = text + ' = __'; cell.classList.remove('revealed'); }
+    else { cell.innerHTML = text + ' = <span class="blank-revealed">' + product + '</span>'; cell.classList.add('revealed'); }
+  }
+  function highlightCross(i, j) {
+    document.querySelectorAll('.cell.hl').forEach(function(el) { el.classList.remove('hl'); });
+    if (cells[i - 1]) cells[i - 1].forEach(function(c) { if (c) c.classList.add('hl'); });
+    for (var r = 0; r < cells.length; r++) { if (cells[r] && cells[r][j - 1]) cells[r][j - 1].classList.add('hl'); }
+  }
+  function clearHighlight() { document.querySelectorAll('.cell.hl').forEach(function(el) { el.classList.remove('hl'); }); }
+  modeToggle.addEventListener('click', function() { mode = mode === 'standard' ? 'practice' : 'standard'; buildTable(); });
+  var quizI = 0, quizJ = 0;
+  function showQuiz(i, j) { quizI = i; quizJ = j; quizFormula.textContent = j + ' × ' + i + ' = ?'; quizInput.value = ''; quizFeedback.textContent = ''; quizFeedback.className = 'feedback'; quizOverlay.classList.remove('hidden'); setTimeout(function() { quizInput.focus(); }, 100); }
+  function handleQuizSubmit() {
+    var val = parseInt(quizInput.value, 10), correct = quizI * quizJ;
+    if (isNaN(val)) { quizFeedback.textContent = '请输入数字'; quizFeedback.className = 'feedback wrong'; return; }
+    if (val === correct) { quizFeedback.textContent = '正确！' + quizJ + ' × ' + quizI + ' = ' + correct; quizFeedback.className = 'feedback correct'; setTimeout(function() { quizOverlay.classList.add('hidden'); }, 800); }
+    else { quizFeedback.textContent = '不对，再想想'; quizFeedback.className = 'feedback wrong'; quizInput.select(); }
+  }
+  function hideQuiz() { quizOverlay.classList.add('hidden'); }
+  randomBtn.addEventListener('click', function() { var i = Math.floor(Math.random() * 9) + 1; var j = Math.floor(Math.random() * i) + 1; showQuiz(i, j); });
+  quizSubmit.addEventListener('click', handleQuizSubmit);
+  quizCancel.addEventListener('click', hideQuiz);
+  quizInput.addEventListener('keydown', function(e) { if (e.key === 'Enter') handleQuizSubmit(); if (e.key === 'Escape') hideQuiz(); });
+  buildTable();
+})();
+</script>
+<script>
+
+</script>
+</body>
+</html>

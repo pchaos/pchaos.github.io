@@ -1,92 +1,84 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>整数除法可视化</title>
-<style>
-*{margin:0;padding:0;box-sizing:border-box}
-body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:#f0f4f8;color:#333}
-.wrap{max-width:960px;margin:0 auto;padding:16px}
-h1{text-align:center;font-size:1.6em;color:#2c3e50;margin-bottom:4px}
-.sub{text-align:center;color:#888;font-size:.85em;margin-bottom:16px}
-.ctrl{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-bottom:12px}
-.ctrl>div{flex:1;min-width:280px;max-width:480px;text-align:center}
-.ctrl label{font-weight:600;font-size:.85em;color:#555;display:block;margin-bottom:4px}
-.ctrl input[type="range"]{width:100%;height:10px;accent-color:#2980b9;cursor:pointer}
-.ctrl input[type="number"]{width:70px;font-size:1.1em;text-align:center;border:2px solid #bdc3c7;border-radius:6px;padding:4px}
-.eq-bar{text-align:center;font-size:1.6em;font-weight:700;padding:10px;background:#fff;border-radius:10px;margin-bottom:14px;box-shadow:0 2px 6px rgba(0,0,0,.06)}
-.eq-bar .hl{color:#2980b9}
-.eq-bar .rem{color:#e74c3c;font-size:.8em}
-.sec{background:#fff;border-radius:14px;padding:20px;margin-bottom:14px;box-shadow:0 3px 12px rgba(0,0,0,.07)}
-.sec-title{font-size:1.05em;font-weight:700;color:#2c3e50;margin-bottom:10px}
+  <title>整数除法可视化</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="template.js"></script>
+  <style>
 .baskets{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
-.basket{border:2px dashed #bdc3c7;border-radius:12px;padding:10px;min-width:80px;text-align:center;background:#fafafa}
-.basket.full{border-color:#27ae60;background:#eafaf1}
-.basket-label{font-size:.7em;color:#888;margin-bottom:4px}
+.basket{border:2px dashed var(--border);border-radius:12px;padding:10px;min-width:80px;text-align:center;background:var(--card)}
+.basket.full{border-color:var(--success);background:var(--success-bg)}
+.basket-label{font-size:.7em;color:var(--text-muted);margin-bottom:4px}
 .items-row{display:flex;gap:2px;justify-content:center;flex-wrap:wrap}
-.item-dot{width:18px;height:18px;border-radius:50%;background:#e74c3c;display:flex;align-items:center;justify-content:center;font-size:.5em;color:#fff}
-.extra-count{font-size:1em;color:#444;font-weight:700;margin-left:4px}
-.basket-count{font-size:1em;font-weight:700;color:#27ae60;margin-top:4px}
-.remainder-area{text-align:center;margin:10px 0;color:#e74c3c;font-size:.9em;font-weight:600}
-.leftover-dot{display:inline-flex;width:20px;height:20px;border-radius:50%;background:#e74c3c;align-items:center;justify-content:center;font-size:.5em;color:#fff;margin:0 1px;opacity:.5}
-/* 笔算竖式 */
-.step-controls{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:10px}
-.btn{padding:8px 20px;border:none;border-radius:20px;cursor:pointer;font-size:.9em;font-weight:600;transition:all .2s}
-.btn-primary{background:#3498db;color:#fff}
-.btn-success{background:#27ae60;color:#fff}
-.btn-rest{background:#ecf0f1;color:#333}
-.pd-wrap{overflow-x:auto;display:flex;justify-content:center;margin:16px 0}
-.pd-table{border-collapse:collapse}
-.pd-table td{text-align:center;padding:2px 0;min-width:30px}
+.item-dot{width:18px;height:18px;border-radius:50%;background:var(--danger);display:flex;align-items:center;justify-content:center;font-size:.5em;color:#fff}
+.extra-count{font-size:1em;color:var(--text);font-weight:700;margin-left:4px}
+.basket-count{font-size:1em;font-weight:700;color:var(--success);margin-top:4px}
+.remainder-area{text-align:center;margin:10px 0;color:var(--danger);font-size:.9em;font-weight:600}
+.leftover-dot{display:inline-flex;width:20px;height:20px;border-radius:50%;background:var(--danger);align-items:center;justify-content:center;font-size:.5em;color:#fff;margin:0 1px;opacity:.5}
+.pd-table td{padding:2px 0;min-width:30px}
 .pd-table .gutter{min-width:4px;padding:0;width:4px}
-.pd-table .pd-q{font-size:2em;font-weight:bold;color:#2980b9;height:1.2em}
-.pd-table .pd-k{font-size:2em;font-weight:300;color:#333;padding-right:2px}
+.pd-table .pd-q{font-size:2em;font-weight:bold;color:var(--accent);height:1.2em}
+.pd-table .pd-k{font-size:2em;font-weight:300;color:var(--text);padding-right:2px}
 .pd-table .pd-b{font-size:2em;font-weight:bold}
-.pd-table .pd-d{font-size:2em;font-weight:bold;min-width:30px;padding-top:4px;border-top:3px solid #333}
-.pd-table .pd-m{font-size:1.6em;color:#e67e22;font-weight:bold;text-align:right;padding-right:2px}
-.pd-table .pd-s{font-size:1.6em;color:#27ae60;min-width:30px;text-align:right}
-.pd-table .pd-p{font-size:1.6em;color:#333;min-width:30px;text-align:right}
-.pd-table .pd-h{height:3px;background:#e67e22;min-width:30px}
-.pd-table .pd-r{font-size:1.6em;color:#e74c3c;min-width:30px;text-align:right}
-.pd-table .hi{background:#fdebd0}
-.pd-table .hi-r{background:#fef9e7}
-.step-desc{text-align:center;font-size:.9em;color:#555;margin-top:12px;line-height:1.7;background:#fff;border-radius:8px;padding:10px}
-.step-desc em{color:#e67e22;font-style:normal;font-weight:bold}
-.step-desc b{color:#2980b9;font-style:normal}
-.step-desc .green{color:#27ae60;font-weight:bold}
-.step-desc .red{color:#e74c3c;font-weight:bold}
-.verify-box{display:flex;justify-content:center;align-items:center;gap:6px;flex-wrap:wrap;font-size:1.1em;font-weight:600;margin:8px 0}
-.verify-box .v-num{background:#ebf5fb;padding:4px 10px;border-radius:8px;color:#2980b9}
-.verify-box .v-op{color:#7f8c8d}
-.verify-box .v-ok{color:#27ae60;font-weight:700;font-size:1.2em}
-</style>
+.pd-table .pd-d{font-size:2em;font-weight:bold;min-width:30px;padding-top:4px;border-top:3px solid var(--text)}
+.pd-table .pd-m{font-size:1.6em;color:var(--warning);font-weight:bold;text-align:right;padding-right:2px}
+.pd-table .pd-s{font-size:1.6em;color:var(--success);min-width:30px;text-align:right}
+.pd-table .pd-p{font-size:1.6em;color:var(--text);min-width:30px;text-align:right}
+.pd-table .pd-h{height:0;background:transparent;min-width:30px}
+.pd-table tr.pd-h-row td{padding:0!important;height:0!important;line-height:0;font-size:0;border:none!important}
+.pd-table tr.pd-h-row td.pd-h{height:2px!important;border:none!important;background:var(--warning)}
+.pd-table .pd-r{font-size:1.6em;color:var(--danger);min-width:30px;text-align:right}
+.pd-table .hi{background:#dbeafe;outline:2px solid var(--accent)}
+.pd-table .hi-r{background:#fef3c7}
+  </style>
 </head>
 <body>
-<div class="wrap">
+<div class="container">
 <h1>整数除法可视化</h1>
-<p class="sub">拖动滑块 → 分物操作 → 笔算竖式 → 验算</p>
-<div class="ctrl">
-<div><label>被除数</label><input type="range" id="sDividend" min="1" max="999" value="196"><input type="number" id="nDividend" min="1" max="999" value="196"></div>
-<div><label>除数</label><input type="range" id="sDivisor" min="1" max="50" value="4"><input type="number" id="nDivisor" min="1" max="50" value="4"></div>
+  <p class="subtitle">拖动滑块 → 分物操作 → 笔算竖式 → 验算</p>
+  <div class="toolbar">
+    <div class="control-group">
+      <label>被除数</label>
+      <input type="range" id="sDividend" min="1" max="999" value="196" />
+      <div class="input-group">
+        <button class="step-btn sub" data-target="nDividend" data-delta="-10">−10</button>
+        <button class="step-btn sub" data-target="nDividend" data-delta="-1">−1</button>
+        <input type="number" id="nDividend" min="1" max="999" value="196" />
+        <button class="step-btn" data-target="nDividend" data-delta="1">+1</button>
+        <button class="step-btn" data-target="nDividend" data-delta="10">+10</button>
+      </div>
+    </div>
+    <div class="control-group">
+      <label>除数</label>
+      <input type="range" id="sDivisor" min="1" max="50" value="4" />
+      <div class="input-group">
+        <button class="step-btn sub" data-target="nDivisor" data-delta="-10">−10</button>
+        <button class="step-btn sub" data-target="nDivisor" data-delta="-1">−1</button>
+        <input type="number" id="nDivisor" min="1" max="50" value="4" />
+        <button class="step-btn" data-target="nDivisor" data-delta="1">+1</button>
+        <button class="step-btn" data-target="nDivisor" data-delta="10">+10</button>
+      </div>
+    </div>
+  </div>
+  <div class="eq-bar" id="eqBar"></div>
+  <div class="card">
+    <div class="card-title">分物操作 <span class="card-badge">1-3年级</span></div>
+    <div id="basketArea"></div>
+  </div>
+  <div class="card">
+    <div class="card-title">笔算竖式 <span class="card-badge">3-6年级</span></div>
+    <div class="step-controls">
+      <button type="button" class="btn btn-primary" id="btnNext">下一步</button>
+      <button type="button" class="btn btn-success" id="btnAll">自动演示</button>
+      <button type="button" class="btn btn-rest" id="btnReset">重置</button>
+    </div>
+    <div class="pd-wrap"><div id="pdContent"></div></div>
+    <div class="step-desc" id="stepDesc">点击"下一步"开始笔算竖式演示</div>
+    <div class="verify-box" id="verifyBox"></div>
+  </div>
 </div>
-<div class="eq-bar" id="eqBar"></div>
-<div class="sec">
-<div class="sec-title">分物操作 <span style="background:#3498db;color:#fff;font-size:.65em;padding:2px 8px;border-radius:10px">1-3年级</span></div>
-<div id="basketArea"></div>
-</div>
-<div class="sec">
-<div class="sec-title">笔算竖式 <span style="background:#3498db;color:#fff;font-size:.65em;padding:2px 8px;border-radius:10px">3-6年级</span></div>
-<div class="step-controls">
-<button class="btn btn-primary" id="btnNext">下一步</button>
-<button class="btn btn-success" id="btnAll">自动演示</button>
-<button class="btn btn-rest" id="btnReset">重置</button>
-</div>
-<div class="pd-wrap"><div id="pdContent"></div></div>
-<div class="step-desc" id="stepDesc">点击"下一步"开始笔算竖式演示</div>
-<div class="verify-box" id="verifyBox"></div>
-</div>
-</div>
+
 <script>
 var $=function(id){return document.getElementById(id)};
 var sD=$('sDividend'),sV=$('sDivisor'),nD=$('nDividend'),nV=$('nDivisor');
@@ -94,174 +86,60 @@ var emojis=['🍎','🍊','🍇','🍓','🍌','🥝','🍑','🫐','🍋','🍉
 var currentStep=0;var stepData=[];var autoTimer=null;var qs_global='';var dividendDigits=[];
 function digitsArray(num){return String(num).split('');}
 function update(){
-  var a=+sD.value,b=+sV.value;
-  nD.value=a;nV.value=b;
-  var q=Math.floor(a/b),r=a%b;
-  qs_global=String(q);
-  dividendDigits=digitsArray(a);
+  var a=+sD.value,b=+sV.value;nD.value=a;nV.value=b;
+  var q=Math.floor(a/b),r=a%b;qs_global=String(q);dividendDigits=digitsArray(a);
   $('eqBar').innerHTML=a+' ÷ '+b+' = <span class="hl">'+q+'</span>'+(r?'<span class="rem"> 余 '+r+'</span>':'');
-  renderBaskets(a,b,q,r);
-  buildStepData(a,b);
-  currentStep=0;
-  renderPD(a,b);
-  renderVerify(a,b,q,r);
-  $('stepDesc').innerHTML='点击<strong>下一步</strong>开始笔算竖式演示';
-  stopAuto();
+  renderBaskets(a,b,q,r);buildStepData(a,b);currentStep=0;renderPD(a,b);renderVerify(a,b,q,r);
+  $('stepDesc').innerHTML='点击<strong>下一步</strong>开始笔算竖式演示';stopAuto();
 }
 function renderBaskets(total,divisor,q,r){
-  var bs=Math.min(divisor,12);
-  var dpb=Math.min(q,30);
-  var extra=q-dpb;
-  var html='';
-  for(var i=0;i<bs;i++){
-    var dots='';
-    for(var j=0;j<dpb;j++) dots+='<span class="item-dot">'+emojis[(i*10+j)%emojis.length]+'</span>';
-    if(extra>0) dots+='<span class="extra-count">+'+extra+'个</span>';
-    html+='<div class="basket'+(q>0?' full':'')+'"><div class="basket-label">第'+(i+1)+'份</div><div class="items-row">'+dots+'</div><div class="basket-count">'+q+(i<r?' +1':'')+'</div></div>';
-  }
-  if(divisor>12) html+='<div style="text-align:center;color:#888;font-size:.85em">……共 '+divisor+' 份</div>';
-  if(r>0){
-    var rd='';
-    for(var i=0;i<Math.min(r,12);i++) rd+='<span class="leftover-dot">'+emojis[(q*divisor+i)%emojis.length]+'</span>';
-    html+='<div class="remainder-area">剩余 '+r+' 个：'+rd+(r>12?'…':'')+'</div>';
-  }
-  html+='<div style="text-align:center;margin-top:8px;font-size:.85em;color:#555">平均分：'+total+' ÷ '+divisor+' = '+q+'余'+r+'，每份'+q+'个'+(r?'，余'+r+'个':'')+'</div>';
+  var bs=Math.min(divisor,12),dpb=Math.min(q,30),extra=q-dpb,html='';
+  for(var i=0;i<bs;i++){var dots='';for(var j=0;j<dpb;j++) dots+='<span class="item-dot">'+emojis[(i*10+j)%emojis.length]+'</span>';if(extra>0) dots+='<span class="extra-count">+'+extra+'个</span>';html+='<div class="basket'+(q>0?' full':'')+'"><div class="basket-label">第'+(i+1)+'份</div><div class="items-row">'+dots+'</div><div class="basket-count">'+q+(i<r?' +1':'')+'</div></div>';}
+  if(divisor>12) html+='<div style="text-align:center;color:var(--text-muted);font-size:.85em">……共 '+divisor+' 份</div>';
+  if(r>0){var rd='';for(var i=0;i<Math.min(r,12);i++) rd+='<span class="leftover-dot">'+emojis[(q*divisor+i)%emojis.length]+'</span>';html+='<div class="remainder-area">剩余 '+r+' 个：'+rd+(r>12?'…':'')+'</div>';}
+  html+='<div style="text-align:center;margin-top:8px;font-size:.85em;color:var(--text-muted)">平均分：'+total+' ÷ '+divisor+' = '+q+'余'+r+'，每份'+q+'个'+(r?'，余'+r+'个':'')+'</div>';
   $('basketArea').innerHTML=html;
 }
-function buildStepData(a,b){
-  stepData=[];var ds=dividendDigits;var rem=0,pos=0;var started=false;
-  while(pos<ds.length){
-    rem=rem*10+parseInt(ds[pos]);
-    var dq=Math.floor(rem/b);
-    if(started||rem>=b){
-      started=true;
-      stepData.push({pos:pos,dividendPart:rem,dq:dq,subResult:dq*b,newRem:rem-dq*b});
-    }
-    rem=rem-dq*b;pos++;
-  }
-}
+function buildStepData(a,b){stepData=[];var ds=dividendDigits,rem=0,pos=0,started=false;while(pos<ds.length){rem=rem*10+parseInt(ds[pos]);var dq=Math.floor(rem/b);if(started||rem>=b){started=true;stepData.push({pos:pos,dividendPart:rem,dq:dq,subResult:dq*b,newRem:rem-dq*b});}rem=rem-dq*b;pos++;}}
 function renderPD(a,b){
-  var ds=dividendDigits;var n=ds.length;var q=Math.floor(a/b),r=a%b;
-  var qs=digitsArray(q);
-  var offset=n-qs.length; // number of empty cells before quotient
-  var html='<table class="pd-table">';
-  // Row 1: quotient
-  html+='<tr>';
-  html+='<td colspan="2"></td>';
-  for(var i=0;i<n;i++){
-    var digit='';
-    if(i>=offset) digit=qs[i-offset];
-    html+='<td class="pd-q">'+(digit?digit:'')+'</td><td class="gutter"></td>';
-  }
-  html+='</tr>';
-  // Row 2: divisor and dividend
-  html+='<tr>';
-html+='<td class="pd-b">'+b+'</td>';
-html+='<td class="pd-k">)</td>';
-  for(var i=0;i<n;i++){
-    html+='<td class="pd-d">'+ds[i]+'</td><td class="gutter"></td>';
-  }
-  html+='</tr>';
-  // Steps
+  var ds=dividendDigits,n=ds.length,q=Math.floor(a/b),r=a%b,qs=digitsArray(q),offset=n-qs.length,html='<table class="pd-table">';
+  html+='<tr><td colspan="2"></td>';for(var i=0;i<n;i++){var digit='';if(i>=offset) digit=qs[i-offset];html+='<td class="pd-q">'+(digit?digit:'')+'</td><td class="gutter"></td>';}html+='</tr>';
+  html+='<tr><td class="pd-b">'+b+'</td><td class="pd-k">)</td>';for(var i=0;i<n;i++){html+='<td class="pd-d">'+ds[i]+'</td><td class="gutter"></td>';}html+='</tr>';
   for(var s=0;s<stepData.length;s++){
-    var st=stepData[s];
-    var subDigits=digitsArray(st.subResult);
-    var subLen=subDigits.length;
-    var nextDigit=(s<stepData.length-1)?ds[st.pos+1]:'';
-    var shownRem=String(st.newRem)+(nextDigit?nextDigit:'');
-    var shownRemDigits=digitsArray(shownRem);
-    var shownRemLen=shownRemDigits.length;
-    var shownRemPos=nextDigit?(st.pos+1):st.pos;
+    var st=stepData[s],subDigits=digitsArray(st.subResult),subLen=subDigits.length,nextDigit=(s<stepData.length-1)?ds[st.pos+1]:'';
+    var shownRem=String(st.newRem)+(nextDigit?nextDigit:''),shownRemDigits=digitsArray(shownRem),shownRemLen=shownRemDigits.length,shownRemPos=nextDigit?(st.pos+1):st.pos;
     var cls=currentStep===s+1?'hi':'hi-r';
-    // SubResult row
-    html+='<tr class="'+cls+'">';
-    html+='<td class="pd-m">-</td><td></td>';
-    for(var i=0;i<n;i++){
-      if(i<st.pos-subLen+1){
-        html+='<td></td><td class="gutter"></td>';
-      } else if(i<=st.pos){
-        var digitIdx=subLen-1-(st.pos-i);
-        if(digitIdx>=0){
-          html+='<td class="pd-s">'+subDigits[digitIdx]+'</td><td class="gutter"></td>';
-        } else {
-          html+='<td></td><td class="gutter"></td>';
-        }
-      } else {
-        var remaining=n-(st.pos+1);
-        for(var r=0;r<remaining;r++) html+='<td></td><td class="gutter"></td>';
-        break;
-      }
-    }
+    html+='<tr class="'+cls+'"><td class="pd-m">-</td><td></td>';
+    for(var i=0;i<n;i++){if(i<st.pos-subLen+1){html+='<td></td><td class="gutter"></td>';}else if(i<=st.pos){var digitIdx=subLen-1-(st.pos-i);if(digitIdx>=0){html+='<td class="pd-s">'+subDigits[digitIdx]+'</td><td class="gutter"></td>';}else{html+='<td></td><td class="gutter"></td>';}}else{var remaining=n-(st.pos+1);for(var r=0;r<remaining;r++) html+='<td></td><td class="gutter"></td>';break;}}
     html+='</tr>';
-    // Horizontal line row
-    html+='<tr>';
-    html+='<td></td><td></td>';
-    for(var i=0;i<n;i++){
-      if(i<st.pos) html+='<td></td><td class="gutter"></td>';
-      else html+='<td class="pd-h"></td><td class="gutter"></td>';
-    }
-    html+='</tr>';
-    // Remainder row
-    html+='<tr class="'+cls+'">';
-    html+='<td></td><td></td>';
-    for(var i=0;i<n;i++){
-      if(i<shownRemPos-shownRemLen+1){
-        html+='<td></td><td class="gutter"></td>';
-      } else if(i<=shownRemPos){
-        var digitIdx=shownRemLen-1-(shownRemPos-i);
-        if(digitIdx>=0){
-          html+='<td class="pd-r">'+shownRemDigits[digitIdx]+'</td><td class="gutter"></td>';
-        } else {
-          html+='<td></td><td class="gutter"></td>';
-        }
-      } else {
-        var remaining=n-(shownRemPos+1);
-        for(var r=0;r<remaining;r++) html+='<td></td><td class="gutter"></td>';
-        break;
-      }
-    }
+    html+='<tr class="pd-h-row"><td></td><td></td>';for(var i=0;i<n;i++){if(i<st.pos) html+='<td></td><td class="gutter"></td>';else html+='<td class="pd-h"></td><td class="gutter"></td>';}html+='</tr>';
+    html+='<tr class="'+cls+'"><td></td><td></td>';
+    for(var i=0;i<n;i++){if(i<shownRemPos-shownRemLen+1){html+='<td></td><td class="gutter"></td>';}else if(i<=shownRemPos){var digitIdx=shownRemLen-1-(shownRemPos-i);if(digitIdx>=0){html+='<td class="pd-r">'+shownRemDigits[digitIdx]+'</td><td class="gutter"></td>';}else{html+='<td></td><td class="gutter"></td>';}}else{var remaining=n-(shownRemPos+1);for(var r=0;r<remaining;r++) html+='<td></td><td class="gutter"></td>';break;}}
     html+='</tr>';
   }
-  html+='</table>';
-  $('pdContent').innerHTML=html;
-  updateStepDesc(a,b);
+  html+='</table>';$('pdContent').innerHTML=html;updateStepDesc(a,b);
 }
 function updateStepDesc(a,b){
   var html='';
-  if(currentStep===0){
-    html='点击<strong>下一步</strong>开始笔算竖式演示';
-  } else if(currentStep>stepData.length){
-    html='<span class="green">笔算完成！</span> '+a+' ÷ '+b+' = '+Math.floor(a/b)+' 余 '+(a%b);
-  } else {
-    var st=stepData[currentStep-1];
-    var aStr=String(a);
-    var nextIdx=st.pos+1;
-    var nextD=nextIdx<aStr.length?aStr[nextIdx]:null;
-    html='<em>第'+currentStep+'步：</em>用除数<b>'+b+'</b>试除当前部分<b>'+st.dividendPart+'</b>，<b>'+st.dividendPart+'</b> ÷ <b>'+b+'</b> = <span class="green">'+st.dq+'</span><br>';
-    html+='<span class="green">'+st.dq+'</span> × '+b+' = <span class="green">'+st.subResult+'</span>，写在被除数下方；<br>';
-    html+=st.dividendPart+' - '+st.subResult+' = <span class="red">'+st.newRem+'</span>';
-    if(nextD!==null) html+="，把下一位<strong>"+nextD+"</strong>拉下来凑成<strong>"+(st.newRem*10+parseInt(nextD))+"</strong>";
-  }
+  if(currentStep===0){html='点击<strong>下一步</strong>开始笔算竖式演示';}
+  else if(currentStep>stepData.length){html='<span class="green">笔算完成！</span> '+a+' ÷ '+b+' = '+Math.floor(a/b)+' 余 '+(a%b);}
+  else{var st=stepData[currentStep-1],aStr=String(a),nextIdx=st.pos+1,nextD=nextIdx<aStr.length?aStr[nextIdx]:null;html='<em>第'+currentStep+'步：</em>用除数<b>'+b+'</b>试除当前部分<b>'+st.dividendPart+'</b>，<b>'+st.dividendPart+'</b> ÷ <b>'+b+'</b> = <span class="green">'+st.dq+'</span><br><span class="green">'+st.dq+'</span> × '+b+' = <span class="green">'+st.subResult+'</span>，写在被除数下方；<br>'+st.dividendPart+' - '+st.subResult+' = <span class="red">'+st.newRem+'</span>';if(nextD!==null) html+="，把下一位<strong>"+nextD+"</strong>拉下来凑成<strong>"+(st.newRem*10+parseInt(nextD))+"</strong>";}
   $('stepDesc').innerHTML=html;
 }
 $('btnNext').onclick=function(){if(currentStep<=stepData.length){currentStep++;renderPD(+sD.value,+sV.value);}};
 $('btnReset').onclick=function(){currentStep=0;renderPD(+sD.value,+sV.value);stopAuto();$('stepDesc').innerHTML='点击<strong>下一步</strong>开始笔算竖式演示';};
 function stopAuto(){if(autoTimer){clearInterval(autoTimer);autoTimer=null;}$('btnAll').textContent='自动演示';}
-$('btnAll').onclick=function(){
-  if(autoTimer){stopAuto();return;}
-  currentStep=0;renderPD(+sD.value,+sV.value);
-  autoTimer=setInterval(function(){
-    if(currentStep>stepData.length){stopAuto();return;}
-    currentStep++;renderPD(+sD.value,+sV.value);
-  },1500);
-  $('btnAll').textContent='暂停';
-};
+$('btnAll').onclick=function(){if(autoTimer){stopAuto();return;}currentStep=0;renderPD(+sD.value,+sV.value);autoTimer=setInterval(function(){if(currentStep>stepData.length){stopAuto();return;}currentStep++;renderPD(+sD.value,+sV.value);},1500);$('btnAll').textContent='暂停';};
 function renderVerify(a,b,q,r){var chk=q*b+r;var ok=chk===a;$('verifyBox').innerHTML='<span class="v-num">'+q+'</span><span class="v-op">×</span><span class="v-num">'+b+'</span><span class="v-op">+</span><span class="v-num">'+r+'</span><span class="v-op">=</span><span class="v-num">'+chk+'</span> '+(ok?'<span class="v-ok">✓ 正确</span>':'✗');}
+document.querySelectorAll('.step-btn').forEach(function(btn){
+  btn.addEventListener('click',function(){
+    var targetId=this.dataset.target,delta=parseInt(this.dataset.delta),inp=$(targetId),newVal=parseInt(inp.value)+delta,min=parseInt(inp.min),max=parseInt(inp.max);
+    if(newVal<min) newVal=min;if(newVal>max) newVal=max;inp.value=newVal;
+    var sliderId='s'+targetId.substring(1),slider=$(sliderId);if(slider){slider.value=newVal;}update();
+  });
+});
 update();
-sD.addEventListener('input',update);
-sV.addEventListener('input',update);
-nD.addEventListener('input',update);
-nV.addEventListener('input',update);
+sD.addEventListener('input',update);sV.addEventListener('input',update);nD.addEventListener('input',update);nV.addEventListener('input',update);
 </script>
 </body>
 </html>

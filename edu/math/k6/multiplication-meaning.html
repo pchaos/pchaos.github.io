@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <title>乘法的意义</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="template.js"></script>
+  <style>
+/* ====== 页面主题：暖色童趣 ====== */
+:root {
+  --apple-red: #ef4444;
+  --apple-green: #22c55e;
+  --apple-yellow: #eab308;
+  --apple-orange: #f97316;
+  --apple-pink: #ec4899;
+  --apple-blue: #3b82f6;
+  --bg-soft: #fffbeb;
+  --card-warm: #fffdf5;
+}
+
+.dot {
+  display: inline-block;
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  transition: all .35s cubic-bezier(.34,1.56,.64,1);
+  box-shadow: 0 2px 6px rgba(0,0,0,.10);
+  margin: 3px;
+}
+.dot.apple {
+  width: 40px; height: 40px;
+  position: relative;
+  background: var(--apple-red);
+  box-shadow: 0 3px 8px rgba(239,68,68,.3);
+}
+.dot.apple::after {
+  content: "";
+  position: absolute;
+  top: -4px; left: 50%;
+  transform: translateX(-50%);
+  width: 6px; height: 6px;
+  background: #78350f;
+  border-radius: 50%;
+}
+.dot.apple.green { background: var(--apple-green); box-shadow: 0 3px 8px rgba(34,197,94,.3); }
+.dot.apple.yellow { background: var(--apple-yellow); box-shadow: 0 3px 8px rgba(234,179,8,.3); }
+.dot.apple.orange { background: var(--apple-orange); box-shadow: 0 3px 8px rgba(249,115,22,.3); }
+.dot.apple.pink { background: var(--apple-pink); box-shadow: 0 3px 8px rgba(236,72,153,.3); }
+.dot.apple.blue { background: var(--apple-blue); box-shadow: 0 3px 8px rgba(59,130,246,.3); }
+.dot.apple.gray { background: #94a3b8; box-shadow: 0 3px 8px rgba(148,163,184,.3); }
+
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+.group-area {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 20px;
+  padding: 16px 0;
+  min-height: 280px;
+  align-items: center;
+}
+.group-box {
+  background: var(--accent-bg);
+  border: 2px dashed var(--accent);
+  border-radius: 16px;
+  padding: 16px 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  transition: all .4s ease;
+  min-width: 80px;
+  position: relative;
+}
+.group-box .group-label {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-weight: 600;
+  margin-top: 4px;
+}
+.group-box.highlight {
+  border-color: var(--accent);
+  background: var(--accent-light);
+  box-shadow: 0 0 0 4px rgba(59,130,246,.12);
+  transform: scale(1.03);
+}
+.group-box .apple-hide {
+  opacity: 0;
+  transform: scale(0);
+  transition: all .35s cubic-bezier(.34,1.56,.64,1);
+}
+.group-box .apple-hide.show {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.array-grid {
+  display: inline-grid;
+  gap: 6px;
+  padding: 20px;
+  background: var(--card);
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+  margin: 0 auto;
+}
+.array-grid .cell {
+  width: 48px; height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+  transition: all .3s ease;
+  position: relative;
+}
+.array-grid .cell .num-overlay {
+  position: absolute;
+  font-size: 11px;
+  font-weight: 600;
+  background: var(--card);
+  padding: 1px 5px;
+  border-radius: 4px;
+  box-shadow: var(--shadow-sm);
+  opacity: 0;
+  transition: opacity .3s;
+  pointer-events: none;
+}
+.array-grid .cell .num-overlay.show { opacity: 1; }
+.array-grid .cell.highlight-row {
+  background: var(--accent-light);
+  border: 2px solid var(--accent);
+  transform: scale(1.1);
+  z-index: 2;
+}
+.array-grid .cell.highlight-col {
+  background: #fce7f3;
+  border: 2px solid var(--apple-pink);
+  transform: scale(1.1);
+  z-index: 2;
+}
+.array-grid .cell.dim {
+  opacity: 0.25;
+  transform: scale(0.85);
+}
+
+.number-line-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 8px 0;
+  overflow-x: auto;
+  max-width: 100%;
+  min-height: 100px;
+}
+.number-line {
+  position: relative;
+  height: 64px;
+  margin: 10px auto;
+}
+.number-line .axis-line {
+  position: absolute;
+  top: 30px;
+  left: 0; right: 0;
+  height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+}
+.number-line .tick {
+  position: absolute;
+  top: 16px;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.number-line .tick::before {
+  content: "";
+  width: 2px;
+  height: 16px;
+  background: var(--text);
+  border-radius: 1px;
+}
+.number-line .tick .tick-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  margin-top: 22px;
+  font-family: var(--font-mono);
+}
+.jump-arrow {
+  position: absolute;
+  top: 27px;
+  height: 3px;
+  border-radius: 2px;
+  opacity: 0;
+  transition: all .5s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.jump-arrow.show { opacity: 1; }
+.jump-arrow .jump-label {
+  position: absolute;
+  top: -20px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent);
+  white-space: nowrap;
+}
+.jump-arrow .arrow-head {
+  position: absolute;
+  right: -6px;
+  width: 0; height: 0;
+  border-left: 8px solid var(--accent);
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
+}
+
+.summary-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  margin: 12px 0;
+}
+.summary-card {
+  background: var(--bg);
+  border-radius: var(--radius);
+  padding: 14px;
+  text-align: center;
+  transition: all .3s;
+}
+.summary-card:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+.summary-card .sc-icon { font-size: 28px; margin-bottom: 4px; }
+.summary-card .sc-label { font-size: 13px; color: var(--text-muted); }
+.summary-card .sc-value {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--accent);
+  font-family: var(--font-mono);
+}
+
+.comparison-row {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  margin: 12px 0;
+}
+.compare-card {
+  flex: 1;
+  min-width: 200px;
+  max-width: 320px;
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 16px;
+  text-align: center;
+  box-shadow: var(--shadow-sm);
+  border: 2px solid var(--border);
+  transition: all .3s;
+}
+.compare-card.active {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-light);
+}
+.compare-card .cc-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+.compare-card .cc-eq {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--accent);
+  margin-bottom: 10px;
+  font-family: var(--font-mono);
+}
+.compare-card .cc-result {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--success);
+  font-family: var(--font-mono);
+}
+
+.fruit-total {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--accent-dark);
+  text-align: center;
+  padding: 8px;
+  background: var(--accent-bg);
+  border-radius: var(--radius-sm);
+  margin: 8px auto;
+  max-width: 300px;
+}
+.addition-show {
+  font-size: 18px;
+  font-weight: 700;
+  text-align: center;
+  padding: 10px;
+  color: var(--text);
+  font-family: var(--font-mono);
+  background: var(--card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  margin: 8px 0;
+  letter-spacing: 2px;
+}
+.addition-show .plus { color: var(--text-muted); font-weight: 400; }
+.addition-show .equals { color: var(--success); }
+
+.auto-indicator {
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-top: 8px;
+  min-height: 20px;
+}
+
+.concept-tag {
+  display: inline-block;
+  background: var(--accent-light);
+  color: var(--accent-dark);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 3px 12px;
+  border-radius: var(--radius-full);
+  margin-bottom: 12px;
+}
+
+@media (max-width: 640px) {
+  .dot.apple { width: 32px; height: 32px; margin: 2px; }
+  .dot.apple::after { width: 4px; height: 4px; top: -3px; }
+  .array-grid .cell { width: 38px; height: 38px; font-size: 12px; }
+  .array-grid { gap: 4px; padding: 12px; }
+  .group-box { padding: 10px 8px; }
+  .comparison-row { gap: 12px; }
+  .summary-cards { grid-template-columns: 1fr 1fr; }
+}
+
+.placeholder-msg {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 14px;
+  padding: 40px 20px;
+}
+  </style>
+</head>
+<body>
+<div class="container">
+<h1>🍎 乘法的意义</h1>
+<p class="subtitle">拖动滑块，看看乘法到底是什么意思</p>
+
+<div class="toolbar">
+  <div class="control-group">
+    <label>行数（每组的数量）</label>
+    <input type="range" id="sliderRows" min="1" max="8" value="3" />
+    <div class="input-group">
+      <button class="step-btn sub" data-target="numRows" data-delta="-1">−1</button>
+      <input type="number" id="numRows" min="1" max="8" value="3" />
+      <button class="step-btn" data-target="numRows" data-delta="1">+1</button>
+    </div>
+  </div>
+  <div class="control-group">
+    <label>列数（有多少组）</label>
+    <input type="range" id="sliderCols" min="1" max="8" value="4" />
+    <div class="input-group">
+      <button class="step-btn sub" data-target="numCols" data-delta="-1">−1</button>
+      <input type="number" id="numCols" min="1" max="8" value="4" />
+      <button class="step-btn" data-target="numCols" data-delta="1">+1</button>
+    </div>
+  </div>
+</div>
+
+<div class="eq-bar" id="eqBar">
+  <span id="eqExpr"></span>
+</div>
+
+<div class="tabs">
+  <div class="tab active" data-tab="groups">🍎 分组看</div>
+  <div class="tab" data-tab="array">📐 阵列看</div>
+  <div class="tab" data-tab="numberline">📏 数轴看</div>
+  <div class="tab" data-tab="commutative">🔄 交换律</div>
+</div>
+
+<div class="card tab-panel active" id="panelgroups">
+  <div class="card-title">
+    <span class="concept-tag">📌 核心概念</span>
+    乘法就是 <b>几个几</b> 相加
+  </div>
+  <div id="groupViz" class="group-area"></div>
+  <div id="groupAddition" class="addition-show"></div>
+  <div id="groupTotal" class="fruit-total"></div>
+  <div class="step-controls">
+    <button class="btn btn-primary" id="btnPrev">◀ 上一步</button>
+    <button class="btn btn-success" id="btnAuto">▶ 自动演示</button>
+    <button class="btn btn-rest" id="btnReset">⟳ 重置</button>
+    <button class="btn btn-primary" id="btnNext">下一步 ▶</button>
+  </div>
+  <div class="auto-indicator" id="autoIndicator"></div>
+  <div class="step-desc" id="stepDesc">
+    ← 点击「下一步」逐组显示，看看乘法是 <b>几个几</b> 加起来
+  </div>
+</div>
+
+<div class="card tab-panel" id="panelarray">
+  <div class="card-title">
+    <span class="concept-tag">📐 面积模型</span>
+    乘法也可以看成 <b>行 × 列</b> 的排列
+  </div>
+  <div style="display:flex;justify-content:center;overflow-x:auto;">
+    <div id="arrayViz" class="array-grid"></div>
+  </div>
+  <div style="text-align:center;margin-top:8px;">
+    <span class="btn btn-rest" id="toggleLabels" style="font-size:12px;padding:4px 14px;">显示行列数</span>
+  </div>
+  <div class="step-desc" style="margin-top:12px;">
+    每一行有 <b id="arrayRowLabel">3</b> 个，有 <b id="arrayColLabel">4</b> 行，
+    一共 <b id="arrayTotalLabel">12</b> 个。
+    这就是 <b id="arrayEqLabel">3 × 4 = 12</b>
+  </div>
+</div>
+
+<div class="card tab-panel" id="panelnumberline">
+  <div class="card-title">
+    <span class="concept-tag">📏 跳数模型</span>
+    乘法就是在数轴上 <b>每次跳一样的步长</b>
+  </div>
+  <div id="nlViz" class="number-line-wrap"></div>
+  <div class="step-desc">
+    从 0 开始，每次跳 <b id="nlStep">3</b> 步，跳 <b id="nlCount">4</b> 次，
+    到达 <b id="nlDest">12</b>。 → 这就是 <b id="nlEq">3 × 4 = 12</b>
+  </div>
+</div>
+
+<div class="card tab-panel" id="panelcommutative">
+  <div class="card-title">
+    <span class="concept-tag">🔄 交换律</span>
+    交换两个数的位置，结果一样！
+  </div>
+  <div class="comparison-row" id="compViz"></div>
+  <div class="step-desc" style="text-align:center;">
+    不管横着看还是竖着看，总数都一样！
+    <br><span style="font-size:13px;color:var(--text-muted);">这就是乘法的 <b>交换律</b>：交换位置，积不变</span>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-title">📊 总结</div>
+  <div class="summary-cards" id="summaryCards">
+    <div class="summary-card">
+      <div class="sc-icon">🍎</div>
+      <div class="sc-label">重复加法</div>
+      <div class="sc-value" id="sumRepeat">3 + 3 + 3 + 3</div>
+    </div>
+    <div class="summary-card">
+      <div class="sc-icon">📐</div>
+      <div class="sc-label">阵列</div>
+      <div class="sc-value" id="sumArray">3 行 × 4 列</div>
+    </div>
+    <div class="summary-card">
+      <div class="sc-icon">📏</div>
+      <div class="sc-label">跳数</div>
+      <div class="sc-value" id="sumJump">每次跳 3，跳 4 次</div>
+    </div>
+    <div class="summary-card">
+      <div class="sc-icon">🔄</div>
+      <div class="sc-label">交换</div>
+      <div class="sc-value" id="sumCommute">3×4 = 4×3</div>
+    </div>
+    <div class="summary-card">
+      <div class="sc-icon">🔢</div>
+      <div class="sc-label">总结果</div>
+      <div class="sc-value" id="sumTotal">12</div>
+    </div>
+  </div>
+</div>
+</div>
+
+<script>
+var rows = 3, cols = 4;
+var groupStep = 0;
+var isAutoPlaying = false;
+var autoTimer = null;
+var showLabels = false;
+
+var els = {
+  sliderRows: document.getElementById('sliderRows'),
+  sliderCols: document.getElementById('sliderCols'),
+  numRows: document.getElementById('numRows'),
+  numCols: document.getElementById('numCols'),
+  eqExpr: document.getElementById('eqExpr'),
+  groupViz: document.getElementById('groupViz'),
+  groupAddition: document.getElementById('groupAddition'),
+  groupTotal: document.getElementById('groupTotal'),
+  arrayViz: document.getElementById('arrayViz'),
+  nlViz: document.getElementById('nlViz'),
+  compViz: document.getElementById('compViz'),
+  stepDesc: document.getElementById('stepDesc'),
+  autoIndicator: document.getElementById('autoIndicator'),
+  btnPrev: document.getElementById('btnPrev'),
+  btnNext: document.getElementById('btnNext'),
+  btnAuto: document.getElementById('btnAuto'),
+  btnReset: document.getElementById('btnReset'),
+  toggleLabels: document.getElementById('toggleLabels'),
+  sumRepeat: document.getElementById('sumRepeat'),
+  sumArray: document.getElementById('sumArray'),
+  sumJump: document.getElementById('sumJump'),
+  sumCommute: document.getElementById('sumCommute'),
+  sumTotal: document.getElementById('sumTotal'),
+  arrayRowLabel: document.getElementById('arrayRowLabel'),
+  arrayColLabel: document.getElementById('arrayColLabel'),
+  arrayTotalLabel: document.getElementById('arrayTotalLabel'),
+  arrayEqLabel: document.getElementById('arrayEqLabel'),
+  nlStep: document.getElementById('nlStep'),
+  nlCount: document.getElementById('nlCount'),
+  nlDest: document.getElementById('nlDest'),
+  nlEq: document.getElementById('nlEq'),
+};
+
+var FRUIT_COLORS = ['apple', 'green', 'yellow', 'orange', 'pink', 'blue'];
+
+function getColor(i) {
+  return FRUIT_COLORS[i % FRUIT_COLORS.length];
+}
+
+function renderGroups() {
+  var html = '';
+  for (var c = 0; c < cols; c++) {
+    var visible = (c < groupStep);
+    html += '<div class="group-box' + (visible && groupStep > 0 ? ' highlight' : '') + '">';
+    for (var r = 0; r < rows; r++) {
+      var show = visible ? ' show' : '';
+      html += '<span class="dot apple ' + getColor(r) + ' apple-hide' + show + '"></span>';
+    }
+    html += '<div class="group-label">第' + (c+1) + '组</div>';
+    html += '</div>';
+  }
+  els.groupViz.innerHTML = html;
+
+  if (groupStep === 0) {
+    els.groupAddition.textContent = '';
+    els.groupTotal.textContent = '';
+  } else {
+    var parts = [];
+    for (var i = 0; i < groupStep; i++) {
+      parts.push('<span class="hl">' + rows + '</span>');
+    }
+    var remainder = cols - groupStep;
+    if (remainder > 0) {
+      for (var i = 0; i < remainder; i++) {
+        parts.push('<span style="opacity:0.25">' + rows + '</span>');
+      }
+    }
+    els.groupAddition.innerHTML = parts.join('<span class="plus"> + </span>') + ' <span class="equals">=</span> ';
+    var total = rows * groupStep;
+    els.groupAddition.innerHTML += '<span class="hl">' + total + '</span>';
+    if (groupStep === cols) {
+      els.groupTotal.innerHTML = '🍎 一共 ' + total + ' 个，就是 ' + rows + ' × ' + cols + ' = ' + (rows * cols);
+    } else {
+      els.groupTotal.innerHTML = '已显示 ' + groupStep + ' 组，共 ' + total + ' 个';
+    }
+  }
+  updateSummary();
+}
+
+function renderArray() {
+  var html = '';
+  html += '<div class="array-grid" style="grid-template-columns:repeat(' + cols + ',1fr);">';
+  for (var r = 0; r < rows; r++) {
+    for (var c = 0; c < cols; c++) {
+      var idx = r * cols + c;
+      var color = getColor(idx);
+      html += '<div class="cell" style="background:' + getColorHex(color) + '22;border-radius:10px;" data-row="' + r + '" data-col="' + c + '">';
+      html += '<span style="font-size:12px;">🍎</span>';
+      if (showLabels) {
+        html += '<span class="num-overlay show">' + (r+1) + ',' + (c+1) + '</span>';
+      } else {
+        html += '<span class="num-overlay"></span>';
+      }
+      html += '</div>';
+    }
+  }
+  html += '</div>';
+  els.arrayViz.innerHTML = html;
+
+  els.arrayViz.querySelectorAll('.cell').forEach(function(cell) {
+    cell.addEventListener('mouseenter', function() {
+      var row = parseInt(this.dataset.row);
+      var col = parseInt(this.dataset.col);
+      els.arrayViz.querySelectorAll('.cell').forEach(function(c) {
+        var cr = parseInt(c.dataset.row);
+        var cc = parseInt(c.dataset.col);
+        c.classList.remove('highlight-row', 'highlight-col', 'dim');
+        if (cr !== row && cc !== col) c.classList.add('dim');
+        if (cr === row) c.classList.add('highlight-row');
+        if (cc === col) c.classList.add('highlight-col');
+      });
+    });
+    cell.addEventListener('mouseleave', function() {
+      els.arrayViz.querySelectorAll('.cell').forEach(function(c) {
+        c.classList.remove('highlight-row', 'highlight-col', 'dim');
+      });
+    });
+  });
+
+  els.arrayRowLabel.textContent = rows;
+  els.arrayColLabel.textContent = cols;
+  els.arrayTotalLabel.textContent = rows * cols;
+  els.arrayEqLabel.textContent = rows + ' × ' + cols + ' = ' + (rows * cols);
+}
+
+function getColorHex(color) {
+  var map = { apple: '#ef4444', green: '#22c55e', yellow: '#eab308', orange: '#f97316', pink: '#ec4899', blue: '#3b82f6' };
+  return map[color] || '#94a3b8';
+}
+
+function renderNumberLine() {
+  var max = rows * cols;
+  var stepSize = rows;
+  var jumpCount = cols;
+  var axisMax = Math.max(max + stepSize, 10);
+  axisMax = Math.ceil(axisMax / 10) * 10;
+  if (axisMax < 10) axisMax = 10;
+  // 用固定 px 避免 display:none 时 % 计算为 0
+  var lineWidth = 560;
+
+  var html = '<div class="number-line" style="width:' + lineWidth + 'px;">';
+  html += '<div class="axis-line"></div>';
+
+  var tickCount = axisMax / stepSize;
+  for (var i = 0; i <= tickCount; i++) {
+    var val = i * stepSize;
+    if (val > axisMax) break;
+    var px = (val / axisMax) * lineWidth;
+    html += '<div class="tick" style="left:' + px + 'px;">';
+    html += '<span class="tick-label">' + val + '</span>';
+    html += '</div>';
+  }
+
+  for (var j = 1; j <= jumpCount; j++) {
+    var from = (j-1) * stepSize;
+    var to = j * stepSize;
+    var fromPx = (from / axisMax) * lineWidth;
+    var toPx = (to / axisMax) * lineWidth;
+    var w = toPx - fromPx;
+    var color = getColorHex(getColor(j-1));
+    html += '<div class="jump-arrow show"';
+    html += ' style="left:' + fromPx + 'px;width:' + w + 'px;background:' + color + ';"';
+    html += ' data-jump="' + j + '">';
+    html += '<span class="jump-label" style="color:' + color + ';">+' + stepSize + '</span>';
+    html += '<span class="arrow-head" style="border-left-color:' + color + ';"></span>';
+    html += '</div>';
+  }
+
+  html += '</div>';
+  els.nlViz.innerHTML = html;
+
+  els.nlStep.textContent = stepSize;
+  els.nlCount.textContent = jumpCount;
+  els.nlDest.textContent = max;
+  els.nlEq.textContent = stepSize + ' × ' + jumpCount + ' = ' + max;
+}
+
+function renderCommutative() {
+  var total = rows * cols;
+  var html = '';
+  html += '<div class="compare-card' + (groupStep === cols ? ' active' : '') + '">';
+  html += '<div class="cc-title">横着看（行）</div>';
+  html += '<div class="cc-eq">' + rows + ' × ' + cols + '</div>';
+  html += '<div style="display:flex;justify-content:center;flex-wrap:wrap;gap:4px;margin:8px 0;">';
+  for (var r = 0; r < rows; r++) {
+    for (var c = 0; c < cols; c++) {
+      html += '<span class="dot apple ' + getColor(r) + '" style="width:28px;height:28px;"></span>';
+    }
+    if (r < rows - 1) html += '<br>';
+  }
+  html += '</div>';
+  html += '<div class="cc-result">= ' + total + '</div>';
+  html += '</div>';
+
+  html += '<div class="compare-card" style="border-color:var(--apple-pink);">';
+  html += '<div class="cc-title">竖着看（列）</div>';
+  html += '<div class="cc-eq" style="color:var(--apple-pink);">' + cols + ' × ' + rows + '</div>';
+  html += '<div style="display:flex;justify-content:center;flex-wrap:wrap;gap:4px;margin:8px 0;">';
+  for (var c = 0; c < cols; c++) {
+    for (var r = 0; r < rows; r++) {
+      html += '<span class="dot apple ' + getColor(c) + '" style="width:28px;height:28px;"></span>';
+    }
+    if (c < cols - 1) html += '<br>';
+  }
+  html += '</div>';
+  html += '<div class="cc-result">= ' + total + '</div>';
+  html += '</div>';
+
+  html += '<div style="display:flex;align-items:center;font-size:28px;font-weight:700;font-family:var(--font-mono);color:var(--text);gap:8px;">';
+  html += '<span style="color:var(--accent)">' + rows + ' × ' + cols + '</span>';
+  html += '<span style="color:var(--text-muted)"> = </span>';
+  html += '<span style="color:var(--apple-pink)">' + cols + ' × ' + rows + '</span>';
+  html += '<span style="color:var(--text-muted)"> = </span>';
+  html += '<span style="color:var(--success)">' + total + '</span>';
+  html += '</div>';
+
+  els.compViz.innerHTML = html;
+}
+
+function updateSummary() {
+  var total = rows * cols;
+  els.eqExpr.innerHTML = rows + ' × ' + cols + ' = ' + total;
+
+  var parts = [];
+  for (var i = 0; i < cols; i++) parts.push(rows);
+  els.sumRepeat.textContent = parts.join(' + ') + ' = ' + total;
+  els.sumArray.textContent = rows + ' 行 × ' + cols + ' 列';
+  els.sumJump.textContent = '每次跳 ' + rows + '，跳 ' + cols + ' 次';
+  els.sumCommute.textContent = rows + '×' + cols + ' = ' + cols + '×' + rows;
+  els.sumTotal.textContent = total;
+}
+
+function update() {
+  rows = parseInt(els.numRows.value) || 3;
+  cols = parseInt(els.numCols.value) || 4;
+
+  if (rows < 1) rows = 1;
+  if (rows > 8) rows = 8;
+  if (cols < 1) cols = 1;
+  if (cols > 8) cols = 8;
+
+  els.numRows.value = rows;
+  els.numCols.value = cols;
+  els.sliderRows.value = rows;
+  els.sliderCols.value = cols;
+
+  if (groupStep > cols) groupStep = cols;
+
+  renderGroups();
+  renderArray();
+  renderNumberLine();
+  renderCommutative();
+  updateStepUI();
+  updateSummary();
+}
+
+function updateStepUI() {
+  els.btnPrev.disabled = (groupStep <= 0);
+  els.btnNext.disabled = (groupStep >= cols);
+
+  var total = rows * cols;
+  var currentTotal = rows * groupStep;
+  if (groupStep === 0) {
+    els.stepDesc.innerHTML = '← 点击「<b>下一步</b>」逐组显示，看看 <b>' + rows + ' × ' + cols + '</b> 是什么意思';
+  } else if (groupStep < cols) {
+    els.stepDesc.innerHTML = '已显示 <b>' + groupStep + '</b> 组，每组 <b>' + rows + '</b> 个 🍎，共 <b>' + currentTotal + '</b> 个。<br>继续点击「下一步」看看全部 ' + cols + ' 组加起来是多少';
+  } else {
+    els.stepDesc.innerHTML = '🎉 <b>' + cols + '</b> 组全部显示完毕！<br>' + rows + ' × ' + cols + ' = <b>' + total + '</b>，就是 <b>' + cols + '</b> 个 <b>' + rows + '</b> 相加 = ' + total;
+  }
+  renderGroups();
+  renderNumberLine();
+  renderCommutative();
+}
+
+els.btnPrev.addEventListener('click', function() {
+  if (groupStep > 0) { groupStep--; updateStepUI(); }
+});
+
+els.btnNext.addEventListener('click', function() {
+  if (groupStep < cols) { groupStep++; updateStepUI(); }
+});
+
+els.btnReset.addEventListener('click', function() {
+  stopAutoPlay();
+  groupStep = 0;
+  updateStepUI();
+});
+
+els.btnAuto.addEventListener('click', function() {
+  if (isAutoPlaying) { stopAutoPlay(); }
+  else { startAutoPlay(); }
+});
+
+function startAutoPlay() {
+  if (groupStep >= cols) groupStep = 0;
+  isAutoPlaying = true;
+  els.btnAuto.textContent = '⏸ 暂停';
+  els.autoIndicator.textContent = '▶ 自动演示中…';
+  stepAuto();
+}
+
+function stepAuto() {
+  if (!isAutoPlaying) return;
+  if (groupStep >= cols) {
+    stopAutoPlay();
+    els.autoIndicator.textContent = '✅ 演示完成！点击「自动演示」重新播放';
+    return;
+  }
+  groupStep++;
+  updateStepUI();
+  autoTimer = setTimeout(stepAuto, 800);
+}
+
+function stopAutoPlay() {
+  isAutoPlaying = false;
+  if (autoTimer) { clearTimeout(autoTimer); autoTimer = null; }
+  els.btnAuto.textContent = '▶ 自动演示';
+  els.autoIndicator.textContent = '';
+}
+
+els.toggleLabels.addEventListener('click', function() {
+  showLabels = !showLabels;
+  renderArray();
+});
+
+document.querySelectorAll('.tab').forEach(function(tab) {
+  tab.addEventListener('click', function() {
+    document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
+    this.classList.add('active');
+    var target = this.dataset.tab;
+    document.querySelectorAll('.tab-panel').forEach(function(p) { p.classList.remove('active'); });
+    var panel = document.getElementById('panel' + target);
+    if (panel) panel.classList.add('active');
+  });
+});
+
+els.sliderRows.addEventListener('input', function() {
+  els.numRows.value = this.value;
+  if (groupStep > parseInt(this.value)) groupStep = parseInt(this.value);
+  update();
+});
+
+els.sliderCols.addEventListener('input', function() {
+  els.numCols.value = this.value;
+  if (groupStep > parseInt(this.value)) groupStep = parseInt(this.value);
+  update();
+});
+
+els.numRows.addEventListener('change', function() { update(); });
+els.numCols.addEventListener('change', function() { update(); });
+
+document.addEventListener('keydown', function(e) {
+  var activePanel = document.querySelector('.tab-panel.active');
+  if (!activePanel || activePanel.id !== 'panelGroups') return;
+  if (e.key === 'ArrowRight') { els.btnNext.click(); e.preventDefault(); }
+  if (e.key === 'ArrowLeft') { els.btnPrev.click(); e.preventDefault(); }
+  if (e.key === 'Enter') { els.btnAuto.click(); e.preventDefault(); }
+});
+
+update();
+</script>
+</body>
+</html>

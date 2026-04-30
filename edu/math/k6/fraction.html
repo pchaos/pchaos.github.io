@@ -1,202 +1,101 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
+  <title>分数可视化 - 视觉学习</title>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>分数可视化 - 视觉学习</title>
+  <script src="template.js"></script>
   <style>
-    :root{
-      --bg: #f6f7fb;
-      --card: #ffffff;
-      --text: #1f2937;
-      --muted: #6b7280;
-      --green: #4CAF50;
-      --gray: #e0e0e0;
-      --shadow: 0 6px 20px rgba(0,0,0,.08);
-    }
-    *{box-sizing:border-box}
-    html,body{height:100%}
-    body{
-      margin:0;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans CJK SC', 'PingFang SC', 'Hiragino Sans GB', Arial, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-    }
-    .wrap{
-      max-width: 900px;
-      margin: 40px auto;
-      padding: 20px;
-    }
-    header{
-      text-align:center;
-      margin-bottom: 18px;
-    }
-    h1{font-size: 28px; margin:0; letter-spacing: .5px}
-    p.subtitle{color: #555; margin:6px 0 0; font-size:14px}
-
-    .card{
-      background: var(--card);
-      border-radius: 14px;
-      padding: 16px;
-      box-shadow: var(--shadow);
-      display:flex; flex-direction:column; align-items:center; gap:14px;
-      border:1px solid #eee;
-    }
-
-    .viz{ width: 100%; display:flex; justify-content:center; align-items:center; }
-    svg{ width: 100%; max-width: 360px; height:auto; }
-
-    .controls{ width:100%; max-width:860px; display:flex; flex-wrap: wrap; gap:16px; justify-content:center; align-items:center; }
-    .control{ display:flex; align-items:center; gap:8px; padding:6px 10px; border-radius:10px; background:#fff; border:1px solid #e5e7eb; }
-    .control label{ font-size:14px; color:#374151; }
-    .control input[type=range]{ width: 180px; height: 28px; }
-    .value{ font-weight:700; min-width:40px; text-align:center; }
-
-    .summary{ text-align:center; font-family: monospace; margin-top:6px; }
-    .summary .row{ display:flex; justify-content:center; gap:12px; margin:4px 0; }
-    .tag{ padding:2px 6px; border-radius:6px; background:#f1f5f9; font-size:12px; }
-
-    .equiv{ font-size:14px; color:#374151; margin-top:4px; text-align:center; }
-    .gridline{ height:1px; width:100%; background:#eee; margin:6px 0; }
-
-    .legend{ font-size:12px; color:#555; display:flex; gap:8px; align-items:center; justify-content:center; }
-    .dot{ display:inline-block; width:12px; height:12px; border-radius:50%; margin-right:6px; vertical-align:middle; }
-    .dot.matched{ background:#4CAF50; }
-    .dot.notmatched{ background:#e0e0e0; }
-
-    @media (max-width: 640px){
-      .controls{ padding:0 8px; }
-    }
+.card { display:flex; flex-direction:column; align-items:center; gap:14px; border:1px solid #eee; }
+.viz{ width: 100%; display:flex; justify-content:center; align-items:center; }
+svg{ width: 100%; max-width: 360px; height:auto; }
+.controls{ width:100%; max-width:860px; display:flex; flex-wrap: wrap; gap:16px; justify-content:center; align-items:center; }
+.control{ display:flex; align-items:center; gap:8px; padding:6px 10px; border-radius:10px; background:#fff; border:1px solid var(--border); }
+.control label{ font-size:14px; color:var(--text-muted); }
+.control input[type=range]{ width: 180px; height: 28px; }
+.value{ font-weight:700; min-width:40px; text-align:center; }
+.control .input-group{display:flex;align-items:center;justify-content:center;gap:4px;margin-top:2px}
+.control input[type="number"]{width:50px;font-size:1em;text-align:center;border:2px solid var(--border-light);border-radius:6px;padding:3px}
+.control .step-btn{width:30px;height:30px;border:none;border-radius:50%;background:var(--accent);color:#fff;font-size:1em;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;transition:background .2s;touch-action:manipulation;-webkit-tap-highlight-color:transparent;user-select:none}
+.control .step-btn:active{background:var(--accent-dark);}
+.control .step-btn.sub{background:#95a5a6}
+.control .step-btn.sub:active{background:#7f8c8d}
+.summary{ text-align:center; font-family: var(--font-mono); margin-top:6px; }
+.summary .row{ display:flex; justify-content:center; gap:12px; margin:4px 0; }
+.tag{ padding:2px 6px; border-radius:6px; background:#f1f5f9; font-size:12px; }
+.equiv{ font-size:14px; color:var(--text); margin-top:4px; text-align:center; }
+.gridline{ height:1px; width:100%; background:#e0e0e0; margin:6px 0; }
+.legend{ font-size:12px; color:var(--text-muted); display:flex; gap:8px; align-items:center; justify-content:center; }
+.dot{ display:inline-block; width:12px; height:12px; border-radius:50%; margin-right:6px; vertical-align:middle; }
+.dot.matched{ background:var(--success); }
+.dot.notmatched{ background:#e0e0e0; }
+@media (max-width: 640px){ .controls{ padding:0 8px; } }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <header>
+<div class="container">
+<header>
       <h1>分数可视化</h1>
       <p class="subtitle">通过把圆分成等份来直观表示分数，中文标签，数字与小数并列显示。</p>
     </header>
-
     <section class="card" aria-label="分数可视化卡片">
       <div class="viz">
         <svg id="pie" viewBox="0 0 320 320" role="img" aria-label="圆形分数图"></svg>
       </div>
-
       <div class="controls" aria-label="控制分母与分子">
         <div class="control">
           <label for="denom">分母</label>
           <input id="denom" type="range" min="2" max="12" value="6" step="1" />
           <span id="denomVal" class="value">6</span>
+          <div class="input-group">
+            <button class="step-btn sub" data-slider="denom" data-delta="-1">−1</button>
+            <input type="number" id="nDenom" min="2" max="12" value="6">
+            <button class="step-btn" data-slider="denom" data-delta="1">+1</button>
+          </div>
         </div>
         <div class="control">
           <label for="numer">分子</label>
           <input id="numer" type="range" min="1" max="6" value="3" step="1" />
           <span id="numerVal" class="value">3</span>
+          <div class="input-group">
+            <button class="step-btn sub" data-slider="numer" data-delta="-1">−1</button>
+            <input type="number" id="nNumer" min="1" max="6" value="3">
+            <button class="step-btn" data-slider="numer" data-delta="1">+1</button>
+          </div>
         </div>
       </div>
-
       <div class="summary" aria-label="分数结果">
         <div>分数: <span id="fracText">3/6</span>（简化: <span id="simplifiedText">1/2</span>）</div>
         <div>十进制: <span id="decimalText">0.5</span>， 百分比: <span id="percentText">50%</span></div>
       </div>
-
       <div id="equiv" class="equiv" aria-label="等值分数"></div>
-    
       <div class="legend">
         <span class="dot matched"></span> 选中的分段
         <span class="dot notmatched"></span> 未选中的分段
       </div>
     </section>
-  </div>
+</div>
 
-  <script>
-    // Fraction visualization logic
-    (function(){
-      const svg = document.getElementById('pie');
-      const denomInput = document.getElementById('denom');
-      const numerInput = document.getElementById('numer');
-      const denomVal = document.getElementById('denomVal');
-      const numerVal = document.getElementById('numerVal');
-      const fracText = document.getElementById('fracText');
-      const simplifiedText = document.getElementById('simplifiedText');
-      const decimalText = document.getElementById('decimalText');
-      const percentText = document.getElementById('percentText');
-      const equivDiv = document.getElementById('equiv');
-
-      // Initialize values
-      let denom = parseInt(denomInput.value, 10);
-      let numer = parseInt(numerInput.value, 10);
-
-      // Build slices group
-      const cx = 160, cy = 160, R = 120;
-      const sliceGroup = document.createElementNS('http://www.w3.org/2000/svg','g');
-      sliceGroup.setAttribute('id','slices');
-      svg.appendChild(sliceGroup);
-
-      function gcd(a,b){ while(b){ const t=a%b; a=b; b=t;} return a; }
-      function updateDisplay(n, d){
-        fracText.textContent = `${n}/${d}`;
-        const g = gcd(n, d);
-        if(g>1){ simplifiedText.textContent = `${n/g}/${d/g}`; } else { simplifiedText.textContent = `${n}/${d}`; }
-        const decimal = n / d;
-        decimalText.textContent = decimal.toFixed(4).replace(/0+$/,'').replace(/\.$/,'');
-        percentText.textContent = (decimal*100).toFixed(0) + '%';
-        // Equivalents
-        if(g>1){ equivDiv.textContent = `等价分数: ${n}/${d} = ${n/g}/${d/g}`; } else { equivDiv.textContent = '等值分数: 无'; }
-      }
-
-      function renderWedges(n, d){
-        // clear existing
-        while (sliceGroup.firstChild) sliceGroup.removeChild(sliceGroup.firstChild);
-        const sliceAngle = (2 * Math.PI) / d;
-        for(let i=0; i<d; i++){
-          const startAngle = -Math.PI/2 + i * sliceAngle;
-          const endAngle = startAngle + sliceAngle;
-          const x1 = cx + R * Math.cos(startAngle);
-          const y1 = cy + R * Math.sin(startAngle);
-          const x2 = cx + R * Math.cos(endAngle);
-          const y2 = cy + R * Math.sin(endAngle);
-          const largeArcFlag = (endAngle - startAngle) > Math.PI ? 1 : 0;
-          const dPath = `M ${cx} ${cy} L ${x1} ${y1} A ${R} ${R} 0 ${largeArcFlag} 1 ${x2} ${y2} Z`;
-          const path = document.createElementNS('http://www.w3.org/2000/svg','path');
-          path.setAttribute('d', dPath);
-          path.setAttribute('fill', i < n ? '#4CAF50' : '#e0e0e0');
-          path.setAttribute('stroke', '#ffffff');
-          path.setAttribute('stroke-width','1');
-          // slight inner stroke for depth
-          sliceGroup.appendChild(path);
-        }
-      }
-
-      function updateAll(){
-        // keep numer within denom
-        if(numer > denom){ numer = denom; numerInput.value = numer; numerVal.textContent = numer; }
-        // update label values
-        denomVal.textContent = denom;
-        numerVal.textContent = numer;
-        renderWedges(numer, denom);
-        updateDisplay(numer, denom);
-      }
-
-      // initial render
-      updateAll();
-
-      denomInput.addEventListener('input', ()=>{
-        denom = parseInt(denomInput.value, 10);
-        denomVal.textContent = denom;
-        // adjust max for numerator
-        numerInput.max = denom;
-        if(parseInt(numerInput.value,10) > denom){ numerInput.value = denom; numer = denom; numerVal.textContent = denom; }
-        // re-render
-        updateAll();
-      });
-
-      numerInput.addEventListener('input', ()=>{
-        numer = parseInt(numerInput.value, 10);
-        numerVal.textContent = numer;
-        updateAll();
-      });
-      
-    })();
-  </script>
+<script>
+(function(){
+  const svg = document.getElementById('pie'), denomInput = document.getElementById('denom'), numerInput = document.getElementById('numer');
+  const denomVal = document.getElementById('denomVal'), numerVal = document.getElementById('numerVal');
+  const fracText = document.getElementById('fracText'), simplifiedText = document.getElementById('simplifiedText');
+  const decimalText = document.getElementById('decimalText'), percentText = document.getElementById('percentText'), equivDiv = document.getElementById('equiv');
+  let denom = parseInt(denomInput.value,10), numer = parseInt(numerInput.value,10);
+  const cx=160,cy=160,R=120,sliceGroup=document.createElementNS('http://www.w3.org/2000/svg','g');sliceGroup.setAttribute('id','slices');svg.appendChild(sliceGroup);
+  function gcd(a,b){while(b){const t=a%b;a=b;b=t;}return a;}
+  function updateDisplay(n,d){fracText.textContent=n+'/'+d;const g=gcd(n,d);simplifiedText.textContent=g>1?(n/g)+'/'+(d/g):n+'/'+d;const decimal=n/d;decimalText.textContent=decimal.toFixed(4).replace(/0+$/,'').replace(/\.$/,'');percentText.textContent=(decimal*100).toFixed(0)+'%';equivDiv.textContent=g>1?'等价分数: '+n+'/'+d+' = '+(n/g)+'/'+(d/g):'等值分数: 无';}
+  function renderWedges(n,d){while(sliceGroup.firstChild)sliceGroup.removeChild(sliceGroup.firstChild);const sliceAngle=(2*Math.PI)/d;for(let i=0;i<d;i++){const startAngle=-Math.PI/2+i*sliceAngle,endAngle=startAngle+sliceAngle,x1=cx+R*Math.cos(startAngle),y1=cy+R*Math.sin(startAngle),x2=cx+R*Math.cos(endAngle),y2=cy+R*Math.sin(endAngle),largeArcFlag=(endAngle-startAngle)>Math.PI?1:0,dPath='M '+cx+' '+cy+' L '+x1+' '+y1+' A '+R+' '+R+' 0 '+largeArcFlag+' 1 '+x2+' '+y2+' Z';const path=document.createElementNS('http://www.w3.org/2000/svg','path');path.setAttribute('d',dPath);path.setAttribute('fill',i<n?'#4CAF50':'#e0e0e0');path.setAttribute('stroke','#ffffff');path.setAttribute('stroke-width','1');sliceGroup.appendChild(path);}}
+  function updateAll(){if(numer>denom){numer=denom;numerInput.value=numer;numerVal.textContent=numer;}denomVal.textContent=denom;numerVal.textContent=numer;renderWedges(numer,denom);updateDisplay(numer,denom);}
+  function syncNumInputs(){document.getElementById('nDenom').value=denom;document.getElementById('nNumer').value=numer;}
+  document.querySelectorAll('.step-btn').forEach(function(btn){btn.addEventListener('click',function(){var sliderId=this.dataset.slider,delta=parseInt(this.dataset.delta),slider=document.getElementById(sliderId),newVal=parseInt(slider.value)+delta,min=parseInt(slider.min),max=parseInt(slider.max);if(newVal<min)newVal=min;if(newVal>max)newVal=max;slider.value=newVal;if(sliderId==='denom'){denom=newVal;denomVal.textContent=newVal;numerInput.max=newVal;if(parseInt(numerInput.value,10)>newVal){numerInput.value=newVal;numer=newVal;numerVal.textContent=newVal;}}else{numer=newVal;numerVal.textContent=newVal;}syncNumInputs();updateAll();});});
+  document.getElementById('nDenom').addEventListener('input',function(){var v=parseInt(this.value);if(isNaN(v)||v<2)v=2;if(v>12)v=12;denomInput.value=v;denom=v;denomVal.textContent=v;numerInput.max=v;if(parseInt(numerInput.value,10)>v){numerInput.value=v;numer=v;numerVal.textContent=v;}document.getElementById('nDenom').value=v;updateAll();});
+  document.getElementById('nNumer').addEventListener('input',function(){var v=parseInt(this.value);if(isNaN(v)||v<1)v=1;if(v>parseInt(denomInput.max,10))v=parseInt(denomInput.max,10);numerInput.value=v;numer=v;numerVal.textContent=v;document.getElementById('nNumer').value=v;updateAll();});
+  syncNumInputs();updateAll();
+  denomInput.addEventListener('input',()=>{denom=parseInt(denomInput.value,10);denomVal.textContent=denom;numerInput.max=denom;if(parseInt(numerInput.value,10)>denom){numerInput.value=denom;numer=denom;numerVal.textContent=denom;}syncNumInputs();updateAll();});
+  numerInput.addEventListener('input',()=>{numer=parseInt(numerInput.value,10);numerVal.textContent=numer;syncNumInputs();updateAll();});
+})();
+</script>
 </body>
 </html>

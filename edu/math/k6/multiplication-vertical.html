@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <title>乘法竖式可视化</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="template.js"></script>
+  <style>
+.pd-table td { position: relative; }
+    .pd-table td.highlight { padding-top: 10px; }
+    .carry-num {
+      position: absolute; top: 1px; left: -4px;
+      font-size: 0.5em; font-weight: 800; color: #fff; background: #e74c3c;
+      line-height: 1; padding: 1px 3px; border-radius: 3px;
+      pointer-events: none; z-index: 1;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+<h1>乘法竖式可视化</h1>
+  <p class="subtitle">拖动滑块 → 分步笔算 → 验算</p>
+  <div class="toolbar">
+    <div class="control-group">
+      <label>被乘数</label>
+      <input type="range" id="sA" min="1" max="999" value="123" />
+      <div class="input-group">
+        <button class="step-btn sub" data-target="nA" data-delta="-10">−10</button>
+        <button class="step-btn sub" data-target="nA" data-delta="-1">−1</button>
+        <input type="number" id="nA" min="1" max="999" value="123" />
+        <button class="step-btn" data-target="nA" data-delta="1">+1</button>
+        <button class="step-btn" data-target="nA" data-delta="10">+10</button>
+      </div>
+    </div>
+    <div class="control-group">
+      <label>乘数</label>
+      <input type="range" id="sB" min="1" max="99" value="45" />
+      <div class="input-group">
+        <button class="step-btn sub" data-target="nB" data-delta="-10">−10</button>
+        <button class="step-btn sub" data-target="nB" data-delta="-1">−1</button>
+        <input type="number" id="nB" min="1" max="99" value="45" />
+        <button class="step-btn" data-target="nB" data-delta="1">+1</button>
+        <button class="step-btn" data-target="nB" data-delta="10">+10</button>
+      </div>
+    </div>
+  </div>
+  <div class="eq-bar" id="eqBar"></div>
+  <div class="card">
+    <div class="card-title">笔算竖式</div>
+    <div class="step-controls">
+      <button type="button" class="btn btn-primary" id="btnNext">下一步</button>
+      <button type="button" class="btn btn-success" id="btnAll">自动演示</button>
+      <button type="button" class="btn btn-rest" id="btnReset">重置</button>
+    </div>
+    <div class="pd-wrap"><div id="pdContent"></div></div>
+    <div class="step-desc" id="stepDesc">点击"下一步"开始竖式演示</div>
+    <div class="verify-box" id="verifyBox"></div>
+  </div>
+</div>
+
+<script>
+var $=function(id){return document.getElementById(id)};
+var sA=$('sA'),sB=$('sB'),nA=$('nA'),nB=$('nB');
+var currentStep=0;var stepData=[];var autoTimer=null;var mulResult=null;
+function buildSteps(a,b){
+  var aStr=String(a),bStr=String(b),aDigits=aStr.split('').map(Number),bDigits=bStr.split('').map(Number),steps=[];
+  for(var i=bDigits.length-1;i>=0;i--){
+    var multiplier=bDigits[i],shift=bDigits.length-1-i,carry=0,prodDigits=[],carrySteps=[];
+    for(var j=aDigits.length-1;j>=0;j--){
+      var prod=aDigits[j]*multiplier+carry,digit=prod%10;carry=Math.floor(prod/10);
+      carrySteps.push({col:j,digit:digit,carry:carry});prodDigits.unshift(digit);
+    }
+    if(carry>0) prodDigits.unshift(carry);
+    var product=parseInt(prodDigits.join(''));
+    steps.push({multiplier:multiplier,shift:shift,product:product,productDigits:prodDigits,carrySteps:carrySteps,multiplierPos:i});
+  }
+  return steps;
+}
+function update(){
+  var a=+sA.value,b=+sB.value;nA.value=a;nB.value=b;
+  var total=a*b;mulResult={a:a,b:b,total:total};mulResult.steps=buildSteps(a,b);
+  $('eqBar').innerHTML=a+' × '+b+' = <span class="hl">'+total+'</span>';
+  currentStep=0;renderStep(a,b);$('stepDesc').innerHTML='点击<strong>下一步</strong>开始竖式演示';
+  renderVerify(a,b,total);stopAuto();
+}
+function getCols(a,b){
+  var aStr=String(a),bStr=String(b),totalStr=String(a*b),maxPartial=0,steps=buildSteps(a,b);
+  for(var i=0;i<steps.length;i++){var w=steps[i].shift+steps[i].productDigits.length;if(w>maxPartial) maxPartial=w;}
+  return Math.max(aStr.length,1+bStr.length,maxPartial,totalStr.length)+1;
+}
+function renderStep(a,b){
+  var C=getCols(a,b),aStr=String(a),bStr=String(b),aOff=C-aStr.length,bOff=C-bStr.length,steps=mulResult.steps;
+  var html='<table class="pd-table">';
+  html+='<tr>';
+  for(var c=0;c<C;c++){
+    var aIdx=c-aOff;
+    if(aIdx>=0&&aIdx<aStr.length){
+      var isHL=currentStep>0&&currentStep<=steps.length&&steps[currentStep-1].carrySteps.some(function(cs){return cs.col===aIdx});
+      var carryHtml='';
+      if(currentStep>0&&currentStep<=steps.length){var cs=steps[currentStep-1].carrySteps.find(function(cs){return cs.col===aIdx});if(cs&&cs.carry>0) carryHtml='<sup class="carry-num">'+cs.carry+'</sup>';}
+      html+='<td'+(isHL?' class="highlight"':'')+'>'+carryHtml+aStr[aIdx]+'</td>';
+    } else html+='<td></td>';
+  }
+  html+='</tr>';
+  html+='<tr>';
+  for(var c=0;c<C;c++){if(c===0){html+='<td class="op-cell">×</td>';continue;}var bIdx=c-bOff;if(bIdx>=0&&bIdx<bStr.length){var isHL=currentStep>0&&currentStep<=steps.length&&bIdx===steps[currentStep-1].multiplierPos;html+='<td'+(isHL?' class="highlight"':'')+'>'+bStr[bIdx]+'</td>';} else html+='<td></td>';}
+  html+='</tr>';
+  html+='<tr class="line-top-row">';for(var c=0;c<C;c++) html+='<td class="line-top"></td>';html+='</tr>';
+  if(currentStep===0){for(var r=0;r<3;r++){html+='<tr>';for(var c=0;c<C;c++) html+='<td></td>';html+='</tr>';}html+='</table>';$('pdContent').innerHTML=html;return;}
+  var stepsToShow=currentStep<=steps.length?currentStep:steps.length;
+  for(var si=0;si<stepsToShow;si++){
+    var st=steps[si],prodStr=String(st.product),prodOff=C-st.shift-prodStr.length,isCurrent=si===currentStep-1;
+    html+='<tr>';
+    for(var c=0;c<C;c++){var pIdx=c-prodOff;if(pIdx>=0&&pIdx<prodStr.length) html+='<td'+(isCurrent?' class="highlight-partial"':'')+'>'+prodStr[pIdx]+'</td>';else html+='<td></td>';}
+    html+='</tr>';
+  }
+  if(currentStep>steps.length){
+    var totalStr=String(a*b),totalOff=C-totalStr.length;
+    html+='<tr class="line-top-row">';for(var c=0;c<C;c++) html+='<td class="line-top"></td>';html+='</tr>';
+    html+='<tr>';for(var c=0;c<C;c++){var rIdx=c-totalOff;if(rIdx>=0&&rIdx<totalStr.length) html+='<td class="highlight-result">'+totalStr[rIdx]+'</td>';else html+='<td></td>';}html+='</tr>';
+  } else {html+='<tr>';for(var c=0;c<C;c++) html+='<td></td>';html+='</tr>';}
+  html+='</table>';$('pdContent').innerHTML=html;updateStepDesc(a,b);
+}
+function updateStepDesc(a,b){
+  var steps=mulResult.steps,html='';
+  if(currentStep===0){html='点击<strong>下一步</strong>开始竖式演示';}
+  else if(currentStep>steps.length){html='<span class="green">竖式完成！</span> '+a+' × '+b+' = '+a*b;}
+  else {
+    var st=steps[currentStep-1],bStr=String(b),posName=(bStr.length-st.multiplierPos===1?'个':bStr.length-st.multiplierPos===2?'十':'百');
+    html='<em>第'+currentStep+'步：</em>用乘数的<b>'+posName+'位</b> <b>'+st.multiplier+'</b> 乘被乘数 <b>'+a+'</b><br>';
+    var carryDescs=[];for(var k=0;k<st.carrySteps.length;k++){var cs=st.carrySteps[k];if(cs.carry>0) carryDescs.push(cs.digit+'写'+cs.digit+'，进'+cs.carry);}
+    var carryDesc=carryDescs.length>0?'（'+carryDescs.join('；')+'）':'';
+    html+=st.multiplier+' × '+a+' = <span class="green">'+st.product+'</span>'+carryDesc+'<br>';
+    html+='错位 <span class="red">'+st.shift+'</span> 位后写入竖式';
+  }
+  $('stepDesc').innerHTML=html;
+}
+function renderVerify(a,b,total){$('verifyBox').innerHTML='<span class="v-num">'+a+'</span><span class="v-op">×</span><span class="v-num">'+b+'</span><span class="v-op">=</span><span class="v-num">'+total+'</span> <span class="v-ok">✓</span>';}
+$('btnNext').onclick=function(){var totalSteps=mulResult.steps.length;if(currentStep<=totalSteps+1){currentStep++;renderStep(+sA.value,+sB.value);}};
+$('btnReset').onclick=function(){currentStep=0;renderStep(+sA.value,+sB.value);stopAuto();$('stepDesc').innerHTML='点击<strong>下一步</strong>开始竖式演示';};
+function stopAuto(){if(autoTimer){clearInterval(autoTimer);autoTimer=null;}$('btnAll').textContent='自动演示';}
+$('btnAll').onclick=function(){
+  if(autoTimer){stopAuto();return;}
+  currentStep=0;renderStep(+sA.value,+sB.value);
+  autoTimer=setInterval(function(){if(currentStep>stepData.length){stopAuto();return;}currentStep++;renderStep(+sA.value,+sB.value);},1500);
+  $('btnAll').textContent='暂停';
+};
+document.querySelectorAll('.step-btn').forEach(function(btn){
+  btn.addEventListener('click',function(){
+    var targetId=this.dataset.target,delta=parseInt(this.dataset.delta),inp=$(targetId),newVal=parseInt(inp.value)+delta,min=parseInt(inp.min),max=parseInt(inp.max);
+    if(newVal<min) newVal=min;if(newVal>max) newVal=max;inp.value=newVal;
+    var sliderId='s'+targetId.substring(1),slider=$(sliderId);if(slider){slider.value=newVal;}update();
+  });
+});
+update();
+sA.addEventListener('input',update);sB.addEventListener('input',update);nA.addEventListener('input',update);nB.addEventListener('input',update);
+</script>
+</body>
+</html>

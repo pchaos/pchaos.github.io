@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <title>三角形的三边关系</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="template.js"></script>
+  <style>
+.svg-wrap { background: var(--card); border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow); text-align: center; }
+.svg-wrap svg { width: 100%; height: auto; display: block; border-radius: 8px; background: var(--bg); box-shadow: inset 0 2px 8px rgba(0,0,0,.04); }
+#triPath { fill: var(--accent-bg); stroke: var(--border); }
+.line-a { stroke: var(--accent); }
+.line-b { stroke: var(--warning); }
+.line-c { stroke: var(--danger); }
+.line-bad { stroke: var(--danger); }
+.tri-label { font-size: 18px; font-weight: 700; fill: var(--text); text-anchor: middle; }
+
+.slider-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.slider-label { display: flex; align-items: center; gap: 6px; font-weight: 600; font-size: 14px; min-width: 56px; }
+.slider-label .dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+.slider-row input[type="range"] { flex: 1; height: 8px; accent-color: var(--accent); cursor: pointer; }
+.slider-row .val-badge { min-width: 40px; text-align: center; padding: 3px 8px; border-radius: var(--radius-full); background: var(--accent-bg); border: 1px solid var(--border); font-weight: 700; font-size: 14px; color: var(--accent); }
+
+.bullet-grid { display: grid; gap: 8px; }
+.bullet-row { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 10px; border: 2px solid var(--border); background: var(--card); transition: all .25s ease; font-size: 14px; font-weight: 600; color: var(--text); }
+.bullet-row.ok { background: var(--success-bg); border-color: var(--success); color: var(--text); }
+.bullet-row.bad { background: #fef2f2; border-color: var(--danger); color: var(--danger); }
+.bullet-row .row-icon { width: 22px; height: 22px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0; }
+.bullet-row.ok .row-icon { background: var(--success); color: #fff; }
+.bullet-row.bad .row-icon { background: var(--danger); color: #fff; }
+.bullet-row .row-status { font-size: 12px; font-weight: 400; color: var(--text-muted); margin-left: auto; }
+
+.result-sum { display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 12px; padding: 10px 24px; border-radius: var(--radius-full); font-size: 16px; font-weight: 700; transition: all .3s ease; }
+.result-sum.good { background: var(--success-bg); border: 2px solid var(--success); color: var(--success); }
+.result-sum.fail { background: #fef2f2; border: 2px solid var(--danger); color: var(--danger); }
+
+.legend { display: flex; justify-content: center; gap: 16px; flex-wrap: wrap; font-size: 12px; color: var(--text-muted); margin-top: 8px; }
+.legend .lg { display: flex; align-items: center; gap: 4px; }
+.legend .lg-swatch { width: 20px; height: 4px; border-radius: 2px; }
+
+.teach-panel { display: none; }
+.teach-box { padding: 14px 16px; border-radius: 10px; font-size: 14px; line-height: 2; margin-top: 8px; background: var(--bg); color: var(--text); }
+.teach-box .ts-title { font-weight: 700; font-size: 15px; margin-bottom: 2px; }
+.teach-box .ts-formula { font-size: 16px; font-weight: 700; text-align: center; padding: 6px 0; }
+
+.know-box { margin-top: 16px; padding: 14px 18px; background: var(--accent-bg); border-radius: var(--radius); border-left: 4px solid var(--accent); font-size: 14px; line-height: 1.8; color: var(--text); }
+.know-box .kb-title { font-weight: 700; font-size: 15px; color: var(--accent); margin-bottom: 4px; }
+  </style>
+</head>
+<body>
+<div class="container">
+<h1>🔺 三角形的三边关系</h1>
+<p class="subtitle">拖动滑块改变三条边的长度，看看它们能不能组成一个三角形？</p>
+
+<div class="toolbar">
+  <button class="btn btn-primary" id="btnRandom">🎲 随机尝试</button>
+  <button class="btn btn-success" id="btnTeach">📖 学一学</button>
+  <button class="btn btn-rest" id="btnReset">↩ 重置</button>
+</div>
+
+<div class="svg-wrap">
+  <svg id="triangleSVG" viewBox="0 0 520 320" preserveAspectRatio="xMidYMid meet" role="img">
+    <path id="triPath" d=""/>
+    <line id="lineAB" class="line-c" x1="0" y1="0" x2="0" y2="0" stroke-width="3" stroke-linecap="round"/>
+    <line id="lineBC" class="line-a" x1="0" y1="0" x2="0" y2="0" stroke-width="3" stroke-linecap="round"/>
+    <line id="lineAC" class="line-b" x1="0" y1="0" x2="0" y2="0" stroke-width="3" stroke-linecap="round"/>
+    <text id="labelA" class="tri-label" x="0" y="0">A</text>
+    <text id="labelB" class="tri-label" x="0" y="0">B</text>
+    <text id="labelC" class="tri-label" x="0" y="0">C</text>
+  </svg>
+  <div class="legend">
+    <span class="lg"><span class="lg-swatch" style="background:var(--danger);"></span> AB = c</span>
+    <span class="lg"><span class="lg-swatch" style="background:var(--accent);"></span> BC = a</span>
+    <span class="lg"><span class="lg-swatch" style="background:var(--warning);"></span> AC = b</span>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-title">📏 调节三条边的长度</div>
+  <div class="slider-row">
+    <div class="slider-label"><span class="dot" style="background:var(--accent);"></span> a</div>
+    <input type="range" id="rangeA" min="1" max="200" value="60" step="1">
+    <span class="val-badge" id="valA">60</span>
+  </div>
+  <div class="slider-row">
+    <div class="slider-label"><span class="dot" style="background:var(--warning);"></span> b</div>
+    <input type="range" id="rangeB" min="1" max="200" value="70" step="1">
+    <span class="val-badge" id="valB">70</span>
+  </div>
+  <div class="slider-row">
+    <div class="slider-label"><span class="dot" style="background:var(--danger);"></span> c</div>
+    <input type="range" id="rangeC" min="1" max="300" value="100" step="1">
+    <span class="val-badge" id="valC">100</span>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-title">📐 三角形不等式</div>
+  <div class="bullet-grid">
+    <div class="bullet-row ok" id="ineq1"><span class="row-icon">✓</span><span>a + b &gt; c</span><span class="row-status" id="status1">60 + 70 &gt; 100 ✓</span></div>
+    <div class="bullet-row ok" id="ineq2"><span class="row-icon">✓</span><span>a + c &gt; b</span><span class="row-status" id="status2">60 + 100 &gt; 70 ✓</span></div>
+    <div class="bullet-row ok" id="ineq3"><span class="row-icon">✓</span><span>b + c &gt; a</span><span class="row-status" id="status3">70 + 100 &gt; 60 ✓</span></div>
+  </div>
+  <div class="result-sum good" id="sumBar"><span id="resultIcon">✅</span><span id="resultText">可以组成三角形！</span></div>
+</div>
+
+<div class="card" style="background:var(--bg);text-align:center;font-size:14px;line-height:2;color:var(--text-muted);" id="stepDesc">
+  💡 三角形中，<b style="color:var(--accent);">任意两边之和大于第三边</b>。<br>
+  <span style="font-size:13px;">调节上面的滑块，观察哪条边太长了、哪条边太短了。</span>
+</div>
+
+<div class="card teach-panel" id="teachPanel">
+  <div class="card-title">📖 一步一步学——为什么三角形有"三边关系"？</div>
+  <div class="teach-box" id="teachDesc">
+    <div class="ts-title"><span style="display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:var(--text-muted);color:#fff;font-size:12px;margin-right:6px;">1</span>准备开始</div>
+    <div class="ts-desc">三角形是由三条线段首尾相连围成的封闭图形。但三根任意长度的线都能围起来吗？我们来试试看。</div>
+  </div>
+  <div style="display:flex;justify-content:center;gap:10px;margin-top:10px;">
+    <button class="btn btn-rest" id="teachPrev">← 上一步</button>
+    <button class="btn btn-primary" id="teachNext">下一步 →</button>
+  </div>
+</div>
+
+<div class="know-box">
+  <div class="kb-title">🌟 你知道吗？</div>
+  <b>三角形三边关系定理</b>：三角形任意两边之和大于第三边。<br>
+  如果 a + b ≤ c 或者 a + c ≤ b 或者 b + c ≤ a，那这三条线段就 <b style="color:var(--danger);">不能</b> 围成三角形！
+</div>
+</div>
+
+<script>
+var aI = document.getElementById('rangeA'), bI = document.getElementById('rangeB'), cI = document.getElementById('rangeC');
+var vA = document.getElementById('valA'), vB = document.getElementById('valB'), vC = document.getElementById('valC');
+var tp = document.getElementById('triPath'), lAB = document.getElementById('lineAB'), lBC = document.getElementById('lineBC'), lAC = document.getElementById('lineAC');
+var lA = document.getElementById('labelA'), lB = document.getElementById('labelB'), lC = document.getElementById('labelC');
+var i1 = document.getElementById('ineq1'), i2 = document.getElementById('ineq2'), i3 = document.getElementById('ineq3');
+var s1 = document.getElementById('status1'), s2 = document.getElementById('status2'), s3 = document.getElementById('status3');
+var sb = document.getElementById('sumBar'), ri = document.getElementById('resultIcon'), rt = document.getElementById('resultText');
+var sd = document.getElementById('stepDesc');
+var W = 520, H = 320, M = 40, BY = 260, AX = M, AY = BY;
+
+function geo(a,b,c) {
+  var ok = (a+b>c)&&(a+c>b)&&(b+c>a);
+  if (!ok) return {ok:false,Ax:AX,Ay:AY,Bx:AX,By:AY,Cx:AX,Cy:AY,d:''};
+  var s = Math.min((W-2*M)/c,(H-60)/Math.max(a,b),5.5);
+  var cp=c*s, xc=(c*c+b*b-a*a)/(2*c), xp=xc*s, yp=Math.sqrt(Math.max(0,b*b-xc*xc))*s;
+  return {ok:true,Ax:AX,Ay:AY,Bx:AX+cp,By:AY,Cx:AX+xp,Cy:AY-yp,d:'M '+AX+' '+AY+' L '+(AX+cp)+' '+AY+' L '+(AX+xp)+' '+(AY-yp)+' Z'};
+}
+
+function upd() {
+  var a=parseInt(aI.value),b=parseInt(bI.value),c=parseInt(cI.value);
+  vA.textContent=a;vB.textContent=b;vC.textContent=c;
+  var g=geo(a,b,c), o1=a+b>c, o2=a+c>b, o3=b+c>a, all=o1&&o2&&o3;
+
+  i1.className='bullet-row'+(o1?' ok':' bad');i2.className='bullet-row'+(o2?' ok':' bad');i3.className='bullet-row'+(o3?' ok':' bad');
+  i1.querySelector('.row-icon').textContent=o1?'✓':'✗';i2.querySelector('.row-icon').textContent=o2?'✓':'✗';i3.querySelector('.row-icon').textContent=o3?'✓':'✗';
+  s1.textContent=a+' + '+b+' > '+c+(o1?' ✓':' ✗');s2.textContent=a+' + '+c+' > '+b+(o2?' ✓':' ✗');s3.textContent=b+' + '+c+' > '+a+(o3?' ✓':' ✗');
+  if (all) { sb.className='result-sum good'; ri.textContent='✅'; rt.textContent='可以组成三角形！🎉'; }
+  else { sb.className='result-sum fail'; ri.textContent='❌'; var r=[]; if(!o1)r.push('a+b≤c');if(!o2)r.push('a+c≤b');if(!o3)r.push('b+c≤a'); rt.textContent='不能组成三角形 😅 因为：'+r.join('，'); }
+
+  if (!all) { tp.setAttribute('d',''); [lAB,lBC,lAC,lA,lB,lC].forEach(function(el){el.setAttribute('x1',0);el.setAttribute('y1',0);el.setAttribute('x2',0);el.setAttribute('y2',0);}); return; }
+
+  tp.setAttribute('d',g.d);
+  lAB.setAttribute('x1',g.Ax);lAB.setAttribute('y1',g.Ay);lAB.setAttribute('x2',g.Bx);lAB.setAttribute('y2',g.By);
+  lBC.setAttribute('x1',g.Bx);lBC.setAttribute('y1',g.By);lBC.setAttribute('x2',g.Cx);lBC.setAttribute('y2',g.Cy);
+  lAC.setAttribute('x1',g.Ax);lAC.setAttribute('y1',g.Ay);lAC.setAttribute('x2',g.Cx);lAC.setAttribute('y2',g.Cy);
+  lA.setAttribute('x',g.Ax);lA.setAttribute('y',g.Ay-12);lB.setAttribute('x',g.Bx);lB.setAttribute('y',g.By-12);lC.setAttribute('x',g.Cx);lC.setAttribute('y',g.Cy-12);
+  lAB.className = o1?'line-c':'line-bad'; lAC.className = o2?'line-b':'line-bad'; lBC.className = o3?'line-a':'line-bad';
+
+  var len=tp.getTotalLength(); tp.style.strokeDasharray=len; tp.style.strokeDashoffset=len; tp.style.transition='stroke-dashoffset 0.5s ease-out';
+  requestAnimationFrame(function(){ tp.style.strokeDashoffset=0; });
+}
+
+function rand() {
+  var a,b,c,att=0; do{a=Math.floor(Math.random()*120)+20;b=Math.floor(Math.random()*120)+20;c=Math.floor(Math.random()*180)+20;att++;}while((a+b<=c||a+c<=b||b+c<=a)&&att<30);
+  if(a+b<=c||a+c<=b||b+c<=a){a=60;b=70;c=100;}
+  if(Math.random()<0.3){var m=Math.floor(Math.random()*3);if(m===0){a=30;b=30;c=200;}else if(m===1){a=180;b=20;c=50;}else{a=20;b=180;c=50;}}
+  aI.value=Math.min(a,parseInt(aI.max));bI.value=Math.min(b,parseInt(bI.max));cI.value=Math.min(c,parseInt(cI.max));upd();
+  sd.innerHTML='🎲 随机尝试！'+(a+b>c&&a+c>b&&b+c>a?'这次刚好能组成三角形！<br><span style="font-size:13px;">再试试其他数值，看看有什么规律？</span>':'注意看：<b style="color:var(--danger);">有不等式不成立</b>，所以围不成三角形。<br><span style="font-size:13px;">试试把最长的边缩短一点？</span>');
+}
+
+var ts=0,TS=5,T=[
+  {t:'什么是三角形？',h:'三角形是由 <b style="color:var(--accent);">三条线段</b> 首尾相连围成的封闭图形。<br>但并不是随便三条线都能围起来——它们必须满足一个重要的条件！'},
+  {t:'提出问题 🤔',h:'假设三条边的长度分别是 a、b、c。<br>如果 a=30, b=30, c=200，你觉得能组成三角形吗？<br>试试看！拖动滑块到这些数值。'},
+  {t:'为什么不能？',h:'因为 <b style="color:var(--danger);">a + b ≤ c</b>！<br>两条短的边加起来还没有长边长，<b>围不起来！</b>'},
+  {t:'关键定理 🎯',h:'<div class="ts-formula" style="color:var(--success);">三角形任意两边之和 <u>大于</u> 第三边</div>需要同时满足三个条件：<br>① a + b > c &nbsp; ② a + c > b &nbsp; ③ b + c > a'},
+  {t:'来试试吧！',h:'回到滑块，试着调节三条边的长度。<br>看看哪些能组成三角形，哪些不能？<br>💡 <b>小技巧</b>：最长边不能超过另外两条边的总和！'}
+];
+
+function uT(){var el=document.getElementById('teachDesc'),d=T[ts];el.innerHTML='<div class="ts-title"><span style="display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:'+(ts===TS-1?'var(--success)':'var(--text-muted)')+';color:#fff;font-size:12px;margin-right:6px;">'+(ts+1)+'</span>'+d.t+'</div><div class="ts-desc">'+d.h+'</div>';document.getElementById('teachPrev').style.visibility=ts===0?'hidden':'visible';document.getElementById('teachNext').textContent=ts===TS-1?'✓ 完成':'下一步 →';}
+
+aI.addEventListener('input',upd);bI.addEventListener('input',upd);cI.addEventListener('input',upd);
+document.getElementById('btnRandom').addEventListener('click',rand);
+document.getElementById('btnReset').addEventListener('click',function(){aI.value=60;bI.value=70;cI.value=100;upd();sd.innerHTML='💡 三角形中，<b style="color:var(--accent);">任意两边之和大于第三边</b>。<br><span style="font-size:13px;">调节滑块，观察哪条边太长了、哪条边太短了。</span>';document.getElementById('teachPanel').style.display='none';});
+document.getElementById('btnTeach').addEventListener('click',function(){var p=document.getElementById('teachPanel');if(p.style.display==='none'||p.style.display===''){p.style.display='block';ts=0;uT();sd.innerHTML='📖 <b>学习模式</b>：一步一步理解三角形的三边关系。<br><span style="font-size:13px;">点击"下一步"逐步学习，拖动滑块动手试试！</span>';aI.value=30;bI.value=30;cI.value=200;upd();}else{p.style.display='none';}});
+document.getElementById('teachPrev').addEventListener('click',function(){if(ts>0){ts--;uT();}});
+document.getElementById('teachNext').addEventListener('click',function(){if(ts<TS-1){ts++;uT();if(ts===1){aI.value=30;bI.value=30;cI.value=200;upd();}else if(ts===3){aI.value=60;bI.value=70;cI.value=100;upd();}}else{aI.value=60;bI.value=70;cI.value=100;upd();sd.innerHTML='🎉 <b>学完了！</b> 记住：<b style="color:var(--accent);">两边之和大于第三边</b>。<br><span style="font-size:13px;">继续用滑块探索吧！</span>';}});
+upd();
+</script>
+</body>
+</html>

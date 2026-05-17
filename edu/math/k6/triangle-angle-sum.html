@@ -1,11 +1,5 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-  <title>三角形内角和</title>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <script src="template.js"></script>
-  <style>
+<!-- title: 三角形内角和 -->
+<style>
 /* ====== 页面主题：清新几何 · 儿童友好 ====== */
 :root {
   --geo-blue: #4f8ef7;
@@ -380,10 +374,8 @@ h1 {
   .sum-bar .sum-val { font-size: 18px; }
   .tear-step { min-width: 80px; padding: 8px; }
 }
-  </style>
-</head>
-<body>
-<div class="container">
+</style>
+
 <!-- ====== 标题区 ====== -->
 <h1>📐 三角形内角和</h1>
 <p class="subtitle">拖动三角形的三个顶点，看看三个角加起来是多少？</p>
@@ -475,7 +467,6 @@ h1 {
     <button class="btn" id="proofNext" style="background:var(--geo-blue);color:#fff;">下一步 →</button>
   </div>
 </div>
-</div>
 
 <script>
 // ============================================================
@@ -517,6 +508,18 @@ function angleBetween(p1, vertex, p2) {
   var cos = dot / (mag1 * mag2);
   cos = Math.max(-1, Math.min(1, cos));
   return Math.round(Math.acos(cos) * 180 / Math.PI);
+}
+
+// ---- 检查三点是否共线（退化三角形） ----
+function isCollinear(p1, p2, p3) {
+  // 用叉积判断：(x2-x1)*(y3-y1) - (x3-x1)*(y2-y1)
+  var cross = (p2.x - p1.x) * (p3.y - p1.y) - (p3.x - p1.x) * (p2.y - p1.y);
+  return Math.abs(cross) < 0.5;  // 允许浮点误差 0.5px
+}
+
+// ---- 计算三角形面积（绝对值） ----
+function triangleArea(p1, p2, p3) {
+  return Math.abs((p2.x - p1.x) * (p3.y - p1.y) - (p3.x - p1.x) * (p2.y - p1.y)) / 2;
 }
 
 // ---- 计算角度 ----
@@ -833,14 +836,27 @@ canvas.addEventListener('mousemove', function(e) {
     return;
   }
   var pos = getPos(e);
+  var oldX = pts[dragIdx].x;
+  var oldY = pts[dragIdx].y;
   pts[dragIdx].x = pos.x;
   pts[dragIdx].y = pos.y;
   clampPt(pts[dragIdx]);
+  // 检查拖动后是否退化：三点共线或面积太小
+  if (isCollinear(pts[0], pts[1], pts[2]) || triangleArea(pts[0], pts[1], pts[2]) < 50) {
+    pts[dragIdx].x = oldX;
+    pts[dragIdx].y = oldY;
+    canvas.style.cursor = 'not-allowed';
+    setTimeout(function() { canvas.style.cursor = 'grab'; }, 150);
+    update();
+    return;
+  }
   update();
 });
 
 canvas.addEventListener('mouseup', function() { dragIdx = -1; });
 canvas.addEventListener('mouseleave', function() { dragIdx = -1; });
+
+canvas.addEventListener('touchend', function() { dragIdx = -1; });
 
 // 触摸事件
 canvas.addEventListener('touchstart', function(e) {
@@ -853,13 +869,20 @@ canvas.addEventListener('touchmove', function(e) {
   if (dragIdx < 0) return;
   e.preventDefault();
   var pos = getPos(e);
+  var oldX = pts[dragIdx].x;
+  var oldY = pts[dragIdx].y;
   pts[dragIdx].x = pos.x;
   pts[dragIdx].y = pos.y;
   clampPt(pts[dragIdx]);
+  // 检查拖动后是否退化
+  if (isCollinear(pts[0], pts[1], pts[2]) || triangleArea(pts[0], pts[1], pts[2]) < 50) {
+    pts[dragIdx].x = oldX;
+    pts[dragIdx].y = oldY;
+    update();
+    return;
+  }
   update();
 }, { passive: false });
-
-canvas.addEventListener('touchend', function() { dragIdx = -1; });
 
 // ---- 按钮事件 ----
 document.getElementById('btnRandom').addEventListener('click', function() {
@@ -1228,5 +1251,3 @@ document.getElementById('btnReset').addEventListener('click', function() {
 // ---- 初始化 ----
 update();
 </script>
-</body>
-</html>

@@ -1,0 +1,406 @@
+/* ====================================
+   数学可视化页面 — 共享模板样式
+   ==================================== */
+
+/* ---- 设计变量 ---- */
+:root, [data-theme="default"] {
+  --accent: #3b82f6;
+  --accent-dark: #2563eb;
+  --accent-light: #dbeafe;
+  --accent-bg: #eaf2ff;
+  --bg: #f5f7fa;
+  --card: #ffffff;
+  --text: #1e293b;
+  --text-muted: #64748b;
+  --text-sub: #7f8c8d;
+  --border: #e2e8f0;
+  --border-light: #bdc3c7;
+  --success: #27ae60;
+  --success-bg: #d1fae5;
+  --danger: #e74c3c;
+  --warning: #e67e22;
+  --highlight-yellow: #fef3c7;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,.06);
+  --shadow: 0 2px 8px rgba(0,0,0,.08);
+  --shadow-lg: 0 6px 20px rgba(0,0,0,.10);
+  --radius: 12px;
+  --radius-sm: 8px;
+  --radius-full: 999px;
+  --font: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+  --font-mono: "Courier New", monospace;
+}
+
+/* ---- 主题变体 ---- */
+[data-theme="green"] {
+  --accent: #2ecc71; --accent-dark: #27ae60; --accent-light: #d1fae5; --accent-bg: #ecfdf5;
+  --bg: #f0fbf6; --text: #1f2937; --text-muted: #6b7280; --text-sub: #7f8c8d;
+  --success: #059669; --success-bg: #d1fae5; --danger: #dc2626; --warning: #d97706;
+  --border: #d1fae5; --border-light: #a7f3d0; --highlight-yellow: #fef3c7;
+}
+[data-theme="purple"] {
+  --accent: #8b5cf6; --accent-dark: #7c3aed; --accent-light: #ede9fe; --accent-bg: #f5f3ff;
+  --bg: #f6f0fb;
+  --card: #ffffff; --border: #e5e7eb; --border-light: #c4b5fd;
+  --success: #059669; --success-bg: #d1fae5; --danger: #dc2626; --warning: #d97706;
+  --highlight-yellow: #fef3c7;
+}
+[data-theme="orange"] {
+  --accent: #f97316; --accent-dark: #ea580c; --accent-light: #ffedd5; --accent-bg: #fff7ed;
+  --bg: #fff7f2;
+  --border: #fed7aa; --border-light: #fdba74;
+  --success: #059669; --success-bg: #d1fae5; --danger: #dc2626; --warning: #d97706;
+  --highlight-yellow: #fef3c7;
+}
+[data-theme="dark"] {
+  --accent: #60a5fa; --accent-dark: #3b82f6; --accent-light: #1e3a5f; --accent-bg: #1e293b;
+  --bg: #0f172a; --card: #1e293b; --text: #e2e8f0; --text-muted: #94a3b8; --text-sub: #94a3b8;
+  --success: #34d399; --success-bg: #064e3b; --danger: #f87171; --warning: #fbbf24;
+  --border: #334155; --border-light: #475569; --highlight-yellow: #78350f;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,.3);
+  --shadow: 0 2px 8px rgba(0,0,0,.4);
+  --shadow-lg: 0 6px 20px rgba(0,0,0,.5);
+}
+
+/* ---- 主题切换器 ---- */
+.theme-picker {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  z-index: 100;
+  display: flex;
+  gap: 4px;
+  background: var(--card);
+  padding: 6px 10px;
+  border-radius: var(--radius-full);
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border);
+}
+.theme-picker button {
+  width: 22px; height: 22px;
+  border: 2px solid transparent;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all .15s;
+  outline: none;
+}
+.theme-picker button:hover { transform: scale(1.2); }
+.theme-picker button.active { border-color: var(--text); }
+
+/* ---- 全局重置 ---- */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+}
+
+/* ---- 容器 ---- */
+.container {
+  max-width: 960px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 24px 16px;
+}
+
+/* ---- 标题 ---- */
+h1 {
+  text-align: center;
+  font-size: 26px;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 6px;
+}
+.subtitle {
+  text-align: center;
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-bottom: 20px;
+}
+
+/* ---- 卡片 ---- */
+.card {
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-bottom: 16px;
+  box-shadow: var(--shadow);
+}
+.card-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.card-badge {
+  display: inline-block;
+  background: var(--accent);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 10px;
+  border-radius: var(--radius-full);
+  vertical-align: middle;
+}
+
+/* ---- 控制区 ---- */
+.toolbar {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.control-group {
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 14px 20px;
+  box-shadow: var(--shadow-sm);
+  text-align: center;
+  flex: 1;
+  min-width: 260px;
+  max-width: 480px;
+}
+.control-group label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+.control-group input[type="range"] {
+  width: 100%;
+  height: 8px;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+.input-group {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 6px;
+}
+.input-group input[type="number"] {
+  width: 70px;
+  font-size: 16px;
+  text-align: center;
+  border: 2px solid var(--border-light);
+  border-radius: 6px;
+  padding: 4px;
+  font-family: var(--font-mono);
+}
+
+/* ---- 步进按钮 ---- */
+.step-btn {
+  width: 34px;
+  height: 34px;
+  border: none;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background .15s;
+  touch-action: manipulation;
+  user-select: none;
+}
+.step-btn:active { background: var(--accent-dark); }
+.step-btn.sub { background: #95a5a6; }
+.step-btn.sub:active { background: #7f8c8d; }
+
+/* ---- 等式条 ---- */
+.eq-bar {
+  text-align: center;
+  font-size: 22px;
+  font-weight: 700;
+  padding: 12px;
+  background: var(--card);
+  border-radius: var(--radius);
+  margin-bottom: 16px;
+  box-shadow: var(--shadow-sm);
+}
+.eq-bar .hl { color: var(--accent); }
+.eq-bar .rem { color: var(--danger); font-size: 16px; }
+
+/* ---- 步骤导航 ---- */
+.step-controls {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+/* ---- 通用按钮 ---- */
+.btn {
+  padding: 8px 20px;
+  border: none;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all .2s;
+  font-family: var(--font);
+}
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:hover { background: var(--accent-dark); }
+.btn-success { background: var(--success); color: #fff; }
+.btn-rest { background: #ecf0f1; color: var(--text); }
+
+/* ---- 步骤描述 ---- */
+.step-desc {
+  text-align: center;
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-top: 12px;
+  line-height: 1.8;
+  background: var(--card);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+}
+.step-desc em { color: var(--warning); font-style: normal; font-weight: 700; }
+.step-desc b { color: var(--accent); font-weight: 700; }
+.step-desc .green { color: var(--success); font-weight: 700; }
+.step-desc .red { color: var(--danger); font-weight: 700; }
+
+/* ---- 验算框 ---- */
+.verify-box {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  font-size: 16px;
+  font-weight: 600;
+  margin: 10px 0;
+}
+.verify-box .v-num {
+  background: #ebf5fb;
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  color: var(--accent);
+}
+.verify-box .v-op { color: #7f8c8d; }
+.verify-box .v-ok { color: var(--success); font-weight: 700; font-size: 18px; }
+
+/* ---- 竖式表格 ---- */
+.pd-wrap {
+  overflow-x: auto;
+  display: flex;
+  justify-content: center;
+  margin: 16px 0;
+}
+.pd-table { border-collapse: collapse; font-family: var(--font-mono); }
+.pd-table td {
+  text-align: center;
+  padding: 0 4px;
+  min-width: 32px;
+  font-size: 2.4em;
+  font-weight: 700;
+  height: 1.3em;
+  vertical-align: middle;
+  line-height: 1.3;
+}
+.pd-table tr.line-top-row td { padding: 0!important; height: 0!important; line-height: 0; font-size: 0; border: none!important; }
+.pd-table tr.line-top-row td.line-top { height: 3px!important; background: var(--text); border: none!important; }
+.pd-table .line-top { border-top: 3px solid var(--text); }
+.pd-table .line-mid { border-top: 2px solid #555; }
+.pd-table .op-cell { font-weight: 300; color: var(--text); }
+.pd-table .highlight { background: var(--highlight-yellow); }
+.pd-table .highlight-carry { background: var(--accent-light); color: var(--accent-dark); }
+.pd-table .highlight-partial { background: #fce7f3; }
+.pd-table .highlight-result { background: var(--success-bg); }
+.pd-table .dim { opacity: 0.3; }
+
+/* ---- 自适应网格（梯形/卡片排列） ---- */
+.grid-fill {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.grid-fill .row {
+  display: flex;
+  justify-content: flex-start;
+  padding-left: 12px;
+  gap: 8px;
+  padding: 8px 0 8px 12px;
+  border-radius: 10px;
+}
+.grid-fill .row:nth-child(odd) { background: rgba(255,255,255,.7); }
+.grid-fill .row:nth-child(even) { background: rgba(249,250,251,.8); }
+.grid-fill .cell {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 8px;
+  width: 88px;
+  min-width: 0;
+  height: 40px;
+  border-radius: 8px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  font-size: clamp(13px, 2vw, 15px);
+  cursor: default;
+  user-select: none;
+  transition: all .15s ease;
+  white-space: nowrap;
+}
+.grid-fill .cell:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow);
+}
+.grid-fill .cell.hl {
+  background: var(--accent-bg);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(59,130,246,.2);
+}
+.grid-fill .cell.clickable { cursor: pointer; }
+.grid-fill .cell .blank-revealed { color: #059669; font-weight: 600; }
+
+@media (max-width: 640px) {
+  .grid-fill .row { padding: 6px 0; gap: 5px; }
+  .grid-fill .cell { width: 64px; height: 34px; font-size: 12px; padding: 4px 4px; border-radius: 6px; }
+}
+
+/* ---- 选项卡 ---- */
+.tabs {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+.tab {
+  padding: 10px 22px;
+  border: 2px solid var(--border-light);
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  font-size: 14px;
+  transition: all .2s;
+  background: var(--card);
+  font-family: var(--font);
+}
+.tab:hover { border-color: var(--accent); }
+.tab.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+/* ---- 响应式 ---- */
+@media (max-width: 640px) {
+  .container { padding: 16px 10px; }
+  h1 { font-size: 22px; }
+  .control-group { min-width: 200px; padding: 10px 14px; }
+  .eq-bar { font-size: 18px; }
+  .pd-table td { font-size: 1.2em; min-width: 26px; }
+}

@@ -1,50 +1,91 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>初中数学函数学习</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-            line-height: 1.6;
-        }
-        h1 {
-            color: #333;
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        .file-list {
-            list-style: none;
-            padding: 0;
-        }
-        .file-list li {
-            margin: 10px 0;
-        }
-        .file-list a {
-            display: block;
-            padding: 15px;
-            background-color: #f5f5f5;
-            border-radius: 5px;
-            text-decoration: none;
-            color: #333;
-            transition: background-color 0.3s;
-        }
-        .file-list a:hover {
-            background-color: #e0e0e0;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>初中数学函数学习</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans SC', sans-serif;
+      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+    h1 {
+      font-size: 2.5rem;
+      color: #2c3e50;
+      margin-bottom: 0.5rem;
+    }
+    .subtitle {
+      color: #7f8c8d;
+      margin-bottom: 2.5rem;
+      font-size: 1.1rem;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 1.5rem;
+      max-width: 800px;
+      width: 100%;
+    }
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 1.5rem;
+      text-decoration: none;
+      color: #2c3e50;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.07);
+      transition: transform 0.2s, box-shadow 0.2s;
+      text-align: center;
+    }
+    .card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+    }
+    .card .icon {
+      font-size: 2.5rem;
+      margin-bottom: 0.75rem;
+    }
+    .card .name {
+      font-size: 1.2rem;
+      font-weight: 600;
+    }
+    .card .desc {
+      font-size: 0.85rem;
+      color: #95a5a6;
+      margin-top: 0.3rem;
+    }
+  </style>
 </head>
 <body>
-    <h1>初中数学函数学习</h1>
-    
-    <ul class="file-list">
-        <li><a href="linear-function.html">一次函数</a></li>
-        <li><a href="quadratic-function.html">二次函数</a></li>
-        <li><a href="cubic-function.html">三次函数</a></li>
-    </ul>
+  <h1>📈 初中数学函数</h1>
+  <p class="subtitle">函数概念互动学习</p>
+
+  <div class="grid">
+    <a class="card" href="linear-function.html">
+      <div class="icon">📈</div>
+      <div class="name">一次函数</div>
+      <div class="desc">直线图像</div>
+    </a>
+    <a class="card" href="quadratic-function.html">
+      <div class="icon">🪀</div>
+      <div class="name">二次函数</div>
+      <div class="desc">抛物线探索</div>
+    </a>
+    <a class="card" href="cubic-function.html">
+      <div class="icon">🌀</div>
+      <div class="name">三次函数</div>
+      <div class="desc">曲线变化</div>
+    </a>
+  </div>
 </body>
 </html>

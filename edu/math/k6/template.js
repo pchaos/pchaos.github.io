@@ -7,7 +7,15 @@
   // 只在浏览器环境运行
   if (typeof document === 'undefined') return;
 
-  var TEMPLATE_CSS = 'template.css';
+  // 根据脚本自身的 src 推导 CSS 路径，支持子目录引用
+  var scriptTag = document.querySelector('script[src*="template.js"]');
+  var baseDir = '';
+  if (scriptTag) {
+    var src = scriptTag.getAttribute('src');
+    var lastSlash = src.lastIndexOf('/');
+    if (lastSlash >= 0) baseDir = src.substring(0, lastSlash + 1);
+  }
+  var TEMPLATE_CSS = baseDir + 'template.css';
 
   // ---- 1. 注入 meta 标签 ----
   function ensureMeta(name, content) {

@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>数学可视化学习平台 — 总目录</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+                   "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+      min-height: 100vh;
+      color: #e0e0e0;
+    }
+
+    header {
+      text-align: center;
+      padding: 56px 20px 32px;
+    }
+
+    header h1 {
+      font-size: 2.6rem;
+      font-weight: 700;
+      background: linear-gradient(90deg, #60a5fa, #a78bfa, #f472b6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 10px;
+    }
+
+    header p {
+      font-size: 1.1rem;
+      color: #9ca3af;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 20px;
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 0 24px 60px;
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 14px;
+      padding: 28px 24px;
+      text-decoration: none;
+      color: inherit;
+      transition: transform 0.25s, box-shadow 0.25s, border-color 0.25s;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 12px;
+    }
+
+    .card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 10px 28px rgba(139, 92, 246, 0.18);
+      border-color: rgba(139, 92, 246, 0.45);
+    }
+
+    .card .icon {
+      font-size: 2.4rem;
+    }
+
+    .card .name {
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: #f0f0f0;
+    }
+
+    .card .desc {
+      font-size: 0.88rem;
+      color: #9ca3af;
+    }
+
+    footer {
+      text-align: center;
+      padding: 0 20px 40px;
+      color: #6b7280;
+      font-size: 0.85rem;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>数学可视化学习平台</h1>
+    <p>选择学科方向开始学习</p>
+  </header>
+
+  <div class="grid">
+    <a class="card" href="math/k6/index.html">
+      <span class="icon">📐</span>
+      <span class="name">K6 小学数学</span>
+      <span class="desc">乘法 · 除法 · 分数 · 几何</span>
+    </a>
+
+    <a class="card" href="math/middle-school/index.html">
+      <span class="icon">📈</span>
+      <span class="name">初中数学函数</span>
+      <span class="desc">一次函数 · 二次函数 · 三次函数</span>
+    </a>
+
+    <a class="card" href="physics/k9/index.html">
+      <span class="icon">⚡</span>
+      <span class="name">初中物理</span>
+      <span class="desc">功和机械能 · 更多章节更新中</span>
+    </a>
+  </div>
+
+  <footer>
+    <p>数学可视化学习平台 &copy; 2026 — 持续更新中</p>
+  </footer>
+</body>
+</html>

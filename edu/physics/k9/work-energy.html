@@ -1,0 +1,1522 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>功和机械能 — 初中物理可视化</title>
+  <link rel="stylesheet" href="template.css" />
+  <style>
+    /* ====== 页面专用样式 ====== */
+
+    /* 标签页 */
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* 主布局 */
+    .viz-row {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .canvas-wrap {
+      flex: 1 1 580px;
+      min-width: 300px;
+      position: relative;
+      text-align: center;
+    }
+    .canvas-wrap canvas {
+      width: 100%;
+      height: auto;
+      border-radius: 12px;
+      background: linear-gradient(180deg, #f8faff 0%, #eef4ff 100%);
+      box-shadow: inset 0 2px 8px rgba(0,0,0,.04);
+      cursor: pointer;
+    }
+    [data-theme="dark"] .canvas-wrap canvas {
+      background: linear-gradient(180deg, #1a2332 0%, #0f172a 100%);
+    }
+
+    /* 能量柱面板 */
+    .energy-panel {
+      flex: 0 0 180px;
+      min-width: 160px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      justify-content: center;
+    }
+    .energy-bar-item {
+      background: var(--card);
+      border-radius: 10px;
+      padding: 10px 14px;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border);
+    }
+    .energy-bar-item .bar-label {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+    .energy-bar-item .bar-track {
+      height: 18px;
+      background: var(--bg);
+      border-radius: 999px;
+      overflow: hidden;
+      position: relative;
+    }
+    .energy-bar-item .bar-fill {
+      height: 100%;
+      border-radius: 999px;
+      transition: width 0.3s ease;
+      position: relative;
+    }
+    .energy-bar-item .bar-fill.kinetic {
+      background: linear-gradient(90deg, #3b82f6, #60a5fa);
+    }
+    .energy-bar-item .bar-fill.potential {
+      background: linear-gradient(90deg, #10b981, #34d399);
+    }
+    .energy-bar-item .bar-fill.total {
+      background: linear-gradient(90deg, #f59e0b, #fbbf24);
+    }
+    .energy-bar-item .bar-value {
+      font-size: 15px;
+      font-weight: 700;
+      font-family: var(--font-mono);
+      margin-top: 3px;
+      text-align: right;
+    }
+    .energy-bar-item .bar-value.kinetic { color: #3b82f6; }
+    .energy-bar-item .bar-value.potential { color: #10b981; }
+    .energy-bar-item .bar-value.total { color: #f59e0b; }
+
+    /* 公式显示区 */
+    .formula-row {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin: 12px 0;
+    }
+    .formula-item {
+      background: var(--card);
+      border-radius: var(--radius-sm);
+      padding: 8px 16px;
+      font-size: 14px;
+      font-weight: 600;
+      border: 1px solid var(--border);
+      font-family: var(--font-mono);
+    }
+    .formula-item .label {
+      font-weight: 400;
+      color: var(--text-muted);
+      font-family: var(--font);
+    }
+
+    /* 数值显示行 */
+    .value-row {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin: 8px 0;
+    }
+    .value-chip {
+      background: var(--accent-bg);
+      border-radius: var(--radius-full);
+      padding: 4px 14px;
+      font-size: 13px;
+      font-weight: 600;
+      border: 1px solid var(--border);
+    }
+    .value-chip .num { font-family: var(--font-mono); }
+
+    /* 功标签页专用 */
+    .work-canvas-wrap {
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    .work-canvas-wrap canvas {
+      width: 100%;
+      height: auto;
+      border-radius: 12px;
+      background: #f8faff;
+      box-shadow: inset 0 2px 8px rgba(0,0,0,.04);
+    }
+    [data-theme="dark"] .work-canvas-wrap canvas {
+      background: #1a2332;
+    }
+
+    /* 知识卡片 */
+    .k-card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 14px;
+    }
+    .k-card {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 20px;
+      box-shadow: var(--shadow-sm);
+      border-left: 4px solid var(--accent);
+      transition: transform .2s;
+    }
+    .k-card:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+    .k-card:nth-child(2) { border-left-color: #10b981; }
+    .k-card:nth-child(3) { border-left-color: #f59e0b; }
+    .k-card:nth-child(4) { border-left-color: #8b5cf6; }
+    .k-card .k-icon { font-size: 24px; margin-bottom: 6px; }
+    .k-card .k-title { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
+    .k-card .k-formula {
+      font-family: var(--font-mono);
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 6px;
+    }
+    .k-card .k-desc { font-size: 13px; color: var(--text-muted); line-height: 1.6; }
+    .k-card .k-example {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 8px;
+      padding: 6px 10px;
+      background: var(--bg);
+      border-radius: 6px;
+    }
+
+    /* 响应式 */
+    @media (max-width: 640px) {
+      .energy-panel { flex: 1 1 100%; flex-direction: row; flex-wrap: wrap; }
+      .energy-bar-item { flex: 1; min-width: 120px; }
+      .formula-item { font-size: 12px; padding: 6px 12px; }
+      .k-card-grid { grid-template-columns: 1fr; }
+    }
+
+    /* ---- 步进按钮（小数版，同名覆盖模板样式） ---- */
+.step-btn-frac {
+  width: 34px;
+  height: 34px;
+  border: none;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background .15s;
+  touch-action: manipulation;
+  user-select: none;
+}
+.step-btn-frac:active { background: var(--accent-dark); }
+.step-btn-frac.sub { background: #95a5a6; }
+.step-btn-frac.sub:active { background: #7f8c8d; }
+
+/* ====== 轨道小车 Canvas 装饰 ====== */
+    .drag-hint {
+      position: absolute;
+      bottom: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(255,255,255,.85);
+      backdrop-filter: blur(4px);
+      padding: 3px 12px;
+      border-radius: 999px;
+      font-size: 11px;
+      color: var(--text-muted);
+      pointer-events: none;
+      white-space: nowrap;
+      border: 1px solid rgba(226,232,240,.6);
+    }
+
+    /* 高度标记线 */
+    .height-legend {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+    .height-legend .dot {
+      display: inline-block;
+      width: 10px; height: 3px;
+      border-radius: 2px;
+      margin-right: 4px;
+      vertical-align: middle;
+    }
+  </style>
+</head>
+<body data-version="v2026-06-01">
+<div class="container">
+
+  <!-- ====== 标题 ====== -->
+  <h1>⚡ 功和机械能</h1>
+  <p class="subtitle">初中物理 · 探索功、动能、重力势能与机械能守恒</p>
+
+  <!-- ====== 标签页 ====== -->
+  <div class="tabs" id="tabBar">
+    <div class="tab active" data-tab="knowledge">📖 知识卡片</div>
+    <div class="tab" data-tab="work">🔧 功 W = F·s</div>
+    <div class="tab" data-tab="conservation">🎢 机械能守恒</div>
+  </div>
+
+  <!-- ================================================================
+       TAB 1: 知识卡片
+       ================================================================ -->
+  <div class="tab-content active" id="tab-knowledge">
+
+    <div class="card">
+      <div class="card-title">📖 核心公式与概念</div>
+      <div class="k-card-grid">
+        <div class="k-card">
+          <div class="k-icon">🔧</div>
+          <div class="k-title">功</div>
+          <div class="k-formula">W = F · s</div>
+          <div class="k-desc">
+            力与在力的方向上移动距离的乘积。<br>
+            <strong>单位：</strong>焦耳（J）<br>
+            <strong>1 J = 1 N · 1 m</strong>
+          </div>
+          <div class="k-example">例：用 10 N 的力将物体推动 2 m，做功 20 J</div>
+        </div>
+        <div class="k-card">
+          <div class="k-icon">⚡</div>
+          <div class="k-title">动能</div>
+          <div class="k-formula" style="color:#10b981">E<sub>k</sub> = ½mv²</div>
+          <div class="k-desc">
+            物体由于运动而具有的能量。<br>
+            <strong>影响因素：</strong>质量 m、速度 v<br>
+            质量越大、速度越大，动能越大。
+          </div>
+          <div class="k-example">例：2 kg 物体以 3 m/s 运动，动能 = ½×2×9 = 9 J</div>
+        </div>
+        <div class="k-card">
+          <div class="k-icon">🌿</div>
+          <div class="k-title">重力势能</div>
+          <div class="k-formula" style="color:#f59e0b">E<sub>p</sub> = mgh</div>
+          <div class="k-desc">
+            物体由于被举高而具有的能量。<br>
+            <strong>影响因素：</strong>质量 m、高度 h<br>
+            质量越大、位置越高，重力势能越大。
+          </div>
+          <div class="k-example">例：2 kg 物体在 5 m 高处，势能 = 2×9.8×5 = 98 J</div>
+        </div>
+        <div class="k-card">
+          <div class="k-icon">⭐</div>
+          <div class="k-title">机械能守恒</div>
+          <div class="k-formula" style="color:#8b5cf6">E<sub>k</sub> + E<sub>p</sub> = 常数</div>
+          <div class="k-desc">
+            只有重力（或弹力）做功时，动能和势能相互转化，<strong>机械能总量不变</strong>。
+          </div>
+          <div class="k-example">过山车：最高点势能最大→下降时势能转化为动能→最低点动能最大→上升时动能转化为势能</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="knowledge-box">
+      <div class="kb-title"><span class="icon">📝</span> 易错点提醒</div>
+      • 做功的两个条件 <strong>缺一不可</strong>：有力 + 在力的方向上有距离<br>
+      • 物体"匀速运动"时，动能不变；"被举高"时，重力势能增大<br>
+      • 机械能守恒的条件是：<strong>只有重力或弹力做功</strong>（没有摩擦、空气阻力等）<br>
+      • 同一物体：速度 v 对动能的影响比质量 m 更大（因为 v²）
+    </div>
+
+  </div>
+
+  <!-- ================================================================
+       TAB 2: 功 W = F·s
+       ================================================================ -->
+  <div class="tab-content" id="tab-work">
+
+    <div class="toolbar">
+      <div class="control-group">
+        <label>作用力 F</label>
+        <input type="range" id="sForce" min="1" max="50" value="20" />
+        <div class="input-group">
+          <button type="button" class="step-btn-frac sub" data-target="nForce" data-delta="-1">−</button>
+          <input type="number" id="nForce" min="1" max="50" value="20" />
+          <button type="button" class="step-btn-frac" data-target="nForce" data-delta="1">+</button>
+          <span style="font-size:13px;color:var(--text-muted);margin-left:4px">N</span>
+        </div>
+      </div>
+      <div class="control-group">
+        <label>位移 s</label>
+        <input type="range" id="sDisp" min="0" max="10" value="5" step="0.5" />
+        <div class="input-group">
+          <button type="button" class="step-btn-frac sub" data-target="nDisp" data-delta="-0.5">−</button>
+          <input type="number" id="nDisp" min="0" max="10" value="5" step="0.5" />
+          <button type="button" class="step-btn-frac" data-target="nDisp" data-delta="0.5">+</button>
+          <span style="font-size:13px;color:var(--text-muted);margin-left:4px">m</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🔧 水平推力做功</div>
+
+      <div class="work-canvas-wrap">
+        <canvas id="workCanvas" width="600" height="280"></canvas>
+      </div>
+
+      <!-- 公式和结果 -->
+      <div class="eq-bar" id="workEqBar">
+        W = F × s = <span id="workF">20</span> N × <span id="workS">5.0</span> m = <span id="workResult" style="color:var(--accent);font-size:26px">100</span> J
+      </div>
+
+      <div class="step-controls">
+        <button type="button" class="btn btn-success" id="btnWorkPlay">▶ 推动演示</button>
+        <button type="button" class="btn btn-rest" id="btnWorkReset">⟳ 重置</button>
+      </div>
+
+      <div class="step-desc" id="workStepDesc">
+        用 <b>20 N</b> 的水平力推物体，沿力的方向移动 <b>5.0 m</b>，做功 <b class="green">100 J</b>。
+      </div>
+    </div>
+
+    <div class="knowledge-box">
+      <div class="kb-title"><span class="icon">💡</span> 功的两个必要因素</div>
+      1. 作用在物体上的力 F； 2. 物体在<strong>力的方向上</strong>移动的距离 s。<br>
+      公式：<strong>W = F·s</strong>（力与位移方向相同时），单位：焦耳（J）
+    </div>
+
+  </div>
+
+  <!-- ================================================================
+       TAB 3: 机械能守恒
+       ================================================================ -->
+  <div class="tab-content" id="tab-conservation">
+
+    <div class="toolbar">
+      <div class="control-group">
+        <label>物体质量 m</label>
+        <input type="range" id="sMass" min="1" max="20" value="2" step="0.5" />
+        <div class="input-group">
+          <button type="button" class="step-btn-frac sub" data-target="nMass" data-delta="-0.5">−</button>
+          <input type="number" id="nMass" min="1" max="20" value="2" step="0.5" />
+          <button type="button" class="step-btn-frac" data-target="nMass" data-delta="0.5">+</button>
+          <span style="font-size:13px;color:var(--text-muted);margin-left:4px">kg</span>
+        </div>
+      </div>
+      <div class="control-group">
+        <label>释放高度 h</label>
+        <input type="range" id="sHeight" min="1" max="12" value="6" step="0.5" />
+        <div class="input-group">
+          <button type="button" class="step-btn-frac sub" data-target="nHeight" data-delta="-0.5">−</button>
+          <input type="number" id="nHeight" min="1" max="12" value="6" step="0.5" />
+          <button type="button" class="step-btn-frac" data-target="nHeight" data-delta="0.5">+</button>
+          <span style="font-size:13px;color:var(--text-muted);margin-left:4px">m</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">
+        <span>🎢 过山车模型 — 机械能转化与守恒</span>
+        <span class="card-badge">无摩擦理想轨道</span>
+      </div>
+
+      <!-- 可视化主区域 -->
+      <div class="viz-row">
+        <div class="canvas-wrap" id="conservationCanvasWrap">
+          <canvas id="conservationCanvas" width="600" height="340"></canvas>
+          <div class="drag-hint">👆 点击/拖拽控制小车位置</div>
+        </div>
+        <div class="energy-panel" id="energyPanel">
+          <div class="energy-bar-item">
+            <div class="bar-label">⚡ 动能 E<sub>k</sub></div>
+            <div class="bar-track"><div class="bar-fill kinetic" id="barKinetic" style="width:0%"></div></div>
+            <div class="bar-value kinetic" id="valKinetic">0.0 J</div>
+          </div>
+          <div class="energy-bar-item">
+            <div class="bar-label">🌿 势能 E<sub>p</sub></div>
+            <div class="bar-track"><div class="bar-fill potential" id="barPotential" style="width:100%"></div></div>
+            <div class="bar-value potential" id="valPotential">0.0 J</div>
+          </div>
+          <div class="energy-bar-item">
+            <div class="bar-label">⭐ 总机械能 E</div>
+            <div class="bar-track"><div class="bar-fill total" id="barTotal" style="width:100%"></div></div>
+            <div class="bar-value total" id="valTotal">0.0 J</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 公式行 -->
+      <div class="formula-row" id="conservationFormulas">
+        <span class="formula-item"><span class="label">E<sub>k</sub> = </span>½mv² = <span id="fEk">0</span> J</span>
+        <span class="formula-item"><span class="label">E<sub>p</sub> = </span>mgh = <span id="fEp">0</span> J</span>
+        <span class="formula-item"><span class="label">E = </span>E<sub>k</sub> + E<sub>p</sub> = <span id="fEtotal">0</span> J</span>
+      </div>
+
+      <!-- 数值行 -->
+      <div class="value-row">
+        <span class="value-chip">高度 h = <span class="num" id="vHeight">6.00</span> m</span>
+        <span class="value-chip">速度 v = <span class="num" id="vSpeed">0.00</span> m/s</span>
+      </div>
+
+      <!-- 步骤导航 -->
+      <div class="step-controls">
+        <button type="button" class="btn btn-primary" id="btnPrev">◀ 上一步</button>
+        <button type="button" class="btn btn-success" id="btnAuto">▶ 自动演示</button>
+        <button type="button" class="btn btn-rest" id="btnReset">⟳ 重置</button>
+        <button type="button" class="btn btn-primary" id="btnNext">下一步 ▶</button>
+      </div>
+    </div>
+
+    <div class="step-desc" id="stepDesc">
+      <b>步骤 1/6：</b>小车位于轨道最高点，<span class="green">势能最大</span>，动能为零。
+    </div>
+
+    <div class="knowledge-box">
+      <div class="kb-title"><span class="icon">💡</span> 机械能守恒定律</div>
+      在只有重力做功的情况下，物体的动能和重力势能可以相互转化，但<strong>机械能的总量保持不变</strong>。
+      即：<strong>E = E<sub>k</sub> + E<sub>p</sub> = 常数</strong>
+    </div>
+
+  </div>
+
+</div>
+
+<script src="template.js"></script>
+<script>
+(function() {
+  'use strict';
+
+  // ================================================================
+  //  常量 & DOM 引用
+  // ================================================================
+  const G = 9.8;  // 重力加速度 m/s²
+
+  // ---- 机械能守恒 ----
+  const canvas = document.getElementById('conservationCanvas');
+  const ctx = canvas.getContext('2d');
+  const sMass = document.getElementById('sMass');
+  const nMass = document.getElementById('nMass');
+  const sHeight = document.getElementById('sHeight');
+  const nHeight = document.getElementById('nHeight');
+  const barKinetic = document.getElementById('barKinetic');
+  const barPotential = document.getElementById('barPotential');
+  const barTotal = document.getElementById('barTotal');
+  const valKinetic = document.getElementById('valKinetic');
+  const valPotential = document.getElementById('valPotential');
+  const valTotal = document.getElementById('valTotal');
+  const fEk = document.getElementById('fEk');
+  const fEp = document.getElementById('fEp');
+  const fEtotal = document.getElementById('fEtotal');
+  const vHeight = document.getElementById('vHeight');
+  const vSpeed = document.getElementById('vSpeed');
+  const stepDesc = document.getElementById('stepDesc');
+  const btnPrev = document.getElementById('btnPrev');
+  const btnNext = document.getElementById('btnNext');
+  const btnAuto = document.getElementById('btnAuto');
+  const btnReset = document.getElementById('btnReset');
+
+  // ---- 功 ----
+  const wCanvas = document.getElementById('workCanvas');
+  const wCtx = wCanvas.getContext('2d');
+  const sForce = document.getElementById('sForce');
+  const nForce = document.getElementById('nForce');
+  const sDisp = document.getElementById('sDisp');
+  const nDisp = document.getElementById('nDisp');
+  const workF = document.getElementById('workF');
+  const workS = document.getElementById('workS');
+  const workResult = document.getElementById('workResult');
+  const workStepDesc = document.getElementById('workStepDesc');
+  const btnWorkPlay = document.getElementById('btnWorkPlay');
+  const btnWorkReset = document.getElementById('btnWorkReset');
+
+  // ================================================================
+  //  标签页切换
+  // ================================================================
+  (function initTabs() {
+    var tabs = document.querySelectorAll('#tabBar .tab');
+    tabs.forEach(function(tab) {
+      tab.addEventListener('click', function() {
+        tabs.forEach(function(t) { t.classList.remove('active'); });
+        this.classList.add('active');
+        document.querySelectorAll('.tab-content').forEach(function(tc) { tc.classList.remove('active'); });
+        var target = document.getElementById('tab-' + this.dataset.tab);
+        if (target) target.classList.add('active');
+        // 切换后重绘
+        if (this.dataset.tab === 'conservation') drawConservation();
+        if (this.dataset.tab === 'work') drawWork();
+      });
+    });
+  })();
+
+  // ================================================================
+  //  机械能守恒 — 轨道参数
+  // ================================================================
+
+  // 轨道几何 (像素坐标)
+  const TRACK = {
+    x0: 55,        // 起点 x
+    x1: 545,       // 终点 x
+    yTop: 50,      // 轨道最高点 y
+    yBottom: 295,  // 轨道最低点 y
+    carW: 36,      // 车厢宽度
+    carH: 16       // 车厢高度
+  };
+  TRACK.xMid = (TRACK.x0 + TRACK.x1) / 2;  // 320
+  TRACK.xRange = TRACK.x1 - TRACK.x0;        // 490
+  TRACK.yRange = TRACK.yBottom - TRACK.yTop; // 245
+
+  // 当前状态
+  let state = {
+    mass: 2,        // kg
+    height: 6,      // m (释放高度)
+    t: 0,           // 轨道位置参数 0~1
+    step: 0,        // 当前步骤 0~5
+    isPlaying: false,
+    animId: null,
+    playDir: 1,
+    isDragging: false,
+    lastFrameTime: 0
+  };
+
+  // 步骤定义
+  const STEPS = [
+    { t: 0.00, desc: '<b>步骤 1/6：</b>小车位于轨道最高点，<span class="green">势能最大</span>，动能为零。此时机械能全部为重力势能。' },
+    { t: 0.22, desc: '<b>步骤 2/6：</b>小车开始沿轨道下滑，<span class="green">势能逐渐减小</span>，<b>动能逐渐增大</b>——势能正在转化为动能。' },
+    { t: 0.50, desc: '<b>步骤 3/6：</b>小车到达轨道最低点，<b>动能达到最大</b>，<span class="green">势能最小</span>。速度最快！' },
+    { t: 0.78, desc: '<b>步骤 4/6：</b>小车继续沿轨道上升，<b>动能逐渐减小</b>，<span class="green">势能逐渐增大</span>——动能正在转化为势能。' },
+    { t: 1.00, desc: '<b>步骤 5/6：</b>小车到达另一侧最高点，<span class="green">势能再次最大</span>，动能为零。<em>与起始高度相同！</em>' },
+    { t: -1,   desc: '<b>步骤 6/6：✅ 机械能守恒！</b>在整个过程中，E<sub>k</sub> + E<sub>p</sub> = <span class="green" id="finalE">0</span> J，<strong>总量保持不变</strong>。动能和势能不断相互转化。' }
+  ];
+
+  // ---- 轨道位置计算 ----
+  function getTrackPos(t) {
+    // t: 0 ~ 1, 返回 {x, y, h_norm} (h_norm: 0~1, 0=最低点, 1=最高点)
+    var x = TRACK.x0 + t * TRACK.xRange;
+    // y 使用余弦曲线: 两端高中间低
+    var cosVal = Math.cos(t * 2 * Math.PI);
+    var y = TRACK.yTop + TRACK.yRange * (1 - cosVal) / 2;
+    // 归一化高度: 1 在顶端, 0 在底端
+    var hNorm = (1 + cosVal) / 2;
+    return { x: x, y: y, hNorm: hNorm };
+  }
+
+  // ---- 物理量计算 ----
+  function computePhysics(t, mass, hMax) {
+    var pos = getTrackPos(t);
+    var h = hMax * pos.hNorm;  // 当前高度 (m)
+    var gpe = mass * G * h;   // Ep = mgh
+    var totalE = mass * G * hMax; // E = mgh_max
+    var ke = totalE - gpe;     // Ek = E - Ep
+    if (ke < 0.001) ke = 0;
+    var speed = Math.sqrt(2 * ke / mass);
+    if (isNaN(speed)) speed = 0;
+    return { h: h, gpe: gpe, ke: ke, totalE: totalE, speed: speed, x: pos.x, y: pos.y, hNorm: pos.hNorm };
+  }
+
+  // ================================================================
+  //  机械能守恒 — 绘图
+  // ================================================================
+  function drawConservation() {
+    var W = canvas.width, H = canvas.height;
+    var mass = parseFloat(nMass.value) || 2;
+    var hMax = parseFloat(nHeight.value) || 6;
+
+    // 清空
+    ctx.clearRect(0, 0, W, H);
+
+    // ---- 背景装饰 ----
+    drawBackground(ctx, W, H);
+
+    // ---- 轨道 ----
+    drawTrack(ctx);
+
+    // ---- 高度参考线 ----
+    var phys = computePhysics(state.t, mass, hMax);
+    drawHeightLines(ctx, phys);
+
+    // ---- 过山车车厢 ----
+    drawRollerCoasterCar(ctx, phys.x, phys.y, state.t);
+
+    // ---- 速度指示箭头 ----
+    if (phys.speed > 0.1) {
+      var arrowLen = Math.min(phys.speed * 3, 80);
+      // 箭头方向：沿轨道切线
+      var dt = 0.001;
+      var next = getTrackPos(Math.min(state.t + dt, 1));
+      var prev = getTrackPos(Math.max(state.t - dt, 0));
+      var dx = next.x - prev.x;
+      var dy = next.y - prev.y;
+      var len = Math.sqrt(dx * dx + dy * dy) || 1;
+      dx /= len; dy /= len;
+      // 画小箭头
+      var ax = phys.x + dx * (12);
+      var ay = phys.y + dy * (12);
+      ctx.beginPath();
+      ctx.moveTo(ax, ay);
+      ctx.lineTo(ax + dx * arrowLen, ay + dy * arrowLen);
+      ctx.strokeStyle = 'rgba(239,68,68,0.6)';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([4, 4]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      // 箭头头
+      var headSize = 8;
+      ctx.beginPath();
+      ctx.moveTo(ax + dx * arrowLen, ay + dy * arrowLen);
+      ctx.lineTo(ax + dx * (arrowLen - headSize) - dy * headSize * 0.4,
+                 ay + dy * (arrowLen - headSize) + dx * headSize * 0.4);
+      ctx.lineTo(ax + dx * (arrowLen - headSize) + dy * headSize * 0.4,
+                 ay + dy * (arrowLen - headSize) - dx * headSize * 0.4);
+      ctx.closePath();
+      ctx.fillStyle = 'rgba(239,68,68,0.5)';
+      ctx.fill();
+    }
+
+    // ---- 标签 ----
+    ctx.fillStyle = '#64748b';
+    ctx.font = '13px "Noto Sans SC", "PingFang SC", sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText('释放高度 h = ' + hMax.toFixed(1) + ' m', 12, 20);
+    ctx.textAlign = 'right';
+    ctx.fillText('m = ' + mass.toFixed(1) + ' kg', W - 12, 20);
+    ctx.fillText('g = 9.8 m/s²', W - 12, 36);
+
+    // 高度标签
+    if (phys.h > 0.3) {
+      ctx.textAlign = 'left';
+      ctx.fillStyle = 'rgba(16,185,129,0.7)';
+      ctx.font = '12px sans-serif';
+      ctx.fillText('h = ' + phys.h.toFixed(1) + ' m', TRACK.x0 - 5, phys.y - 8);
+    }
+
+    // ---- 更新能量柱 ----
+    updateEnergyBars(phys);
+
+    // ---- 更新公式行 ----
+    fEk.textContent = phys.ke.toFixed(1);
+    fEp.textContent = phys.gpe.toFixed(1);
+    fEtotal.textContent = phys.totalE.toFixed(1);
+    vHeight.textContent = phys.h.toFixed(2);
+    vSpeed.textContent = phys.speed.toFixed(2);
+  }
+
+  function drawBackground(ctx, W, H) {
+    // 极淡的网格
+    ctx.strokeStyle = 'rgba(200,212,230,0.2)';
+    ctx.lineWidth = 1;
+    for (var x = 0; x <= W; x += 40) {
+      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+    }
+    for (var y = 0; y <= H; y += 40) {
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+    }
+  }
+
+  function drawTrack(ctx) {
+    // 绘制轨道线 (带有厚度和渐变)
+    var steps = 200;
+    ctx.beginPath();
+    for (var i = 0; i <= steps; i++) {
+      var t = i / steps;
+      var pos = getTrackPos(t);
+      if (i === 0) ctx.moveTo(pos.x, pos.y);
+      else ctx.lineTo(pos.x, pos.y);
+    }
+    ctx.strokeStyle = '#94a3b8';
+    ctx.lineWidth = 6;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.stroke();
+
+    // 轨道内发光
+    ctx.beginPath();
+    for (var j = 0; j <= steps; j++) {
+      var t2 = j / steps;
+      var pos2 = getTrackPos(t2);
+      if (j === 0) ctx.moveTo(pos2.x, pos2.y);
+      else ctx.lineTo(pos2.x, pos2.y);
+    }
+    ctx.strokeStyle = 'rgba(148,163,184,0.3)';
+    ctx.lineWidth = 12;
+    ctx.stroke();
+
+    // 轨道内线 (亮色)
+    ctx.beginPath();
+    for (var k = 0; k <= steps; k++) {
+      var t3 = k / steps;
+      var pos3 = getTrackPos(t3);
+      if (k === 0) ctx.moveTo(pos3.x, pos3.y);
+      else ctx.lineTo(pos3.x, pos3.y);
+    }
+    ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // 起始/终点标记
+    var start = getTrackPos(0);
+    var end = getTrackPos(1);
+    ctx.fillStyle = 'rgba(59,130,246,0.15)';
+    ctx.beginPath(); ctx.arc(start.x, start.y, 18, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(end.x, end.y, 18, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#3b82f6';
+    ctx.font = '11px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('起点', start.x, start.y + 32);
+    ctx.fillText('终点', end.x, end.y + 32);
+
+    // 地面线
+    ctx.strokeStyle = 'rgba(100,116,139,0.25)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4, 6]);
+    ctx.beginPath();
+    ctx.moveTo(20, TRACK.yBottom + 8);
+    ctx.lineTo(ctx.canvas.width - 20, TRACK.yBottom + 8);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '11px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText('地面', 25, TRACK.yBottom + 22);
+  }
+
+  function drawHeightLines(ctx, phys) {
+    if (phys.hNorm < 0.05) return;
+    // 从小车到地面画虚线
+    ctx.strokeStyle = 'rgba(16,185,129,0.25)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([3, 4]);
+    ctx.beginPath();
+    ctx.moveTo(phys.x, phys.y + 12);
+    ctx.lineTo(phys.x, TRACK.yBottom + 5);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // 水平指示线
+    ctx.strokeStyle = 'rgba(16,185,129,0.15)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([2, 4]);
+    ctx.beginPath();
+    ctx.moveTo(TRACK.x0 - 10, phys.y);
+    ctx.lineTo(TRACK.x1 + 10, phys.y);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  // ---- 过山车车厢 (简单稳定绘制) ----
+  function drawRollerCoasterCar(ctx, cx, cy, t) {
+    try {
+      var dt = 0.003;
+      var t1 = Math.min(t + dt, 1);
+      var t0 = Math.max(t - dt, 0);
+      var p1 = getTrackPos(t1);
+      var p0 = getTrackPos(t0);
+      var dx = p1.x - p0.x;
+      var dy = p1.y - p0.y;
+      var angle = Math.atan2(dy, dx);
+      var cosA = Math.cos(angle);
+      var sinA = Math.sin(angle);
+      var cw = 34, ch = 18;
+      var halfW = cw / 2, halfH = ch / 2;
+
+      // 旋转一个点 (绕 cx, cy)
+      function rotPt(px, py) {
+        var rx = (px) * cosA - (py) * sinA;
+        var ry = (px) * sinA + (py) * cosA;
+        return { x: cx + rx, y: cy + ry };
+      }
+
+      // 填充一个旋转矩形 (中心在 cx,cy，传入相对偏移)
+      function fillRotRect(dx, dy, w, h, color) {
+        var p1 = rotPt(dx - w/2, dy - h/2);
+        var p2 = rotPt(dx + w/2, dy - h/2);
+        var p3 = rotPt(dx + w/2, dy + h/2);
+        var p4 = rotPt(dx - w/2, dy + h/2);
+        ctx.beginPath();
+        ctx.moveTo(p1.x, p1.y);
+        ctx.lineTo(p2.x, p2.y);
+        ctx.lineTo(p3.x, p3.y);
+        ctx.lineTo(p4.x, p4.y);
+        ctx.closePath();
+        ctx.fillStyle = color;
+        ctx.fill();
+      }
+
+      // 车厢主体
+      fillRotRect(0, 0, cw, ch, 'rgba(220,38,38,0.9)');
+      // 高光
+      fillRotRect(0, -2, cw - 4, ch * 0.5, 'rgba(248,113,113,0.3)');
+
+      // 车窗 (3个蓝色小窗)
+      fillRotRect(-9, 0, 6, 7, 'rgba(191,219,254,0.6)');
+      fillRotRect(0, 0, 6, 7, 'rgba(191,219,254,0.6)');
+      fillRotRect(9, 0, 6, 7, 'rgba(191,219,254,0.6)');
+
+      // 车轮 (4个)
+      var wheelPositions = [-10, -4, 4, 10];
+      for (var wi = 0; wi < 4; wi++) {
+        var wOff = wheelPositions[wi];
+        var wPt = rotPt(wOff, halfH + 1);
+        ctx.beginPath();
+        ctx.arc(wPt.x, wPt.y, 3.5, 0, Math.PI * 2);
+        ctx.fillStyle = '#334155';
+        ctx.shadowColor = 'rgba(0,0,0,0.15)';
+        ctx.shadowBlur = 3;
+        ctx.fill();
+        ctx.shadowBlur = 0;
+      }
+      ctx.shadowColor = 'transparent';
+    } catch(e) {
+      // 车厢绘制失败不影响主流程
+    }
+  }
+
+  // ================================================================
+  //  能量柱更新
+  // ================================================================
+  function updateEnergyBars(phys) {
+    var maxE = phys.totalE || 1;
+    var kPct = (phys.ke / maxE * 100).toFixed(1);
+    var pPct = (phys.gpe / maxE * 100).toFixed(1);
+
+    barKinetic.style.width = Math.min(kPct, 100) + '%';
+    barPotential.style.width = Math.min(pPct, 100) + '%';
+    barTotal.style.width = '100%';
+
+    valKinetic.textContent = phys.ke.toFixed(1) + ' J';
+    valPotential.textContent = phys.gpe.toFixed(1) + ' J';
+    valTotal.textContent = phys.totalE.toFixed(1) + ' J';
+
+    // 如果没有动能，淡化显示
+    if (phys.ke < 0.01) {
+      barKinetic.style.opacity = '0.3';
+      valKinetic.style.opacity = '0.4';
+    } else {
+      barKinetic.style.opacity = '1';
+      valKinetic.style.opacity = '1';
+    }
+    if (phys.gpe < 0.01) {
+      barPotential.style.opacity = '0.3';
+      valPotential.style.opacity = '0.4';
+    } else {
+      barPotential.style.opacity = '1';
+      valPotential.style.opacity = '1';
+    }
+  }
+
+  // ================================================================
+  //  机械能守恒 — 步骤控制
+  // ================================================================
+  function goToStep(idx) {
+    if (idx < 0) idx = 0;
+    if (idx >= STEPS.length) idx = STEPS.length - 1;
+    state.step = idx;
+    var step = STEPS[idx];
+    if (step.t >= 0) {
+      state.t = step.t;
+    }
+    // 最后一步显示守恒总结
+    if (idx === STEPS.length - 1) {
+      var phys = computePhysics(0, parseFloat(nMass.value), parseFloat(nHeight.value));
+      var html = step.desc.replace('id="finalE"', 'id="finalE" style="font-weight:700;font-size:18px"');
+      stepDesc.innerHTML = html.replace('0', phys.totalE.toFixed(1));
+    } else {
+      stepDesc.innerHTML = step.desc;
+    }
+    drawConservation();
+    updateStepButtons();
+  }
+
+  function updateStepButtons() {
+    btnPrev.disabled = (state.step === 0);
+    btnNext.disabled = (state.step >= STEPS.length - 1);
+  }
+
+  btnPrev.addEventListener('click', function() {
+    if (state.isPlaying) stopAutoPlay();
+    goToStep(state.step - 1);
+  });
+
+  btnNext.addEventListener('click', function() {
+    if (state.isPlaying) stopAutoPlay();
+    goToStep(state.step + 1);
+  });
+
+  // ================================================================
+  //  机械能守恒 — 自动演示
+  // ================================================================
+  function startAutoPlay() {
+    if (state.isPlaying) return;
+    state.isPlaying = true;
+    btnAuto.textContent = '⏸ 暂停';
+    btnAuto.className = 'btn btn-rest';
+    // 从当前小车位置继续，或从起点开始
+    state.playDir = 1;
+    if (state.t >= 0.98) state.playDir = -1; // 如果已经在终点附近，则反向
+    if (state.t <= 0.02) state.playDir = 1; // 如果已经在起点附近，则正向
+    state.lastFrameTime = performance.now(); // 记录开始时间
+    cancelAnimationFrame(state.animId);
+    autoPlayLoop();
+  }
+
+  function stopAutoPlay() {
+    state.isPlaying = false;
+    btnAuto.textContent = '▶ 自动演示';
+    btnAuto.className = 'btn btn-success';
+    if (state.animId) {
+      cancelAnimationFrame(state.animId);
+      state.animId = null;
+    }
+  }
+
+  function autoPlayLoop() {
+    if (!state.isPlaying) return;
+
+    // 时间步进 — 保证各帧率下速度一致
+    var now = performance.now();
+    var delta = (now - (state.lastFrameTime || now)) / 1000; // 秒
+    state.lastFrameTime = now;
+    // 限制最大步长防止切标签后跳帧 (e.g., 16ms frame time is ~60fps)
+    if (delta > 0.1) delta = 0.016; 
+
+    var animationSpeed = 0.35; // 0.35 t/s -> 全程 ≈ 1/0.35 ≈ 2.9 秒
+    state.t += state.playDir * animationSpeed * delta;
+
+    // 限制 t 在 [0, 1] 范围内并反转方向
+    if (state.t >= 1) {
+      state.t = 1;
+      state.playDir = -1;
+    } else if (state.t <= 0) {
+      state.t = 0;
+      state.playDir = 1;
+    }
+
+    // 根据位置更新步骤描述
+    var mass = parseFloat(nMass.value);
+    var hMax = parseFloat(nHeight.value);
+    var phys = computePhysics(state.t, mass, hMax);
+
+    // 自动更新步骤描述
+    if (state.t < 0.05) {
+      stepDesc.innerHTML = STEPS[0].desc;
+      state.step = 0;
+    } else if (state.t < 0.35) {
+      stepDesc.innerHTML = STEPS[1].desc;
+      state.step = 1;
+    } else if (state.t < 0.65) {
+      stepDesc.innerHTML = STEPS[2].desc;
+      state.step = 2;
+    } else if (state.t < 0.95) {
+      stepDesc.innerHTML = STEPS[3].desc;
+      state.step = 3;
+    } else {
+      stepDesc.innerHTML = STEPS[4].desc;
+      state.step = 4;
+    }
+
+    drawConservation();
+    updateStepButtons();
+
+    state.animId = requestAnimationFrame(autoPlayLoop);
+  }
+
+  function stopAutoPlay() {
+    state.isPlaying = false;
+    btnAuto.textContent = '▶ 自动演示';
+    btnAuto.className = 'btn btn-success';
+    if (state.animId) {
+      cancelAnimationFrame(state.animId);
+      state.animId = null;
+    }
+  }
+
+  function autoPlayLoop() {
+    if (!state.isPlaying) return;
+
+    // 时间步进 — 保证各帧率下速度一致
+    var now = performance.now();
+    var delta = (now - (state.lastFrameTime || now)) / 1000; // 秒
+    state.lastFrameTime = now;
+    // 限制最大步长防止切标签后跳帧
+    if (delta > 0.1) delta = 0.016;
+
+    var speed = 0.35; // 全程用时 ≈ 1/0.35 ≈ 2.9 秒
+    state.t += state.playDir * speed * delta;
+
+    if (state.t >= 1) {
+      state.t = 1;
+      state.playDir = -1;
+    } else if (state.t <= 0) {
+      state.t = 0;
+      state.playDir = 1;
+    }
+
+    // 根据位置更新步骤描述
+    var mass = parseFloat(nMass.value);
+    var hMax = parseFloat(nHeight.value);
+    var phys = computePhysics(state.t, mass, hMax);
+
+    // 自动更新步骤描述
+    if (state.t < 0.05) {
+      stepDesc.innerHTML = STEPS[0].desc;
+      state.step = 0;
+    } else if (state.t < 0.35) {
+      stepDesc.innerHTML = STEPS[1].desc;
+      state.step = 1;
+    } else if (state.t < 0.65) {
+      stepDesc.innerHTML = STEPS[2].desc;
+      state.step = 2;
+    } else if (state.t < 0.95) {
+      stepDesc.innerHTML = STEPS[3].desc;
+      state.step = 3;
+    } else {
+      stepDesc.innerHTML = STEPS[4].desc;
+      state.step = 4;
+    }
+
+    drawConservation();
+    updateStepButtons();
+
+    state.animId = requestAnimationFrame(autoPlayLoop);
+  }
+
+  btnAuto.addEventListener('click', function() {
+    if (state.isPlaying) {
+      stopAutoPlay();
+    } else {
+      startAutoPlay();
+    }
+  });
+
+  btnReset.addEventListener('click', function() {
+    if (state.isPlaying) stopAutoPlay();
+    state.t = 0;
+    goToStep(0);
+  });
+
+  // ================================================================
+  //  机械能守恒 — Canvas 点击/拖拽
+  // ================================================================
+  canvas.addEventListener('mousedown', function(e) {
+    if (state.isPlaying) stopAutoPlay();
+    var rect = canvas.getBoundingClientRect();
+    var scaleX = canvas.width / rect.width;
+    var mx = (e.clientX - rect.left) * scaleX;
+    state.isDragging = true;
+    updateBallFromMouse(mx);
+  });
+
+  canvas.addEventListener('mousemove', function(e) {
+    if (!state.isDragging) return;
+    var rect = canvas.getBoundingClientRect();
+    var scaleX = canvas.width / rect.width;
+    var mx = (e.clientX - rect.left) * scaleX;
+    updateBallFromMouse(mx);
+  });
+
+  document.addEventListener('mouseup', function() {
+    state.isDragging = false;
+  });
+
+  // 触摸支持
+  canvas.addEventListener('touchstart', function(e) {
+    if (state.isPlaying) stopAutoPlay();
+    var rect = canvas.getBoundingClientRect();
+    var touch = e.touches[0];
+    var scaleX = canvas.width / rect.width;
+    var mx = (touch.clientX - rect.left) * scaleX;
+    state.isDragging = true;
+    updateBallFromMouse(mx);
+    e.preventDefault();
+  });
+
+  canvas.addEventListener('touchmove', function(e) {
+    if (!state.isDragging) return;
+    var rect = canvas.getBoundingClientRect();
+    var touch = e.touches[0];
+    var scaleX = canvas.width / rect.width;
+    var mx = (touch.clientX - rect.left) * scaleX;
+    updateBallFromMouse(mx);
+    e.preventDefault();
+  });
+
+  canvas.addEventListener('touchend', function() {
+    state.isDragging = false;
+  });
+
+  function updateBallFromMouse(mx) {
+    var t = (mx - TRACK.x0) / TRACK.xRange;
+    t = Math.max(0, Math.min(1, t));
+    state.t = t;
+    // 找到最近的步骤
+    var closestStep = 0;
+    var closestDist = Infinity;
+    for (var i = 0; i < STEPS.length; i++) {
+      if (STEPS[i].t < 0) continue;
+      var dist = Math.abs(STEPS[i].t - t);
+      if (dist < closestDist) {
+        closestDist = dist;
+        closestStep = i;
+      }
+    }
+    state.step = closestStep;
+    goToStep(closestStep);
+    // override stepDesc with the actual position description
+    var mass = parseFloat(nMass.value);
+    var hMax = parseFloat(nHeight.value);
+    var phys = computePhysics(t, mass, hMax);
+    if (phys.ke < 0.01 && phys.gpe > 0) {
+      stepDesc.innerHTML = '📍 小车位于轨道上，<span class="green">势能为主</span>，动能几乎为零。';
+    } else if (phys.gpe < 0.01 && phys.ke > 0) {
+      stepDesc.innerHTML = '📍 小车位于轨道最低点，<b>动能最大</b>，势能几乎为零。';
+    } else if (phys.ke > phys.gpe) {
+      stepDesc.innerHTML = '📍 小车正在下滑，<b>动能</b>（' + phys.ke.toFixed(1) + ' J）<b>&gt;</b> 势能（' + phys.gpe.toFixed(1) + ' J）';
+    } else {
+      stepDesc.innerHTML = '📍 小车正在上升，<span class="green">势能</span>（' + phys.gpe.toFixed(1) + ' J）<b>&gt;</b> 动能（' + phys.ke.toFixed(1) + ' J）';
+    }
+    updateStepButtons();
+    drawConservation();
+  }
+
+  // ================================================================
+  //  机械能守恒 — 输入同步
+  // ================================================================
+  function syncMass() {
+    nMass.value = sMass.value;
+    if (!state.isPlaying) { drawConservation(); updateStepButtons(); }
+  }
+  function syncMassN() {
+    sMass.value = nMass.value;
+    if (!state.isPlaying) { drawConservation(); updateStepButtons(); }
+  }
+  function syncHeight() {
+    nHeight.value = sHeight.value;
+    if (!state.isPlaying) { drawConservation(); updateStepButtons(); }
+  }
+  function syncHeightN() {
+    sHeight.value = nHeight.value;
+    if (!state.isPlaying) { drawConservation(); updateStepButtons(); }
+  }
+
+  sMass.addEventListener('input', syncMass);
+  nMass.addEventListener('input', syncMassN);
+  sHeight.addEventListener('input', syncHeight);
+  nHeight.addEventListener('input', syncHeightN);
+
+  // ================================================================
+  //  功 W = F·s
+  // ================================================================
+  var workAnimId = null;
+  var workProgress = 0; // 0~1
+
+  function drawWork() {
+    var W = wCanvas.width, H = wCanvas.height;
+    var force = parseFloat(nForce.value) || 20;
+    var disp = parseFloat(nDisp.value) || 5;
+    var currentDisp = disp * workProgress;
+
+    wCtx.clearRect(0, 0, W, H);
+
+    // ---- 地面 ----
+    var groundY = 210;
+    wCtx.fillStyle = '#e8ecf1';
+    wCtx.fillRect(0, groundY, W, H - groundY);
+    wCtx.strokeStyle = '#cbd5e1';
+    wCtx.lineWidth = 2;
+    wCtx.beginPath();
+    wCtx.moveTo(0, groundY);
+    wCtx.lineTo(W, groundY);
+    wCtx.stroke();
+
+    // 地面纹理
+    wCtx.strokeStyle = 'rgba(203,213,225,0.3)';
+    wCtx.lineWidth = 1;
+    for (var i = 0; i < W; i += 20) {
+      wCtx.beginPath();
+      wCtx.moveTo(i, groundY + 5);
+      wCtx.lineTo(i + 8, groundY + 5);
+      wCtx.stroke();
+    }
+
+    // ---- 重物（木箱） ----
+    var boxX = 80 + currentDisp * 35;
+    var boxSize = 55;
+    var boxY = groundY - boxSize;
+
+    // 阴影
+    wCtx.fillStyle = 'rgba(0,0,0,0.08)';
+    wCtx.beginPath();
+    wCtx.ellipse(boxX + boxSize/2, groundY + 3, boxSize/2 + 4, 6, 0, 0, Math.PI * 2);
+    wCtx.fill();
+
+    // 箱体主体（木色）
+    var boxGrad = wCtx.createLinearGradient(boxX, boxY, boxX + boxSize, boxY + boxSize);
+    boxGrad.addColorStop(0, '#d4a056');
+    boxGrad.addColorStop(0.5, '#c8913e');
+    boxGrad.addColorStop(1, '#b0782e');
+    wCtx.fillStyle = boxGrad;
+    wCtx.shadowColor = 'rgba(0,0,0,0.15)';
+    wCtx.shadowBlur = 8;
+    wCtx.shadowOffsetY = 3;
+    wCtx.fillRect(boxX, boxY, boxSize, boxSize);
+    wCtx.shadowColor = 'transparent';
+    wCtx.strokeStyle = '#8b5e24';
+    wCtx.lineWidth = 2;
+    wCtx.strokeRect(boxX, boxY, boxSize, boxSize);
+
+    // 横向木板纹（3条）
+    wCtx.strokeStyle = 'rgba(139,94,36,0.25)';
+    wCtx.lineWidth = 1;
+    var plankY = [boxY + 12, boxY + 27, boxY + 42];
+    plankY.forEach(function(py) {
+      wCtx.beginPath();
+      wCtx.moveTo(boxX + 4, py);
+      wCtx.lineTo(boxX + boxSize - 4, py);
+      wCtx.stroke();
+    });
+
+    // 金属包角（四个角）
+    wCtx.fillStyle = 'rgba(100,116,139,0.6)';
+    var cornerSize = 10;
+    // 左上
+    wCtx.beginPath(); wCtx.moveTo(boxX, boxY); wCtx.lineTo(boxX + cornerSize, boxY); wCtx.lineTo(boxX, boxY + cornerSize); wCtx.closePath(); wCtx.fill();
+    // 右上
+    wCtx.beginPath(); wCtx.moveTo(boxX + boxSize, boxY); wCtx.lineTo(boxX + boxSize - cornerSize, boxY); wCtx.lineTo(boxX + boxSize, boxY + cornerSize); wCtx.closePath(); wCtx.fill();
+    // 左下
+    wCtx.beginPath(); wCtx.moveTo(boxX, boxY + boxSize); wCtx.lineTo(boxX + cornerSize, boxY + boxSize); wCtx.lineTo(boxX, boxY + boxSize - cornerSize); wCtx.closePath(); wCtx.fill();
+    // 右下
+    wCtx.beginPath(); wCtx.moveTo(boxX + boxSize, boxY + boxSize); wCtx.lineTo(boxX + boxSize - cornerSize, boxY + boxSize); wCtx.lineTo(boxX + boxSize, boxY + boxSize - cornerSize); wCtx.closePath(); wCtx.fill();
+
+    // 捆扎带（两条交叉）
+    wCtx.strokeStyle = 'rgba(59,130,246,0.35)';
+    wCtx.lineWidth = 3;
+    wCtx.beginPath();
+    wCtx.moveTo(boxX + boxSize/2, boxY + 2);
+    wCtx.lineTo(boxX + boxSize/2, boxY + boxSize - 2);
+    wCtx.stroke();
+    // 十字交叉
+    wCtx.beginPath();
+    wCtx.moveTo(boxX + 2, boxY + boxSize/2);
+    wCtx.lineTo(boxX + boxSize - 2, boxY + boxSize/2);
+    wCtx.stroke();
+
+    // ---- 力的箭头 ----
+    if (force > 0 && workProgress < 1) {
+      var arrowStartX = boxX + boxSize + 5;
+      var arrowEndX = arrowStartX + Math.min(force * 2.5, 100);
+      var arrowY = boxY + boxSize/2;
+
+      // 箭杆
+      wCtx.strokeStyle = '#ef4444';
+      wCtx.lineWidth = 3;
+      wCtx.beginPath();
+      wCtx.moveTo(arrowStartX, arrowY);
+      wCtx.lineTo(arrowEndX, arrowY);
+      wCtx.stroke();
+
+      // 箭头头
+      var headLen = 12;
+      wCtx.fillStyle = '#ef4444';
+      wCtx.beginPath();
+      wCtx.moveTo(arrowEndX + headLen, arrowY);
+      wCtx.lineTo(arrowEndX, arrowY - 7);
+      wCtx.lineTo(arrowEndX, arrowY + 7);
+      wCtx.closePath();
+      wCtx.fill();
+
+      // 力标签
+      wCtx.fillStyle = '#ef4444';
+      wCtx.font = 'bold 15px sans-serif';
+      wCtx.textAlign = 'center';
+      wCtx.textBaseline = 'bottom';
+      wCtx.fillText('F = ' + force + ' N', (arrowStartX + arrowEndX + headLen) / 2, arrowY - 6);
+    }
+
+    // ---- 位移标注 ----
+    if (currentDisp > 0.3) {
+      var dispEndX = 80 + currentDisp * 35;
+      wCtx.strokeStyle = 'rgba(59,130,246,0.5)';
+      wCtx.lineWidth = 1.5;
+      wCtx.setLineDash([4, 4]);
+      wCtx.beginPath();
+      wCtx.moveTo(80, groundY + 18);
+      wCtx.lineTo(dispEndX, groundY + 18);
+      wCtx.stroke();
+      wCtx.setLineDash([]);
+
+      // 箭头端点
+      wCtx.fillStyle = '#3b82f6';
+      wCtx.beginPath();
+      wCtx.moveTo(80, groundY + 18);
+      wCtx.lineTo(86, groundY + 14);
+      wCtx.lineTo(86, groundY + 22);
+      wCtx.closePath();
+      wCtx.fill();
+      wCtx.beginPath();
+      wCtx.moveTo(dispEndX, groundY + 18);
+      wCtx.lineTo(dispEndX - 6, groundY + 14);
+      wCtx.lineTo(dispEndX - 6, groundY + 22);
+      wCtx.closePath();
+      wCtx.fill();
+
+      wCtx.fillStyle = '#3b82f6';
+      wCtx.font = '13px sans-serif';
+      wCtx.textAlign = 'center';
+      wCtx.textBaseline = 'top';
+      wCtx.fillText('s = ' + currentDisp.toFixed(1) + ' m', (80 + dispEndX) / 2, groundY + 22);
+    }
+
+    // ---- 摩擦力/阻力示意 ----
+    if (workProgress < 1 && currentDisp > 0.5) {
+      var frictionX = boxX + boxSize / 2;
+      var frictionY = boxY + boxSize + 15;
+      wCtx.fillStyle = 'rgba(100,116,139,0.4)';
+      wCtx.font = '12px sans-serif';
+      wCtx.textAlign = 'center';
+      wCtx.textBaseline = 'top';
+      wCtx.fillText('≈ 光滑表面（忽略摩擦）', frictionX, frictionY);
+    }
+
+    // ---- 更新公式显示 ----
+    workF.textContent = force;
+    workS.textContent = currentDisp.toFixed(1);
+    var workDone = force * currentDisp;
+workResult.textContent = workDone.toFixed(1);
+    workStepDesc.innerHTML =
+      '用 <b>' + force + ' N</b> 的水平力推物体，沿力的方向移动 <b>' + currentDisp.toFixed(1) + ' m</b>，做功 <b class="green">' + workDone.toFixed(1) + ' J</b>。';
+  }
+
+  // ---- 功的动画 ----
+  function startWorkAnimation() {
+    if (workAnimId) {
+      cancelAnimationFrame(workAnimId);
+      workAnimId = null;
+    }
+    if (workProgress >= 1) workProgress = 0;
+    var speed = 0.015;
+
+    function animLoop() {
+      workProgress += speed;
+      if (workProgress >= 1) {
+        workProgress = 1;
+        drawWork();
+        btnWorkPlay.textContent = '▶ 推动演示';
+        workAnimId = null;
+        return;
+      }
+      drawWork();
+      workAnimId = requestAnimationFrame(animLoop);
+    }
+    btnWorkPlay.textContent = '⏩ 推动中…';
+    animLoop();
+  }
+
+  btnWorkPlay.addEventListener('click', function() {
+    if (workAnimId) {
+      cancelAnimationFrame(workAnimId);
+      workAnimId = null;
+      btnWorkPlay.textContent = '▶ 推动演示';
+      return;
+    }
+    if (workProgress >= 1) {
+      workProgress = 0;
+    }
+    startWorkAnimation();
+  });
+
+  btnWorkReset.addEventListener('click', function() {
+    if (workAnimId) {
+      cancelAnimationFrame(workAnimId);
+      workAnimId = null;
+    }
+    workProgress = 0;
+    btnWorkPlay.textContent = '▶ 推动演示';
+    drawWork();
+  });
+
+  // ---- 功的输入同步 ----
+  function syncForce() { nForce.value = sForce.value; drawWork(); }
+  function syncForceN() { sForce.value = nForce.value; drawWork(); }
+  function syncDisp() { nDisp.value = sDisp.value; drawWork(); }
+  function syncDispN() { sDisp.value = nDisp.value; drawWork(); }
+
+  sForce.addEventListener('input', syncForce);
+  nForce.addEventListener('input', syncForceN);
+  sDisp.addEventListener('input', syncDisp);
+  nDisp.addEventListener('input', syncDispN);
+
+  // ================================================================
+  //  键盘快捷键
+  // ================================================================
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'ArrowRight') {
+      var next = document.getElementById('btnNext');
+      if (next && !next.disabled) next.click();
+      e.preventDefault();
+    } else if (e.key === 'ArrowLeft') {
+      var prev = document.getElementById('btnPrev');
+      if (prev && !prev.disabled) prev.click();
+      e.preventDefault();
+    } else if (e.key === 'Enter' || e.key === ' ') {
+      var auto = document.getElementById('btnAuto');
+      if (auto) auto.click();
+      e.preventDefault();
+    }
+  });
+
+  // ================================================================
+  //  自定义步进按钮（支持小数）
+  // ================================================================
+  document.querySelectorAll('.step-btn-frac').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var targetId = this.dataset.target;
+      var delta = parseFloat(this.dataset.delta);
+      var inp = document.getElementById(targetId);
+      if (!inp) return;
+      var newVal = parseFloat(inp.value) + delta;
+      var min = parseFloat(inp.min), max = parseFloat(inp.max);
+      var step = parseFloat(inp.step) || 1;
+      if (newVal < min) newVal = min;
+      if (newVal > max) newVal = max;
+      // 对齐到 step 的整数倍
+      newVal = Math.round(newVal / step) * step;
+      // 避免浮点精度问题
+      newVal = parseFloat(newVal.toFixed(4));
+      inp.value = newVal;
+      // 同步对应 slider (命名约定: s + InputId 首字母大写)
+      var slider = document.getElementById('s' + targetId.substring(1));
+      if (slider) slider.value = newVal;
+      inp.dispatchEvent(new Event('input'));
+    });
+  });
+
+  // ================================================================
+  //  初始化
+  // ================================================================
+
+  // 首次渲染
+  function init() {
+    goToStep(0);
+    drawWork();
+  }
+
+  // 延时等 template.js 加载完
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+
+  // 窗口大小变化重新绘制 (防抖)
+  var resizeTimer;
+  window.addEventListener('resize', function() {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(function() {
+      drawConservation();
+      drawWork();
+    }, 200);
+  });
+
+})();
+</script>
+</body>
+</html>

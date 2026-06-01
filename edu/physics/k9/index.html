@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>初中物理可视化 — 目录</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+                   "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+      min-height: 100vh;
+      color: #e0e0e0;
+    }
+
+    header {
+      text-align: center;
+      padding: 48px 20px 32px;
+    }
+
+    header h1 {
+      font-size: 2.4rem;
+      font-weight: 700;
+      background: linear-gradient(90deg, #60a5fa, #a78bfa, #f472b6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 8px;
+    }
+
+    header p {
+      font-size: 1.05rem;
+      color: #9ca3af;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 24px;
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 16px 24px 60px;
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 16px;
+      padding: 28px 24px;
+      text-decoration: none;
+      color: inherit;
+      transition: transform 0.25s, box-shadow 0.25s, border-color 0.25s;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 32px rgba(96, 165, 250, 0.15);
+      border-color: rgba(96, 165, 250, 0.4);
+    }
+
+    .card .icon {
+      font-size: 2rem;
+    }
+
+    .card h2 {
+      font-size: 1.3rem;
+      font-weight: 600;
+      color: #f0f0f0;
+    }
+
+    .card .desc {
+      font-size: 0.92rem;
+      color: #9ca3af;
+      line-height: 1.55;
+    }
+
+    .card .tag {
+      display: inline-block;
+      font-size: 0.78rem;
+      padding: 3px 10px;
+      border-radius: 999px;
+      background: rgba(96, 165, 250, 0.15);
+      color: #60a5fa;
+      align-self: flex-start;
+      margin-top: 4px;
+    }
+
+    footer {
+      text-align: center;
+      padding: 0 20px 40px;
+      color: #6b7280;
+      font-size: 0.85rem;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>初中物理可视化</h1>
+    <p>交互式几何与物理概念图解，帮助理解核心知识点</p>
+  </header>
+
+  <div class="grid">
+    <a href="work-energy.html" class="card">
+      <span class="icon">⚡</span>
+      <h2>功和机械能</h2>
+      <p class="desc">功、功率、动能、势能及机械能守恒的可视化演示</p>
+      <span class="tag">力学</span>
+    </a>
+  </div>
+
+  <footer>
+    <p>暂无更多页面 — 新的章节将持续添加</p>
+  </footer>
+</body>
+</html>

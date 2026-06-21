@@ -1,7 +1,7 @@
  # https://pchaos.github.io/exchanges/hw.txt
-Modified: 2026-06-21 16:40:49
+Modified: 2026-06-21 19:28:16
 
-https://hwdata.doits.eu.cc/sub?token=b361f62eb96933afd8513174c0741381
+https://hwdata.doits.eu.cc/sub?token=594d43bc44f433c02e34cf8a33d8a1a3
 
 https://hw.sxsc.eu.cc/hwdata/sub
 

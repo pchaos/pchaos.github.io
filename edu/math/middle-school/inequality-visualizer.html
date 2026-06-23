@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <title>一元一次不等式组 - 可视化练习</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="template.js"></script>
+  <style>
+body{display:flex;flex-direction:column;align-items:center}
+.input-grid{display:flex;flex-direction:column;gap:15px;margin:15px 0}
+.ineq-card{background:var(--accent-bg);padding:15px;border-radius:10px;border:2px solid transparent;transition:all .3s}
+.ineq-card:hover{border-color:var(--accent)}
+.ineq-display{background:var(--accent-dark);color:#fff;padding:12px;border-radius:8px;text-align:center;font-size:20px;font-weight:700;font-family:'Courier New',monospace;margin-bottom:12px}
+.param-row{display:flex;align-items:center;gap:8px;margin:6px 0;flex-wrap:wrap}
+.param-row label{font-size:13px;color:#666;min-width:50px}
+input[type=number]{width:70px;padding:6px 10px;border:1px solid #ddd;border-radius:6px;font-size:16px;text-align:center}
+input[type=number]:focus{outline:0;border-color:var(--accent)}
+select{padding:6px 12px;border:1px solid #ddd;border-radius:6px;font-size:14px;background:#fff}
+.number-line-wrap{position:relative;height:320px;margin:20px 0}
+.nlb{position:relative;height:30px;margin:2px 0}
+.nlb .ax{position:absolute;top:50%;left:5%;right:5%;height:2px;background:#333;transform:translateY(-50%)}
+.nlb .ax::after{content:"→";position:absolute;right:-18px;top:-11px;font-size:20px;color:#333}
+.nlb .tk{position:absolute;top:50%;width:2px;height:12px;background:#666;transform:translate(-50%,-50%)}
+.nlb .tl{position:absolute;bottom:0;transform:translateX(-50%);font-size:11px;color:#666;font-weight:600}
+.ir{position:relative;height:34px;margin:6px 0}
+.iarr{position:absolute;height:4px;top:50%;transform:translateY(-50%);z-index:10;border-radius:2px}
+.iarr:after{content:"";position:absolute;right:-12px;top:50%;transform:translateY(-50%);width:0;height:0;border-style:solid;border-width:10px 0 10px 14px;border-color:transparent transparent transparent var(--ac)}
+.iarr.lt{right:auto;left:auto}
+.iarr.lt:after{left:-12px;right:auto;border-width:10px 14px 10px 0;border-color:transparent var(--ac) transparent transparent}
+.ic{position:absolute;width:12px;height:12px;border-radius:50%;top:50%;transform:translate(-50%,-50%);z-index:15;border:2px solid var(--cc);background:var(--cf)}
+.sr{position:relative;height:50px;margin-top:8px;padding-top:6px;border-top:2px dashed #ccc}
+.sr .ax{position:absolute;top:50%;left:5%;right:5%;height:2px;background:#333;transform:translateY(-50%)}
+.sr .ax::after{content:"→";position:absolute;right:-18px;top:-11px;font-size:20px;color:#333}
+.sr .tk{position:absolute;top:50%;width:2px;height:10px;background:#666;transform:translate(-50%,-50%)}
+.sr .sh{position:absolute;height:18px;top:50%;transform:translateY(-50%);background:var(--accent);opacity:0.35;border-radius:3px;z-index:10}
+.sc{position:absolute;width:12px;height:12px;border-radius:50%;top:50%;transform:translate(-50%,-50%);z-index:15}
+.sc.f{background:var(--accent);border:2px solid #333}
+.sc.h{background:#fff;border:2px solid var(--accent)}
+.solution-box{background:var(--accent-bg);border:2px solid var(--accent);border-radius:10px;padding:18px;margin-top:18px}
+.solution-box h3{color:var(--accent);margin-bottom:10px}
+.solution-text{font-size:22px;text-align:center;padding:15px;background:#fff;border-radius:8px;font-family:'Courier New',monospace;font-weight:700}
+.solution-text.no-solution{color:#dc3545}
+.solution-text.all-real{color:#28a745}
+.legend{display:flex;gap:15px;flex-wrap:wrap;padding:10px 15px;background:#f8f9fa;border-radius:8px;margin:12px 0}
+.legend-item{display:flex;align-items:center;gap:6px;font-size:13px}
+.legend-swatch{width:28px;height:18px;border-radius:9px}
+.legend-swatch.hollow{background:0 0;border:2px solid #666}
+.step-box{display:none}
+.step-box.show{display:block}
+.step-row{display:flex;align-items:flex-start;gap:10px;margin:8px 0;padding:10px;background:#f8f9fa;border-radius:8px}
+.step-num{width:28px;height:28px;background:var(--accent);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0}
+.step-body{flex:1}
+.step-body .step-title{font-weight:700;color:#333;font-size:14px}
+.step-body .step-detail{color:#666;font-size:13px;margin-top:3px}
+.examples{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.example-card{background:#f8f9fa;padding:12px;border-radius:8px;cursor:pointer;border:2px solid transparent;transition:all .2s}
+.example-card:hover{border-color:var(--accent);background:var(--accent-bg)}
+.example-card h4{color:var(--accent);font-size:15px;margin-bottom:6px}
+.example-card .expr{font-family:'Courier New',monospace;color:#333;font-size:14px}
+.example-card .tip{color:#888;font-size:12px;margin-top:4px}
+.properties{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:15px}
+@media(max-width:600px){.properties{grid-template-columns:repeat(2,1fr)}}
+.property{background:#f9f9f9;padding:10px;border-radius:8px;text-align:center}
+.property-label{color:#666;font-size:12px}
+.property-value{font-size:16px;font-weight:700;color:var(--accent)}
+  </style>
+</head>
+<body>
+
+<div class="container">
+<h1>📐 一元一次不等式组</h1>
+<p class="subtitle">初中数学 · 八年级下册 · 数轴可视化</p>
+
+<div class="info-section">
+<div class="instructions">
+<h3>💡 知识要点</h3>
+<p><strong>定义：</strong>由几个含有同一个未知数的一元一次不等式组成的不等式组。</p>
+<ul>
+<li><strong>解法步骤：</strong>①分别解每个不等式 ②在数轴上表示解集 ③找公共部分</li>
+<li><strong>记忆口诀：</strong>同大取大，同小取小，大小小大中间找，大大小小找不到</li>
+</ul>
+</div>
+<div class="info-box">
+<h4>📖 教材定位</h4>
+<ul>
+<li><strong>人教版：</strong>七年级下册 · 第九章</li>
+<li><strong>核心考点：</strong>数轴表示解集、解集的交集运算</li>
+<li><strong>常见题型：</strong>解不等式组、求整数解、含参数问题</li>
+</ul>
+</div>
+</div>
+
+<div class="section-title">✏️ 输入不等式</div>
+<div class="input-grid" id="inequalityInputs"></div>
+<div class="controls">
+<button class="btn btn-primary" onclick="addInequality()">➕ 添加不等式</button>
+<button class="btn btn-primary" onclick="visualize()" style="background:var(--accent-dark)">📊 可视化</button>
+<button class="btn" onclick="showSteps()" style="background:#fa8c16;color:#fff">📖 分步解析</button>
+<button class="btn btn-secondary" onclick="resetAll()">🔄 重置</button>
+</div>
+</div>
+
+<div class="container">
+<div class="section-title">📝 典型例题</div>
+<div class="examples">
+<div class="example-card" onclick="loadExample(1)"><h4>例1：基础不等式组</h4><div class="expr">2x+1 &gt; 5 且 3x-2 &lt; 10</div><div class="tip">💡 先分别解，再找公共部分</div></div>
+<div class="example-card" onclick="loadExample(2)"><h4>例2：含等号</h4><div class="expr">x-3 ≥ 0 且 2x+1 ≤ 9</div><div class="tip">💡 注意端点是否包含</div></div>
+<div class="example-card" onclick="loadExample(3)"><h4>例3：无解情况</h4><div class="expr">x &gt; 5 且 x &lt; 3</div><div class="tip">💡 大大小小找不到（无解）</div></div>
+<div class="example-card" onclick="loadExample(4)"><h4>例4：全实数</h4><div class="expr">x+1 &gt; 0 且 x-1 &lt; 10</div><div class="tip">💡 大小小大中间找</div></div>
+<div class="example-card" onclick="loadExample(5)"><h4>例5：含负系数</h4><div class="expr">-2x+4 &gt; 0 且 x+1 ≥ 0</div><div class="tip">💡 除以负数，不等号方向改变！</div></div>
+<div class="example-card" onclick="loadExample(6)"><h4>例6：复杂系数</h4><div class="expr">3x-6 &lt; 9 且 2x+4 ≥ 10</div><div class="tip">💡 注意移项和系数化简</div></div>
+</div>
+</div>
+
+<div class="container" id="vizContainer" style="display:none">
+<div class="section-title">📊 可视化结果</div>
+<div class="number-line-wrap" id="numberLine"><div class="axis"></div></div>
+<div class="legend">
+<div class="legend-item"><div class="legend-swatch hollow"></div><span>空心圆（不包含端点）</span></div>
+<div class="legend-item"><div class="legend-swatch" style="background:var(--accent)"></div><span>解集区域</span></div>
+</div>
+<div class="solution-box">
+<h3>🎯 解集</h3>
+<div class="solution-text" id="solutionText">💡 点击"可视化"查看结果</div>
+</div>
+<div id="stepAnalysis" class="step-box"></div>
+</div>
+
+<div class="container" id="quizContainer" style="display:none">
+<div class="section-title">📋 随堂测验</div>
+<div id="quizContent"></div>
+<div class="controls">
+<button class="btn btn-primary" onclick="submitQuiz()">📝 提交答案</button>
+<button class="btn" onclick="nextQuiz()" style="background:#fa8c16;color:#fff">▶ 下一题</button>
+</div>
+</div>
+
+<div class="controls" style="justify-content:center;">
+<button class="btn btn-primary" onclick="toggleQuiz()">📝 开始测验</button>
+</div>
+
+<script>
+var ineqs=[
+{a:2,b:1,op:'>',c:5,color:'#11998e'},
+{a:3,b:-2,op:'<',c:10,color:'#3498db'}
+];
+var colors=['#11998e','#3498db','#9b59b6','#ff7f00','#e74c3c','#2ecc71'];
+
+var quiz=[
+{q:'不等式组 {x>3, x≤7} 的解集是？',o:['x>3','x≤7','3<x≤7','x>7'],a:2},
+{q:'不等式 2x-4>0 的解集是？',o:['x>2','x<2','x>4','x<-2'],a:0},
+{q:'不等式 -3x≤9 的解集是？',o:['x≥-3','x≤-3','x≥3','x≤3'],a:0},
+{q:'不等式组 {x+1>0, x-3<0} 的解集是？',o:['x>-1','x<3','-1<x<3','无解'],a:2},
+{q:'不等式 5x-3>2x+6 的解集是？',o:['x>2','x>3','x>1','x>9'],a:1},
+{q:'不等式组 {2x-4≥0, x+1<3} 的解集是？',o:['x≥2','x<2','无解','x>2'],a:2},
+];
+var curQ=0,ans=[];
+
+function loadExample(i){
+  var exs=[
+    [{a:2,b:1,op:'>',c:5},{a:3,b:-2,op:'<',c:10}],
+    [{a:1,b:-3,op:'>=',c:0},{a:2,b:1,op:'<=',c:9}],
+    [{a:1,b:0,op:'>',c:5},{a:1,b:0,op:'<',c:3}],
+    [{a:1,b:1,op:'>',c:0},{a:1,b:-1,op:'<',c:10}],
+    [{a:-2,b:4,op:'>',c:0},{a:1,b:1,op:'>=',c:0}],
+    [{a:3,b:-6,op:'<',c:9},{a:2,b:4,op:'>=',c:10}]
+  ];
+  ineqs=exs[i-1].map(function(e,j){e.color=colors[j];return e;});
+  renderInputs();visualize();showSteps();
+}
+
+function fmtExpr(a,b,op,c){
+  var left='';
+  if(a===1)left='x';else if(a===-1)left='-x';else left=a+'x';
+  if(b>0)left+=' + '+b;else if(b<0)left+=' - '+Math.abs(b);
+  var m={'>':'>','>=':'≥','<':'<','<=':'≤'};
+  return left+' '+m[op]+' '+c;
+}
+
+function renderInputs(){
+  var c=document.getElementById('inequalityInputs');
+  c.innerHTML='';
+  ineqs.forEach(function(ineq,i){
+    var d=document.createElement('div');d.className='ineq-card';
+    d.innerHTML='<div class="ineq-display" style="background:'+ineq.color+'">'+fmtExpr(ineq.a,ineq.b,ineq.op,ineq.c)+'</div>'+
+      '<div class="param-row"><label>系数a:</label><input type="number" value="'+ineq.a+'" onchange="upd('+i+',\'a\',this.value)"><span>x</span></div>'+
+      '<div class="param-row"><label>常数b:</label><input type="number" value="'+ineq.b+'" onchange="upd('+i+',\'b\',this.value)"></div>'+
+      '<div class="param-row"><label>不等号:</label><select onchange="upd('+i+',\'op\',this.value)">'+
+        '<option value=">"'+(ineq.op==='>'?' selected':'')+'>大于号(>)</option>'+
+        '<option value=">="'+(ineq.op==='>='?' selected':'')+'>大于等于(≥)</option>'+
+        '<option value="<"'+(ineq.op==='<'?' selected':'')+'>小于号(<)</option>'+
+        '<option value="<="'+(ineq.op==='<='?' selected':'')+'>小于等于(≤)</option>'+
+      '</select></div>'+
+      '<div class="param-row"><label>常数c:</label><input type="number" value="'+ineq.c+'" onchange="upd('+i+',\'c\',this.value)"></div>'+
+      (ineqs.length>1?'<button class="btn btn-secondary" onclick="rm('+i+')" style="margin-top:8px;padding:4px 12px;font-size:12px">🗑 删除</button>':'');
+    c.appendChild(d);
+  });
+}
+
+function upd(i,f,v){
+  if(f==='op')ineqs[i][f]=v;
+  else ineqs[i][f]=parseFloat(v)||0;
+  renderInputs();
+  var vc=document.getElementById('vizContainer');
+  if(vc.style.display!=='none')visualize();
+}
+function addInequality(){
+  if(ineqs.length>=6){alert('最多支持6个不等式');return;}
+  ineqs.push({a:1,b:0,op:'>',c:0,color:colors[ineqs.length]});
+  renderInputs();
+  var v=document.getElementById('vizContainer');
+  if(v.style.display!=='none')visualize();
+}
+function rm(i){
+  ineqs.splice(i,1);renderInputs();
+  var v=document.getElementById('vizContainer');
+  if(v.style.display!=='none')visualize();
+}
+
+function solve(a,b,op,c){
+  var rhs=c-b;
+  if(a===0){
+    var ok=(op==='>'&&b>c)||(op==='>='&&b>=c)||(op==='<'&&b<c)||(op==='<='&&b<=c);
+    return ok?{t:'all'}:{t:'none'};
+  }
+  var bound=rhs/a;
+  if(a>0)return{t:'half',b:bound,d:op.includes('<')?'l':'r',inc:op.includes('=')};
+  else{
+    var ro=op==='>'?'<':op==='>='?'<=':op==='<'?'>':'>=';
+    return{t:'half',b:bound,d:ro.includes('<')?'l':'r',inc:ro.includes('=')};
+  }
+}
+
+function fn(x){return Number.isInteger(x)?x.toString():x.toFixed(2);}
+
+function visualize(){
+  var card=document.getElementById('vizContainer');
+  card.style.display='block';card.scrollIntoView({behavior:'smooth',block:'nearest'});
+  var nl=document.getElementById('numberLine'),st=document.getElementById('solutionText');
+  nl.innerHTML='';
+  
+  var sols=ineqs.map(function(v){return solve(v.a,v.b,v.op,v.c)});
+  if(sols.filter(function(s){return s.t==='none'}).length>0){
+    st.className='solution-text no-solution';st.textContent='\u274c \u65e0\u89e3\uff08\u7a7a\u96c6 \u2205\uff09';
+    renderNumLine(nl,null,null);return;
+  }
+  if(sols.filter(function(s){return s.t==='all'}).length===sols.length){
+    st.className='solution-text all-real';st.textContent='\u2705 \u6240\u6709\u5b9e\u6570\uff08\u211d\uff09';
+    renderNumLine(nl,null,null);return;
+  }
+  
+  var hs=sols.filter(function(s){return s.t==='half'});
+  if(hs.length===0){
+    st.className='solution-text all-real';st.textContent='\u2705 \u6240\u6709\u5b9e\u6570\uff08\u211d\uff09';
+    renderNumLine(nl,null,null);return;
+  }
+  
+  var maxL=-Infinity,minR=Infinity,maxLi=false,minRi=false;
+  hs.forEach(function(s){
+    if(s.d==='r'){if(s.b>maxL||(s.b===maxL&&s.inc&&!maxLi)){maxL=s.b;maxLi=s.inc;}
+    }else{if(s.b<minR||(s.b===minR&&s.inc&&!minRi)){minR=s.b;minRi=s.inc;}}
+  });
+  
+  var minV=-10,maxV=10;
+  hs.forEach(function(s){minV=Math.min(minV,s.b-6);maxV=Math.max(maxV,s.b+6);});
+  if(maxL>-Infinity){minV=Math.min(minV,maxL-4);}
+  if(minR<Infinity){maxV=Math.max(maxV,minR+4);}
+  minV=Math.floor(minV);maxV=Math.ceil(maxV);
+  
+  var solInfo=null;
+  if(maxL>=minR){
+    if(maxL===minR&&maxLi&&minRi){
+      st.className='solution-text';st.textContent='x = '+fn(maxL);
+      solInfo={l:maxL,r:maxL,f:true};
+    }else{
+      st.className='solution-text no-solution';st.textContent='\u274c \u65e0\u89e3\uff08\u7a7a\u96c6 \u2205\uff09';
+    }
+  }else{
+    var str=fn(maxL)+(maxLi?' \u2264 ':' < ')+'x'+(minRi?' \u2264 ':' < ')+fn(minR);
+    st.className='solution-text';st.textContent=str;
+    solInfo={l:maxL,r:minR,lf:maxLi,rf:minRi};
+  }
+  
+  // Draw base number line
+  renderNumLine(nl,minV,maxV);
+  
+  // Draw each inequality row
+  hs.forEach(function(s,i){addRow(nl,s,i,minV,maxV);});
+  
+  // Draw solution row
+  if(solInfo){addSoln(nl,solInfo,minV,maxV);}
+  
+  // Draw vertical connecting lines
+  addConnectors(nl);
+}
+
+function renderNumLine(container,minV,maxV){
+  if(minV===null)return;
+  var base=document.createElement('div');base.className='nlb';
+  var ax=document.createElement('div');ax.className='ax';base.appendChild(ax);
+  for(var i=minV;i<=maxV;i++){
+    var p=((i-minV)/(maxV-minV))*80+10;
+    var t=document.createElement('div');t.className='tk';t.style.left=p+'%';base.appendChild(t);
+    var l=document.createElement('div');l.className='tl';l.style.left=p+'%';l.textContent=i;base.appendChild(l);
+  }
+  container.appendChild(base);
+}
+
+function addRow(container,sol,idx,minV,maxV){
+  var row=document.createElement('div');row.className='ir';
+  var pct=function(v){return((v-minV)/(maxV-minV))*80+10;};
+  var bp=pct(sol.b);
+  var clr=colors[idx%colors.length];
+  
+  var arr=document.createElement('div');
+  if(sol.d==='r'){
+    arr.className='iarr';
+    arr.style.left=bp+'%';arr.style.width=(95-bp)+'%';
+  }else{
+    arr.className='iarr lt';
+    arr.style.left='5%';arr.style.width=(bp-5)+'%';
+  }
+  arr.style.background=clr;
+  arr.style.setProperty('--ac',clr);
+  row.appendChild(arr);
+  container.appendChild(row);
+  
+  // Add circle to the main axis (nlb)
+  var nlb=container.querySelector('.nlb');
+  if(nlb){
+    var c=document.createElement('div');c.className='ic';
+    c.style.left=bp+'%';
+    c.style.setProperty('--cc',clr);
+    c.style.setProperty('--cf',sol.inc?clr:'transparent');
+    c.dataset.ineqIdx=idx;
+    nlb.appendChild(c);
+  }
+}
+
+function addSoln(container,info,minV,maxV){
+  var row=document.createElement('div');row.className='sr';
+  var ax=document.createElement('div');ax.className='ax';row.appendChild(ax);
+  var pct=function(v){return((v-minV)/(maxV-minV))*80+10;};
+  for(var i=minV;i<=maxV;i++){
+    var t=document.createElement('div');t.className='tk';t.style.left=pct(i)+'%';row.appendChild(t);
+  }
+  if(info.r!==undefined&&info.l!==info.r){
+    var lp=pct(info.l),rp=pct(info.r);
+    var sh=document.createElement('div');sh.className='sh';
+    sh.style.left=Math.max(5,lp)+'%';sh.style.width=Math.min(95,rp)-Math.max(5,lp)+'%';
+    row.appendChild(sh);
+    // Add solution circles to the main axis (nlb)
+    var nlb=container.querySelector('.nlb');
+    if(nlb){
+      var c1=document.createElement('div');c1.className='sc '+(info.lf?'f':'h');c1.style.left=lp+'%';nlb.appendChild(c1);
+      var c2=document.createElement('div');c2.className='sc '+(info.rf?'f':'h');c2.style.left=rp+'%';nlb.appendChild(c2);
+    }
+  }else if(info.f){
+    var nlb=container.querySelector('.nlb');
+    if(nlb){
+      var c=document.createElement('div');c.className='sc f';c.style.left=pct(info.l)+'%';nlb.appendChild(c);
+    }
+  }
+  container.appendChild(row);
+}
+
+function addConnectors(nl){
+  var nlb=nl.querySelector('.nlb');
+  if(!nlb)return;
+  var ics=nlb.querySelectorAll('.ic');
+  if(!ics.length)return;
+  var nlRect=nl.getBoundingClientRect();
+  ics.forEach(function(c){
+    var cRect=c.getBoundingClientRect();
+    var cy=cRect.top+cRect.height/2;
+    var color=c.style.getPropertyValue('--cc');
+    var target=nl.querySelectorAll('.ir')[parseInt(c.dataset.ineqIdx)];
+    if(!target)return;
+    var tRect=target.getBoundingClientRect();
+    var tCenter=tRect.top+tRect.height/2;
+    if(tCenter>cy+4){
+      var line=document.createElement('div');
+      line.style.cssText='position:absolute;left:'+c.style.left+';top:'+(cy-nlRect.top)+'px;height:'+(tCenter-cy)+'px;width:0;border-left:4px solid '+color+';z-index:5;pointer-events:none';
+      nl.appendChild(line);
+    }
+  });
+}
+
+function showSteps(){
+  document.getElementById("vizContainer").style.display="block";
+  var box=document.getElementById("stepAnalysis");box.style.display="block";
+  var h='<h3 style="margin-bottom:15px;color:var(--accent)">\U0001F4D6 \u89E3\u9898\u6B65\u9AA4</h3>';
+  ineqs.forEach(function(ineq,i){
+    var s=solve(ineq.a,ineq.b,ineq.op,ineq.c);
+    h+='<div class="step-row"><div class="step-num">'+(i+1)+'</div><div class="step-body"><div class="step-title">\u89E3\u4E0D\u7B49\u5F0F '+(i+1)+'</div><div class="step-detail">'+fmtExpr(ineq.a,ineq.b,ineq.op,ineq.c)+'</div>';
+    if(s.t==="half"){
+      h+='<div class="step-detail" style="margin-top:5px;color:var(--accent)"><strong>\u89E3\u5F97\uFF1A</strong> x '+(s.d==="r"?(s.inc?"\u2265":">"):(s.inc?"\u2264":"<"))+' '+fn(s.b)+'</div>';
+    }else if(s.t==="all"){
+      h+='<div class="step-detail" style="margin-top:5px;color:#28a745"><strong>\u89E3\u5F97\uFF1A</strong> \u6240\u6709\u5B9E\u6570(\u211D)</div>';
+    }else{
+      h+='<div class="step-detail" style="margin-top:5px;color:#dc3545"><strong>\u89E3\u5F97\uFF1A</strong> \u65E0\u89E3(\u2205)</div>';
+    }
+    h+="</div></div>";
+  });
+  h+='<div class="step-row"><div class="step-num" style="background:#fa8c16">\u2211</div><div class="step-body"><div class="step-title">\u53D6\u516C\u5171\u90E8\u5206(\u4EA4\u96C6)</div><div class="step-detail">\u5728\u6570\u8F74\u4E0A\u627E\u51FA\u6240\u6709\u89E3\u96C6\u7684\u91CD\u53E0\u533A\u57DF</div></div></div>';
+  box.innerHTML=h;box.scrollIntoView({behavior:"smooth",block:"nearest"});
+}
+
+function toggleQuiz(){
+  var el=document.getElementById('quizContainer');
+  el.style.display=el.style.display==='none'?'block':'none';
+  if(el.style.display==='block'){loadQ(0);el.scrollIntoView({behavior:'smooth'});}
+}
+function loadQ(i){
+  curQ=i;var c=document.getElementById('quizContent');
+  var q=quiz[i];
+  var h='<div style="background:#f8f9fa;padding:18px;border-radius:10px"><h4 style="margin-bottom:12px">第 '+(i+1)+' 题</h4><p style="font-size:16px;margin-bottom:15px">'+q.q+'</p><div class="quiz-options">';
+  q.o.forEach(function(o,j){h+='<div class="quiz-option" onclick="sel('+j+')">'+String.fromCharCode(65+j)+'. '+o+'</div>';});
+  h+='</div></div>';c.innerHTML=h;ans[i]=null;
+}
+function sel(i){
+  ans[curQ]=i;
+  document.querySelectorAll('.quiz-option').forEach(function(e,j){e.classList.toggle('sel',j===i);});
+}
+function submitQuiz(){
+  if(ans[curQ]===null){alert('请先选择一个答案！');return;}
+  var q=quiz[curQ];var opts=document.querySelectorAll('.quiz-option');
+  opts[ans[curQ]].classList.toggle('correct',ans[curQ]===q.a);
+  opts[ans[curQ]].classList.toggle('wrong',ans[curQ]!==q.a);
+  opts[q.a].classList.add('correct');
+  var score=0;ans.forEach(function(a,i){if(a===quiz[i].a)score++;});
+  var correct=ans[curQ]===q.a;
+  setTimeout(function(){alert('得分：'+score+'/'+quiz.length+'\\n'+(correct?'✅ 正确！':'❌ 答案：'+String.fromCharCode(65+q.a)));},100);
+}
+function nextQuiz(){
+  if(curQ<quiz.length-1)loadQ(curQ+1);
+  else alert('测验完成！总得分：'+ans.filter(function(a,i){return a===quiz[i].a}).length+'/'+quiz.length);
+}
+
+function resetAll(){
+  ineqs=[
+    {a:2,b:1,op:'>',c:5,color:'#11998e'},
+    {a:3,b:-2,op:'<',c:10,color:'#3498db'}
+  ];
+  renderInputs();
+  document.getElementById('numberLine').innerHTML='<div class="axis"></div>';
+  document.getElementById('solutionText').className='solution-text';document.getElementById('solutionText').textContent='';
+  document.getElementById('vizContainer').style.display='none';
+  document.getElementById('stepAnalysis').style.display='none';
+}
+
+document.addEventListener('DOMContentLoaded',function(){
+  renderInputs();
+});
+</script>
+</body>
+</html>

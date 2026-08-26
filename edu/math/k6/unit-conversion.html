@@ -419,22 +419,19 @@ function renderBar(barId, capId, value, unitName, spanRatio) {
     var whole = Math.floor(value);
     var extra = value - whole;
     if (value <= 48) {
+      // 每条代表 value 个 1 单位：整格宽 100/value%，小数格按 extra 比例 —— 体现“2.2 个格子”
+      var capW = 100 / value;
       for (var i = 0; i < whole; i++) {
-        var d = document.createElement('div'); d.className = 'seg'; bar.appendChild(d);
+        var d = document.createElement('div'); d.className = 'seg';
+        d.style.flex = '0 0 auto'; d.style.width = capW + '%';
+        bar.appendChild(d);
       }
       var extraText = extra > 0.001 ? fracText(extra) : null;
-      if (extraText) {
-        // 最后一个单位切成几份，填一部分
-        var p = bestFraction(extra);
-        if (p.d <= 20) {
-          var cell = document.createElement('div'); cell.className = 'frac-cell';
-          for (var k = 0; k < p.d; k++) {
-            var s = document.createElement('div');
-            s.className = 'frac-sub' + (k < p.n ? ' on' : '');
-            cell.appendChild(s);
-          }
-          bar.appendChild(cell);
-        }
+      if (extra > 0.001) {
+        // 小数格：占 extra 个 1 单位的宽度（0.204623 → 约 0.2 格）
+        var cell = document.createElement('div'); cell.className = 'seg';
+        cell.style.flex = '0 0 auto'; cell.style.width = (extra * capW) + '%';
+        bar.appendChild(cell);
       }
       cap.textContent = capText + ' = ' + whole + ' 个 1 ' + unitName +
         (extraText ? ' + ' + extraText : (extra > 0.001 ? ' + 约 ' + fmt(extra) : ''));

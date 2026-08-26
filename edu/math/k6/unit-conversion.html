@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>小学数学 · 单位换算可视化</title>
+  <link rel="stylesheet" href="template.css" />
+  <style>
+    /* ===== 页面专属样式 ===== */
+    .tabs { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-bottom:18px; }
+    .tab-btn { padding:8px 18px; border:2px solid var(--border); background:var(--card);
+               border-radius:var(--radius-full); cursor:pointer; font-size:15px; font-weight:600;
+               color:var(--text); font-family:var(--font); transition:all .2s; }
+    .tab-btn:hover { border-color:var(--accent); }
+    .tab-btn.active { background:var(--accent); color:#fff; border-color:var(--accent); }
+
+    .conv-grid { display:grid; grid-template-columns:1fr 1fr; gap:18px; align-items:center; }
+    @media (max-width:720px){ .conv-grid{ grid-template-columns:1fr; } }
+    .unit-cell { text-align:center; }
+    .unit-cell .u-badge { font-size:16px; font-weight:700; color:var(--accent-dark); margin-bottom:6px; }
+    .unit-cell select { font-size:15px; padding:8px 12px; border:1px solid var(--border-light);
+                        border-radius:8px; background:var(--card); color:var(--text); font-family:var(--font); }
+    .unit-cell .big { font-size:30px; font-weight:800; color:var(--text); margin-top:6px;
+                      font-family:var(--font-mono); }
+    .unit-cell .big .u { font-size:18px; color:var(--accent-dark); font-weight:700; }
+
+    .eq-arrow { text-align:center; font-size:28px; color:var(--accent); font-weight:800; }
+
+    .value-row { display:flex; align-items:center; justify-content:center; gap:10px; margin:16px 0; flex-wrap:wrap; }
+    .value-row label { font-size:14px; color:var(--text-muted); }
+    .value-row input[type=number] { width:90px; font-size:20px; text-align:center;
+        border:2px solid var(--border-light); border-radius:8px; padding:6px; font-family:var(--font-mono); }
+    .value-row input[type=number]:focus { outline:none; border-color:var(--accent); }
+    .value-row input[type=range] { flex:1 1 200px; max-width:380px; accent-color:var(--accent); }
+
+    .viz-title { font-size:14px; color:var(--text-muted); margin:4px 0 4px; text-align:left; }
+    .segbar { display:flex; height:34px; border-radius:8px; overflow:hidden; background:var(--accent-bg);
+              border:1px solid var(--border-light); margin-bottom:4px; }
+.segbar .seg { flex:1 1 0; background:var(--accent); border-right:1px solid var(--card); min-width:2px; }
+.segbar .seg:last-child { border-right:none; }
+.frac-cell { flex:1 1 0; display:flex; min-width:2px; }
+.frac-sub { flex:1 1 0; background:var(--accent-light); border-right:1px solid var(--card); min-width:1px; }
+.frac-sub.on { background:var(--accent); }
+.frac-sub:last-child { border-right:none; }
+    .bar-cap { text-align:center; font-size:12px; color:var(--text-muted); margin-bottom:14px; }
+
+    .equal-note { text-align:center; font-size:15px; font-weight:700; color:var(--success); margin:6px 0 2px; }
+
+    .rule-box { background:var(--accent-bg); border-radius:var(--radius); padding:12px 16px; margin-top:16px;
+                font-size:14px; line-height:1.7; color:var(--text); }
+    .rule-box b { color:var(--accent-dark); }
+    .kb-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:14px; margin-top:16px; }
+    .kb-cat { background:var(--card); border:1px solid var(--border-light); border-radius:var(--radius); padding:12px 14px; }
+    .kb-cat-name { font-weight:700; color:var(--accent-dark); margin-bottom:8px; font-size:15px; }
+    .kb-rate { font-size:13px; color:var(--text); line-height:1.9; font-family:var(--font-mono); }
+    .kb-rate b { color:var(--accent-dark); }
+    .kb-plus { margin-top:12px; }
+
+    /* ===== 练习区 ===== */
+    .quiz-card { text-align:center; }
+    .quiz-q { font-size:24px; font-weight:800; color:var(--text); margin:8px 0 18px; font-family:var(--font-mono); }
+    .opt-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; max-width:520px; margin:0 auto; }
+    @media (max-width:520px){ .opt-grid{ grid-template-columns:1fr; } }
+    .opt-btn { padding:14px; font-size:20px; font-weight:700; font-family:var(--font-mono);
+               border:2px solid var(--border-light); border-radius:var(--radius); background:var(--card);
+               color:var(--text); cursor:pointer; transition:all .2s; }
+    .opt-btn:hover:not(:disabled){ border-color:var(--accent); transform:translateY(-1px); }
+    .opt-btn.correct { background:var(--success); color:#fff; border-color:var(--success); }
+    .opt-btn.wrong { background:var(--danger); color:#fff; border-color:var(--danger); }
+    .opt-btn:disabled { cursor:default; }
+    .quiz-feedback { min-height:26px; font-size:16px; font-weight:700; margin:14px 0 8px; }
+    .quiz-feedback.ok { color:var(--success); }
+    .quiz-feedback.no { color:var(--danger); }
+    .quiz-controls { display:flex; gap:10px; justify-content:center; margin-top:10px; flex-wrap:wrap; }
+
+    .progress-wrap { max-width:520px; margin:0 auto 18px; }
+    .progress-row { display:flex; justify-content:space-between; font-size:14px; color:var(--text-muted); margin-bottom:6px; }
+    .progress-bar { height:14px; background:var(--accent-bg); border-radius:var(--radius-full); overflow:hidden;
+                    border:1px solid var(--border-light); }
+    .progress-fill { height:100%; background:var(--success); width:0; transition:width .3s; }
+    .quiz-note { font-size:13px; color:var(--text-muted); margin-top:14px; }
+  </style>
+</head>
+<body>
+<div class="theme-picker" id="themePicker">
+  <button data-theme="default" style="background:#3b82f6" title="默认蓝"></button>
+  <button data-theme="green" style="background:#2ecc71" title="绿色"></button>
+  <button data-theme="purple" style="background:#8b5cf6" title="紫色"></button>
+  <button data-theme="orange" style="background:#f97316" title="橙色"></button>
+  <button data-theme="dark" style="background:#1e293b" title="暗色"></button>
+</div>
+<div class="container">
+
+  <h1>小学数学 · 单位换算可视化</h1>
+  <p class="subtitle">长度 · 重量 · 容量 · 时间 · 面积 · 体积 · 速度 —— 拖一拖、算一算、练一练</p>
+
+  <div class="card">
+    <div class="card-title">单位换算 · 探索</div>
+
+    <div class="tabs" id="catTabs"></div>
+
+    <div class="conv-grid">
+      <div class="unit-cell">
+        <div class="u-badge">从</div>
+        <select id="selFrom"></select>
+        <div class="big"><span id="valFrom">1</span><span class="u" id="unitFrom"></span></div>
+      </div>
+      <div class="eq-arrow">=</div>
+      <div class="unit-cell">
+        <div class="u-badge">到</div>
+        <select id="selTo"></select>
+        <div class="big"><span id="valTo"></span><span class="u" id="unitTo"></span></div>
+      </div>
+    </div>
+
+    <div class="value-row">
+      <label>数值</label>
+      <button class="step-btn sub" data-target="numInput" data-delta="-1">−</button>
+      <input type="number" id="numInput" value="1" min="0.01" step="any" />
+      <button class="step-btn" data-target="numInput" data-delta="1">+</button>
+      <input type="range" id="slider" min="1" max="200" step="1" value="1" />
+    </div>
+
+    <div class="eq-bar" id="eqBar"></div>
+
+    <div class="viz-title">直观对比 —— 蓝色一样长，只是“格子”不同：</div>
+    <div class="segbar" id="barFrom"></div>
+    <div class="bar-cap" id="capFrom"></div>
+    <div class="segbar" id="barTo"></div>
+    <div class="bar-cap" id="capTo"></div>
+    <div class="equal-note" id="equalNote"></div>
+
+    <div class="rule-box" id="ruleBox"></div>
+  </div>
+  <!-- ====== 基础知识卡 ====== -->
+  <div class="card">
+    <div class="card-title">基础知识 · 单位进率表</div>
+
+    <div class="knowledge-box">
+      <div class="kb-title"><span class="icon">🧭</span>进率口诀</div>
+      <b>大单位 → 小单位：乘进率</b>（×10、×100、×1000…）<br>
+      <b>小单位 → 大单位：除进率</b>（÷10、÷100、÷1000…）<br>
+      <b>相邻单位进率</b>：1 个大单位里包含几个小单位，就是进率（如 1 米 = 10 分米 → 进率 10）。
+    </div>
+
+    <div class="kb-grid">
+      <div class="kb-cat">
+        <div class="kb-cat-name">📏 长度</div>
+        <div class="kb-rate">1 千米 (km) = 1000 米 (m)</div>
+        <div class="kb-rate">1 米 (m) = 10 分米 (dm)</div>
+        <div class="kb-rate">1 分米 (dm) = 10 厘米 (cm)</div>
+        <div class="kb-rate">1 厘米 (cm) = 10 毫米 (mm)</div>
+        <div class="kb-rate">1 英尺 (ft) = 12 英寸 (in)</div>
+        <div class="kb-rate">1 英寸 (in) = 2.54 厘米 (cm)</div>
+        <div class="kb-rate">1 英尺 (ft) = 0.3048 米 (m)</div>
+        <div class="kb-rate">1 米 (m) = 3 尺 (chi)</div>
+        <div class="kb-rate">1 英里 (mile) ≈ 1.609 千米 (km)</div>
+        <div class="kb-rate">1 海里 (nmi) = 1852 米 (m)</div>
+      </div>
+      <div class="kb-cat">
+        <div class="kb-cat-name">⚖️ 重量</div>
+        <div class="kb-rate">1 吨 (t) = 1000 千克 (kg)</div>
+        <div class="kb-rate">1 千克 (kg) = 1000 克 (g)</div>
+        <div class="kb-rate">1 千克 (kg) = 2 斤 (jin)</div>
+        <div class="kb-rate">1 斤 (jin) = 10 两 (liang)</div>
+        <div class="kb-rate">1 斤 (jin) = 500 克 (g)</div>
+        <div class="kb-rate">1 两 (liang) = 50 克 (g)</div>
+        <div class="kb-rate">1 公斤 (kg) = 1 千克 (kg)</div>
+        <div class="kb-rate">1 磅 (lb) ≈ 0.454 千克 (kg)</div>
+      </div>
+      <div class="kb-cat">
+        <div class="kb-cat-name">🧪 容量</div>
+        <div class="kb-rate">1 升 (L) = 1000 毫升 (mL)</div>
+      </div>
+      <div class="kb-cat">
+        <div class="kb-cat-name">⏱ 时间</div>
+        <div class="kb-rate">1 时 (h) = 60 分 (min)</div>
+        <div class="kb-rate">1 分 (min) = 60 秒 (s)</div>
+        <div class="kb-rate">1 时 (h) = 3600 秒 (s)</div>
+        <div class="kb-rate">1 日 (d) = 24 时 (h)</div>
+        <div class="kb-rate">1 日 (d) = 1440 分 (min)</div>
+        <div class="kb-rate">1 周 (w) = 7 日 (d)</div>
+      </div>
+      <div class="kb-cat">
+        <div class="kb-cat-name">⬛ 面积</div>
+        <div class="kb-rate">1 平方千米 (km²) = 100 公顷 (ha)</div>
+        <div class="kb-rate">1 公顷 (ha) = 10000 平方米 (m²)</div>
+        <div class="kb-rate">1 平方米 (m²) = 100 平方分米 (dm²)</div>
+        <div class="kb-rate">1 平方分米 (dm²) = 100 平方厘米 (cm²)</div>
+        <div class="kb-rate">1 平方厘米 (cm²) = 100 平方毫米 (mm²)</div>
+      </div>
+      <div class="kb-cat">
+        <div class="kb-cat-name">📦 体积</div>
+        <div class="kb-rate">1 立方米 (m³) = 1000 立方分米 (dm³)</div>
+        <div class="kb-rate">1 立方分米 (dm³) = 1000 立方厘米 (cm³)</div>
+      </div>
+      <div class="kb-cat">
+        <div class="kb-cat-name">📐 速度</div>
+        <div class="kb-rate">1 米/秒 (m/s) = 3.6 千米/时 (km/h)</div>
+        <div class="kb-rate">1 米/秒 (m/s) = 60 米/分 (m/min)</div>
+        <div class="kb-rate">1 千米/分 (km/min) = 1000 米/分 (m/min)</div>
+        <div class="kb-rate">口诀：千米/时 ↔ 米/秒 ×3.6 / ÷3.6</div>
+      </div>
+    </div>
+
+    <div class="knowledge-box kb-plus">
+      <div class="kb-title"><span class="icon">💡</span>特殊关系</div>
+      <b>1 升 = 1 立方分米</b>，<b>1 毫升 = 1 立方厘米</b>（容量与体积相通）<br>
+      <b>1 年 = 12 个月</b>（月→年不是固定进率，用实际天数）<br>
+      <b>1 元 = 10 角</b>，<b>1 角 = 10 分</b>（货币换算，进率 10）
+    </div>
+  </div>
+
+
+  <!-- ====== 练习区 ====== -->
+  <div class="card">
+    <div class="card-title">换算练习 · 即时反馈</div>
+
+    <div class="tabs" id="quizTabs"></div>
+
+    <div class="progress-wrap">
+      <div class="progress-row"><span id="progText">已答 0 / 0</span><span id="scoreText">正确率 —</span></div>
+      <div class="progress-bar"><div class="progress-fill" id="progFill"></div></div>
+    </div>
+
+    <div class="quiz-card">
+      <div class="quiz-q" id="quizQ">—</div>
+      <div class="opt-grid" id="optGrid"></div>
+      <div class="quiz-feedback" id="quizFeedback"></div>
+      <div class="quiz-controls">
+        <button class="btn btn-primary" id="btnCheck">检查</button>
+        <button class="btn btn-success" id="btnNext">下一题</button>
+        <button class="btn btn-rest" id="btnRestart">重新开始</button>
+      </div>
+    </div>
+    <p class="quiz-note">键盘：← / → 不适用，按“下一题”继续；练习随机出题，做满 10 题统计一轮正确率。</p>
+  </div>
+
+</div>
+
+<script src="template.js"></script>
+<script>
+var DATA = {
+  length: {
+    name: '长度', base: '米',
+    units: [
+      {s:'毫米', en:'mm', f:0.001}, {s:'厘米', en:'cm', f:0.01},
+      {s:'英寸', en:'in', f:0.0254}, {s:'分米', en:'dm', f:0.1},
+      {s:'英尺', en:'ft', f:0.3048}, {s:'尺', en:'chi', f:1/3},
+      {s:'米', en:'m', f:1}, {s:'千米', en:'km', f:1000},
+      {s:'英里', en:'mile', f:1609.344}, {s:'海里', en:'nmi', f:1852}
+    ]
+  },
+  weight: {
+    name: '重量', base: '千克',
+    units: [
+      {s:'毫克', en:'mg', f:1e-6}, {s:'克', en:'g', f:0.001},
+      {s:'两', en:'liang', f:0.05}, {s:'磅', en:'lb', f:0.45359237}, {s:'斤', en:'jin', f:0.5},
+      {s:'千克', en:'kg', f:1}, {s:'公斤', en:'kg', f:1}, {s:'吨', en:'t', f:1000}
+    ]
+  },
+  capacity: {
+    name: '容量', base: '升',
+    units: [ {s:'毫升', en:'mL', f:0.001}, {s:'升', en:'L', f:1} ]
+  },
+  time: {
+    name: '时间', base: '秒',
+    units: [ {s:'秒', en:'s', f:1}, {s:'分', en:'min', f:60}, {s:'时', en:'h', f:3600},
+             {s:'日', en:'d', f:86400}, {s:'周', en:'w', f:604800} ]
+  },
+  area: {
+    name: '面积', base: '平方米',
+    units: [
+      {s:'平方毫米', en:'mm²', f:1e-6}, {s:'平方厘米', en:'cm²', f:0.0001},
+      {s:'平方分米', en:'dm²', f:0.01}, {s:'平方米', en:'m²', f:1},
+      {s:'公顷', en:'ha', f:10000}, {s:'平方千米', en:'km²', f:1000000}
+    ]
+  },
+  volume: {
+    name: '体积', base: '立方米',
+    units: [ {s:'立方厘米', en:'cm³', f:0.000001}, {s:'立方分米', en:'dm³', f:0.001}, {s:'立方米', en:'m³', f:1} ]
+  },
+  speed: {
+    name: '速度', base: '米/秒',
+    units: [
+      {s:'米/秒', en:'m/s', f:1}, {s:'米/分', en:'m/min', f:1/60},
+      {s:'千米/时', en:'km/h', f:5/18}, {s:'千米/分', en:'km/min', f:50/3}
+    ]
+  }
+};
+
+var CAT_ORDER = ['length','weight','capacity','time','area','volume','speed'];
+var currentCat = 'length';
+
+function unitLabel(u) { return u.s + ' (' + u.en + ')'; }
+
+/* ==================== 探索区逻辑 ==================== */
+function fmt(n) {
+  n = Math.round(n * 1e6) / 1e6;
+  if (!isFinite(n)) return String(n);
+  if (Math.abs(n) >= 1e12 || (Math.abs(n) < 1e-6 && n !== 0)) return n.toExponential(3);
+  if (Number.isInteger(n)) return String(n);
+  var s = n.toFixed(6).replace(/0+$/, '').replace(/\.$/, '');
+  return s;
+}
+
+function buildTabs() {
+  var wrap = document.getElementById('catTabs');
+  wrap.innerHTML = '';
+  CAT_ORDER.forEach(function(key) {
+    var b = document.createElement('button');
+    b.className = 'tab-btn' + (key === currentCat ? ' active' : '');
+    b.textContent = DATA[key].name;
+    b.dataset.cat = key;
+    b.addEventListener('click', function() { switchCat(key); });
+    wrap.appendChild(b);
+  });
+}
+
+function switchCat(key) {
+  currentCat = key;
+  document.querySelectorAll('#catTabs .tab-btn').forEach(function(b) {
+    b.classList.toggle('active', b.dataset.cat === key);
+  });
+  var units = DATA[key].units;
+  var from = document.getElementById('selFrom');
+  var to = document.getElementById('selTo');
+  from.innerHTML = ''; to.innerHTML = '';
+  units.forEach(function(u, i) {
+    from.appendChild(new Option(u.s + ' (' + u.en + ')', i));
+    to.appendChild(new Option(u.s + ' (' + u.en + ')', i));
+  });
+  // 默认：相邻两级（大→小）
+  if (units.length > 1) { from.selectedIndex = Math.max(0, units.length - 2); to.selectedIndex = units.length - 1; }
+  else { from.selectedIndex = 0; to.selectedIndex = 0; }
+  document.getElementById('numInput').value = 1;
+  document.getElementById('slider').value = 1;
+  update();
+}
+
+function update() {
+  var units = DATA[currentCat].units;
+  var iF = parseInt(document.getElementById('selFrom').value);
+  var iT = parseInt(document.getElementById('selTo').value);
+  var uF = units[iF], uT = units[iT];
+  var val = parseFloat(document.getElementById('numInput').value);
+  if (isNaN(val) || val < 0) val = 1;
+
+  var base = val * uF.f;
+  var out = base / uT.f;
+
+  document.getElementById('valFrom').textContent = fmt(val);
+  document.getElementById('valTo').textContent = fmt(out);
+  document.getElementById('unitFrom').textContent = unitLabel(uF);
+  document.getElementById('unitTo').textContent = unitLabel(uT);
+
+  var eq = document.getElementById('eqBar');
+  eq.innerHTML = '<span class="hl">' + fmt(val) + ' ' + unitLabel(uF) +
+    '</span> = <span class="hl">' + fmt(out) + ' ' + unitLabel(uT) + '</span>';
+
+  // 可视化：蓝色部分等长（同一数量），各按单位切格子
+  // 每条跨度（基础单位）：值≥1 显示整个数量；值<1 显示 1 个单位参照
+  function span(v, f) { return v >= 1 ? v * f : f; }
+  var sFrom = span(val, uF.f);
+  var sTo = span(out, uT.f);
+  var maxS = Math.max(sFrom, sTo, 1e-9);
+  renderBar('barFrom', 'capFrom', val, unitLabel(uF), sFrom / maxS);
+  renderBar('barTo', 'capTo', out, unitLabel(uT), sTo / maxS);
+  document.getElementById('equalNote').textContent =
+    '✓ 蓝色部分一样长：' + fmt(val) + ' ' + unitLabel(uF) + ' = ' + fmt(out) + ' ' + unitLabel(uT) + '（同一数量）';
+
+  // 换算口诀
+  var rb = document.getElementById('ruleBox');
+  var rate = uF.f / uT.f; // 1 个 uF = rate 个 uT
+  var rule;
+  if (rate > 1) {
+    rule = '大单位 → 小单位，×' + fmt(rate) +
+           '：1 ' + unitLabel(uF) + ' = ' + fmt(rate) + ' ' + unitLabel(uT) + '，所以 ' + fmt(val) + ' ' + unitLabel(uF) +
+           ' = ' + fmt(val) + ' × ' + fmt(rate) + ' = ' + fmt(out) + ' ' + unitLabel(uT);
+  } else if (rate < 1) {
+    var inv = 1 / rate;
+    rule = '小单位 → 大单位，÷' + fmt(inv) +
+           '：' + fmt(inv) + ' ' + unitLabel(uF) + ' = 1 ' + unitLabel(uT) + '，所以 ' + fmt(val) + ' ' + unitLabel(uF) +
+           ' = ' + fmt(val) + ' ÷ ' + fmt(inv) + ' = ' + fmt(out) + ' ' + unitLabel(uT);
+  } else {
+    rule = '这两个单位相同，无需换算。';
+  }
+  rb.innerHTML = '换算口诀：<b>' + rule + '</b>';
+}
+
+function bestFraction(v) {
+  // 精确十分位 → 十等分（0.6 → 6/10）
+  var n10 = Math.round(v * 10);
+  if (Math.abs(v * 10 - n10) < 1e-6 && n10 >= 1) return { n: n10, d: 10 };
+  // 找最小分母 2..3600（覆盖百分位 1/100、时间 1/3600 等）
+  for (var d = 2; d <= 3600; d++) {
+    var n = Math.round(v * d);
+    if (n >= 1 && Math.abs(v * d - n) < 1e-6) return { n: n, d: d };
+  }
+  return null;
+}
+
+function fracText(v) {
+  var p = bestFraction(v);
+  if (!p) return null;
+  return p.n + '/' + p.d + '（' + p.d + ' 份中的 ' + p.n + ' 份）';
+}
+
+function renderBar(barId, capId, value, unitName, spanRatio) {
+  var bar = document.getElementById(barId);
+  var cap = document.getElementById(capId);
+  bar.innerHTML = '';
+  bar.style.background = '';
+  bar.style.width = Math.max(spanRatio * 100, 0.5) + '%';
+  var capText = fmt(value) + ' ' + unitName;
+
+  // 值 ≥ 1：显示整个数量，切 value 个 1 单位格子
+  if (value >= 1) {
+    var whole = Math.floor(value);
+    var extra = value - whole;
+    if (value <= 48) {
+      for (var i = 0; i < whole; i++) {
+        var d = document.createElement('div'); d.className = 'seg'; bar.appendChild(d);
+      }
+      var extraText = extra > 0.001 ? fracText(extra) : null;
+      if (extraText) {
+        // 最后一个单位切成几份，填一部分
+        var p = bestFraction(extra);
+        if (p.d <= 20) {
+          var cell = document.createElement('div'); cell.className = 'frac-cell';
+          for (var k = 0; k < p.d; k++) {
+            var s = document.createElement('div');
+            s.className = 'frac-sub' + (k < p.n ? ' on' : '');
+            cell.appendChild(s);
+          }
+          bar.appendChild(cell);
+        }
+      }
+      cap.textContent = capText + ' = ' + whole + ' 个 1 ' + unitName +
+        (extraText ? ' + ' + extraText : (extra > 0.001 ? ' + 约 ' + fmt(extra) : ''));
+    } else {
+      // 格子太多：渐变提示
+      var pct = 100 / value;
+      var grad = 'repeating-linear-gradient(90deg, var(--accent) 0, var(--accent) ' +
+                 (pct * 0.8) + '%, var(--card) ' + (pct * 0.8) + '%, var(--card) ' + pct + '%)';
+      bar.style.background = grad;
+      cap.textContent = capText + '（≈ ' + Math.round(value) + ' 个 1 ' + unitName + '，格子太多已简化显示）';
+    }
+    return;
+  }
+
+  // 值 < 1：显示 1 个单位参照，填其分数（空位 = 单位的其余部分）
+  var ft = fracText(value);
+  if (ft) {
+    var p = bestFraction(value);
+    if (p.d <= 20) {
+      var cell = document.createElement('div'); cell.className = 'frac-cell';
+      for (var k = 0; k < p.d; k++) {
+        var s = document.createElement('div');
+        s.className = 'frac-sub' + (k < p.n ? ' on' : '');
+        cell.appendChild(s);
+      }
+      bar.appendChild(cell);
+    } else {
+      var gp = document.createElement('div'); gp.className = 'seg';
+      var pct = (p.n / p.d) * 100;
+      gp.style.background = 'linear-gradient(90deg, var(--accent) 0%, var(--accent) ' + pct +
+        '%, var(--accent-bg) ' + pct + '%, var(--accent-bg) 100%)';
+      bar.appendChild(gp);
+    }
+    cap.textContent = capText + ' = ' + ft;
+    return;
+  }
+
+  // 无干净分数：部分填充并给出小数
+  var fp = document.createElement('div'); fp.className = 'seg';
+  fp.style.flex = '0 0 auto'; fp.style.width = (value * 100) + '%';
+  fp.style.background = 'var(--accent-light)'; bar.appendChild(fp);
+  cap.textContent = capText + ' = ' + fmt(value);
+}
+
+/* ==================== 练习区逻辑 ==================== */
+var quizCat = 'length';
+var quizCount = 0, quizCorrect = 0, quizTotal = 10, quizLocked = false;
+var currentAnswer = null;
+
+function buildQuizTabs() {
+  var wrap = document.getElementById('quizTabs');
+  wrap.innerHTML = '';
+  CAT_ORDER.forEach(function(key) {
+    var b = document.createElement('button');
+    b.className = 'tab-btn' + (key === quizCat ? ' active' : '');
+    b.textContent = DATA[key].name;
+    b.addEventListener('click', function() { quizCat = key; restartQuiz(); });
+    wrap.appendChild(b);
+  });
+}
+
+function randInt(a, b) { return a + Math.floor(Math.random() * (b - a + 1)); }
+function shuffle(a) { for (var i = a.length - 1; i > 0; i--) { var j = randInt(0, i); var t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
+
+function tryClean(uF, uT) {
+  var cand = [1,2,3,4,5,6,8,10,12,15,20,24,25,30,50,60,100,200,500,1000];
+  for (var k = 0; k < cand.length; k++) {
+    var v = cand[k];
+    var base = v * uF.f;
+    var ans = base / uT.f;
+    var r = Math.round(ans * 100) / 100;
+    if (Math.abs(r - ans) < 1e-6) return { val: v, ans: r };
+  }
+  var v2 = cand[randInt(0, cand.length - 1)];
+  var a2 = Math.round((v2 * uF.f / uT.f) * 100) / 100;
+  return { val: v2, ans: a2 };
+}
+
+function makeOptions(ans) {
+  var set = new Set([ans]);
+  var cand = [10, 0.1, 100, 0.01, 2, 3, 5];
+  for (var i = 0; i < cand.length && set.size < 4; i++) {
+    var d = Math.round(ans * cand[i] * 100) / 100;
+    if (d > 0 && !set.has(d)) set.add(d);
+  }
+  var inc = 1;
+  while (set.size < 4) {
+    var d = ans + inc;
+    if (d > 0 && !set.has(d)) set.add(d);
+    inc++;
+  }
+  return shuffle(Array.from(set));
+}
+
+function nextQuestion() {
+  var units = DATA[quizCat].units;
+  var iF = randInt(0, units.length - 1);
+  var iT = randInt(0, units.length - 1);
+  if (iT === iF) iT = (iF + 1) % units.length;
+  var uF = units[iF], uT = units[iT];
+  var c = tryClean(uF, uT);
+  currentAnswer = c.ans;
+
+  document.getElementById('quizQ').textContent =
+    fmt(c.val) + ' ' + unitLabel(uF) + ' = ? ' + unitLabel(uT);
+  document.getElementById('quizFeedback').textContent = '';
+  document.getElementById('quizFeedback').className = 'quiz-feedback';
+  document.getElementById('btnCheck').disabled = false;
+
+  var grid = document.getElementById('optGrid');
+  grid.innerHTML = '';
+  makeOptions(c.ans).forEach(function(opt) {
+    var b = document.createElement('button');
+    b.className = 'opt-btn';
+    b.textContent = fmt(opt);
+    b.dataset.val = String(opt);
+    b.addEventListener('click', function() { pickOption(b); });
+    grid.appendChild(b);
+  });
+  quizLocked = false;
+}
+
+function pickOption(btn) {
+  if (quizLocked) return;
+  quizLocked = true;
+  quizCount++;
+  var fb = document.getElementById('quizFeedback');
+  var chosen = parseFloat(btn.dataset.val);
+  var isRight = Math.abs(chosen - currentAnswer) < 1e-6;
+  if (isRight) {
+    quizCorrect++;
+    fb.textContent = '✓ 正确！';
+    fb.className = 'quiz-feedback ok';
+  } else {
+    fb.textContent = '✗ 不对，正确答案是 ' + fmt(currentAnswer);
+    fb.className = 'quiz-feedback no';
+  }
+  document.querySelectorAll('#optGrid .opt-btn').forEach(function(b) {
+    b.disabled = true;
+    if (Math.abs(parseFloat(b.dataset.val) - currentAnswer) < 1e-6) b.classList.add('correct');
+    else if (b === btn && !isRight) b.classList.add('wrong');
+  });
+  updateProgress();
+}
+
+function updateProgress() {
+  document.getElementById('progText').textContent = '已答 ' + quizCount + ' / ' + quizTotal;
+  var pct = quizTotal > 0 ? (quizCount / quizTotal) * 100 : 0;
+  document.getElementById('progFill').style.width = pct + '%';
+  var rate = quizCount > 0 ? Math.round(quizCorrect / quizCount * 100) + '%' : '—';
+  document.getElementById('scoreText').textContent = '正确率 ' + rate;
+}
+
+function restartQuiz() {
+  quizCount = 0; quizCorrect = 0;
+  document.querySelectorAll('#quizTabs .tab-btn').forEach(function(b) {
+    b.classList.toggle('active', b.dataset.cat === quizCat);
+  });
+  updateProgress();
+  nextQuestion();
+}
+
+/* ==================== 初始化 ==================== */
+function wire() {
+  buildTabs();
+  buildQuizTabs();
+  switchCat('length');
+
+  document.getElementById('numInput').addEventListener('input', function() {
+    document.getElementById('slider').value = Math.min(200, Math.max(1, parseFloat(this.value) || 1));
+    update();
+  });
+  document.getElementById('slider').addEventListener('input', function() {
+    document.getElementById('numInput').value = this.value;
+    update();
+  });
+  document.getElementById('selFrom').addEventListener('change', update);
+  document.getElementById('selTo').addEventListener('change', update);
+
+  document.getElementById('btnCheck').addEventListener('click', function() {
+    // 未选择时提示；已选则忽略
+    var sel = document.querySelector('#optGrid .opt-btn.correct, #optGrid .opt-btn.wrong');
+    if (!sel && !quizLocked) { document.getElementById('quizFeedback').textContent = '请先点击一个选项'; return; }
+  });
+  document.getElementById('btnNext').addEventListener('click', function() {
+    nextQuestion();
+  });
+  document.getElementById('btnRestart').addEventListener('click', restartQuiz);
+
+  restartQuiz();
+}
+
+
+// ---- 键盘：回车 = 下一题，方便练习 ----
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' || e.key === ' ') {
+    if (document.activeElement && document.activeElement.id === 'numInput') return;
+    var btn = document.getElementById('btnNext');
+    if (btn) btn.click();
+    e.preventDefault();
+  }
+});
+
+wire();
+</script>
+</body>
+</html>

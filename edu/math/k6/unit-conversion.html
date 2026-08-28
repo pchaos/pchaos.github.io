@@ -373,7 +373,27 @@ function update() {
   var rb = document.getElementById('ruleBox');
   var rate = uF.f / uT.f; // 1 个 uF = rate 个 uT
   var rule;
-  if (rate > 1) {
+  var lF = unitLabel(uF), lT = unitLabel(uT);
+  var bname = DATA[currentCat].base; // 基础单位（中间桥）
+  // 跨级：基础单位夹在两个单位之间 → 分步展示 大→基础→小
+  var cross = (uF.f > 1 && uT.f < 1) || (uF.f < 1 && uT.f > 1);
+  if (cross) {
+    if (uF.f >= 1) {
+      // 大 → 小：×uF.f 化成基础单位，再 ×(1/uT.f) 换成目标单位
+      var r2 = 1 / uT.f;
+      rule = lF + ' → ' + bname + ' → ' + lT + '（经过基础单位“' + bname + '”）' +
+        ' ① 1 ' + lF + ' = ' + fmt(uF.f) + ' ' + bname + '（×' + fmt(uF.f) + '）' +
+        ' ② 1 ' + bname + ' = ' + fmt(r2) + ' ' + lT + '（×' + fmt(r2) + '）' +
+        ' 所以：' + fmt(val) + ' ' + lF + ' = ' + fmt(val) + ' × ' + fmt(uF.f) + ' × ' + fmt(r2) + ' = ' + fmt(out) + ' ' + lT;
+    } else {
+      // 小 → 大：÷(1/uF.f) 化成基础单位，再 ÷uT.f 换成目标单位
+      var r1 = 1 / uF.f, r2 = uT.f;
+      rule = lF + ' → ' + bname + ' → ' + lT + '（经过基础单位“' + bname + '”）' +
+        ' ① 1 ' + bname + ' = ' + fmt(r1) + ' ' + lF + '，所以 1 ' + lF + ' = 1 ÷ ' + fmt(r1) + ' = ' + fmt(1 / r1) + ' ' + bname + '（÷' + fmt(r1) + '）' +
+        ' ② 1 ' + lT + ' = ' + fmt(r2) + ' ' + bname + '，所以 1 ' + bname + ' = 1 ÷ ' + fmt(r2) + ' = ' + fmt(1 / r2) + ' ' + lT + '（÷' + fmt(r2) + '）' +
+        ' 所以：' + fmt(val) + ' ' + lF + ' = ' + fmt(val) + ' ÷ ' + fmt(r1) + ' ÷ ' + fmt(r2) + ' = ' + fmt(out) + ' ' + lT;
+    }
+  } else if (rate > 1) {
     rule = '大单位 → 小单位，×' + fmt(rate) +
            '：1 ' + unitLabel(uF) + ' = ' + fmt(rate) + ' ' + unitLabel(uT) + '，所以 ' + fmt(val) + ' ' + unitLabel(uF) +
            ' = ' + fmt(val) + ' × ' + fmt(rate) + ' = ' + fmt(out) + ' ' + unitLabel(uT);
@@ -497,17 +517,29 @@ function randInt(a, b) { return a + Math.floor(Math.random() * (b - a + 1)); }
 function shuffle(a) { for (var i = a.length - 1; i > 0; i--) { var j = randInt(0, i); var t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
 
 function tryClean(uF, uT) {
-  var cand = [1,2,3,4,5,6,8,10,12,15,20,24,25,30,50,60,100,200,500,1000];
+  // 数值池：常见可整除数字，避免总出“1”（原来按固定顺序取第一个干净值 → 永远 1）
+  var cand = [1,2,3,4,5,6,7,8,9,10,12,15,16,18,20,24,25,30,32,36,40,45,48,50,60,64,72,75,80,90,96,100,120,125,150,180,200,240,250,300,360,400,500,600,750,1000];
+  // 收集所有“答案干净（最多两位小数）”的候选，再随机挑一个
+  var clean = [];
   for (var k = 0; k < cand.length; k++) {
     var v = cand[k];
     var base = v * uF.f;
     var ans = base / uT.f;
     var r = Math.round(ans * 100) / 100;
-    if (Math.abs(r - ans) < 1e-6) return { val: v, ans: r };
+    if (r <= 0) continue; // 答案四舍五入后 ≤ 0 无意义（极小→极大单位），跳过
+    if (Math.abs(r - ans) < 1e-6) clean.push({ val: v, ans: r });
   }
-  var v2 = cand[randInt(0, cand.length - 1)];
-  var a2 = Math.round((v2 * uF.f / uT.f) * 100) / 100;
-  return { val: v2, ans: a2 };
+  if (clean.length) return clean[randInt(0, clean.length - 1)];
+  // 没有干净解：随机取一个候选，答案四舍五入到两位（确保 > 0）
+  for (var t = 0; t < 20; t++) {
+    var v2 = cand[randInt(0, cand.length - 1)];
+    var a2 = Math.round((v2 * uF.f / uT.f) * 100) / 100;
+    if (a2 > 0) return { val: v2, ans: a2 };
+  }
+  // 极端兜底：取最大候选，保证答案非零
+  var v3 = cand[cand.length - 1];
+  var a3 = Math.round((v3 * uF.f / uT.f) * 100) / 100;
+  return { val: v3, ans: Math.max(a3, 0.01) };
 }
 
 function makeOptions(ans) {
@@ -607,6 +639,23 @@ function wire() {
   document.getElementById('slider').addEventListener('input', function() {
     document.getElementById('numInput').value = this.value;
     update();
+  });
+  // 数值加减按钮：页面自身接线（替换节点移除 template.js 的通用处理，避免重复触发）
+  document.querySelectorAll('.step-btn').forEach(function(btn) {
+    var clone = btn.cloneNode(true);
+    btn.parentNode.replaceChild(clone, btn);
+    clone.addEventListener('click', function() {
+      var inp = document.getElementById('numInput');
+      var cur = parseFloat(inp.value);
+      if (isNaN(cur) || cur < 0.01) cur = 1;
+      var next = cur + (parseFloat(clone.dataset.delta) || 1);
+      if (next < 0.01) next = 0.01;
+      if (next > 200) next = 200;
+      inp.value = next;
+      var slider = document.getElementById('slider');
+      slider.value = Math.min(200, Math.max(1, next));
+      update();
+    });
   });
   document.getElementById('selFrom').addEventListener('change', update);
   document.getElementById('selTo').addEventListener('change', update);

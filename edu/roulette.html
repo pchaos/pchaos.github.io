@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>轮盘赌</title>
+<link rel="icon" href="data:,">
+<style>
+  :root {
+    --bg: #1a1a2e;
+    --panel: #26263f;
+    --panel-border: #3a3a5c;
+    --text: #e8e8f0;
+    --muted: #9a9ab0;
+    --accent: #ff5e5e;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 28px;
+    background: radial-gradient(circle at 50% 30%, #22224a, var(--bg) 60%);
+    color: var(--text);
+    font-family: system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+    padding: 24px;
+  }
+  .wheel-wrap { position: relative; width: min(72vw, 420px); aspect-ratio: 1; }
+  canvas#wheel { width: 100%; height: 100%; display: block; filter: drop-shadow(0 8px 24px rgba(0,0,0,.45)); }
+  /* 顶部指针 */
+  .pointer {
+    position: absolute; top: -6%; left: 50%; transform: translateX(-50%);
+    width: 0; height: 0;
+    border-left: 14px solid transparent;
+    border-right: 14px solid transparent;
+    border-top: 34px solid var(--accent);
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,.5));
+    z-index: 2;
+  }
+  .center-hub {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    width: 22%; height: 22%; border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #fff, #c9c9de 40%, #8b8baa);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; color: #33334d;
+    box-shadow: 0 2px 8px rgba(0,0,0,.4);
+    z-index: 2;
+  }
+  #result {
+    min-height: 1.6em;
+    font-size: clamp(1.4rem, 4vw, 2rem);
+    font-weight: 700;
+    text-align: center;
+    letter-spacing: .04em;
+  }
+  #result .hit { color: var(--accent); }
+  button#spin {
+    padding: 14px 48px;
+    font-size: 1.2rem;
+    font-weight: 700;
+    border: none;
+    border-radius: 40px;
+    background: linear-gradient(135deg, #ff7a59, var(--accent));
+    color: #fff;
+    cursor: pointer;
+    box-shadow: 0 6px 18px rgba(255, 94, 94, .35);
+    transition: transform .12s ease, box-shadow .12s ease;
+  }
+  button#spin:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(255,94,94,.45); }
+  button#spin:active { transform: translateY(0); }
+  button#spin:disabled { opacity: .5; cursor: default; transform: none; }
+</style>
+</head>
+<body>
+
+  <div class="wheel-wrap">
+    <div class="pointer"></div>
+    <canvas id="wheel"></canvas>
+    <div class="center-hub" id="hub">GO</div>
+  </div>
+
+  <div id="result">点击「开转」开始</div>
+  <button id="spin">开转</button>
+
+<script>
+/* ===== 条目：动作名 / 数量 / 规则说明 ===== */
+const ITEMS = [
+  { name: "金鸡独立", amount: "60秒",  rule: "单脚支撑，除了支撑脚，肢体不能触碰任何外物" },
+  { name: "弓步",     amount: "60秒",  rule: "大腿和地面平行，手不能接触外物，身体笔直垂直于地面" },
+  { name: "仰卧起坐", amount: "45个",  rule: "每次头碰膝盖，背部要着地" },
+  { name: "俯卧撑",   amount: "30个",  rule: "身体平直，起来时手臂伸直，下去时胸部离地面五厘米以内" },
+  { name: "平板支撑", amount: "60秒",  rule: "身体平直，保持不动" },
+  { name: "深蹲",     amount: "50个",  rule: "" },
+  { name: "马步",     amount: "60秒",  rule: "大腿与地面保持平行，小腿与地面保持垂直，身体笔直垂直于地面" },
+  { name: "独立思考", amount: "600秒", rule: "自己翻书或者查看资料，独立思考" },
+  { name: "观看相关视频", amount: "",  rule: "" },
+];
+
+const COLORS = [
+  "#ff6b6b", "#ffa94d", "#ffd43b", "#51cf66",
+  "#22b8cf", "#748ffc", "#b197fc", "#f783ac",
+];
+
+const canvas = document.getElementById("wheel");
+const ctx = canvas.getContext("2d");
+const hub = document.getElementById("hub");
+const resultEl = document.getElementById("result");
+const spinBtn = document.getElementById("spin");
+
+let dpr = Math.min(window.devicePixelRatio || 1, 2);
+let size = 0;
+let currentAngle = 0; // 当前扇区0的中线指向的角度（rad）
+let spinning = false;
+
+function resize() {
+  size = canvas.parentElement.clientWidth;
+  canvas.width = size * dpr;
+  canvas.height = size * dpr;
+  canvas.style.width = size + "px";
+  canvas.style.height = size + "px";
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  draw();
+}
+
+const slice = () => 2 * Math.PI / ITEMS.length;
+
+function draw() {
+  const c = size / 2;
+  const r = size / 2 - 2;
+  ctx.clearRect(0, 0, size, size);
+  for (let i = 0; i < ITEMS.length; i++) {
+    const item = ITEMS[i];
+    const start = currentAngle + i * slice();
+    ctx.beginPath();
+    ctx.moveTo(c, c);
+    ctx.arc(c, c, r, start, start + slice());
+    ctx.closePath();
+    ctx.fillStyle = COLORS[i % COLORS.length];
+    ctx.fill();
+    ctx.strokeStyle = "rgba(255,255,255,.35)";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // 文字：沿半径方向居中，两行（名称 / 数量），白字+深色描边保证对比度
+    ctx.save();
+    ctx.translate(c, c);
+    ctx.rotate(start + slice() / 2);
+    ctx.textAlign = "right";
+    ctx.textBaseline = "middle";
+    const f1 = Math.max(12, r * 0.115);
+    const f2 = Math.max(11, r * 0.095);
+    ctx.lineWidth = 4;
+    ctx.lineJoin = "round";
+    ctx.strokeStyle = "rgba(0,0,0,.55)";
+    ctx.fillStyle = "#fff";
+    ctx.font = "700 " + f1 + "px system-ui, sans-serif";
+    ctx.strokeText(clip(item.name, r * 0.8, f1), r * 0.88, -f1 * 0.42);
+    ctx.fillText(clip(item.name, r * 0.8, f1), r * 0.88, -f1 * 0.42);
+    if (item.amount) {
+      ctx.font = "700 " + f2 + "px system-ui, sans-serif";
+      ctx.strokeText(clip(item.amount, r * 0.8, f2), r * 0.88, f2 * 0.75);
+      ctx.fillText(clip(item.amount, r * 0.8, f2), r * 0.88, f2 * 0.75);
+    }
+    ctx.restore();
+  }
+  // 外圈
+  ctx.beginPath();
+  ctx.arc(c, c, r, 0, 2 * Math.PI);
+  ctx.lineWidth = 6;
+  ctx.strokeStyle = "#d9d9ec";
+  ctx.stroke();
+}
+
+function clip(s, maxWidth, fontSize) {
+  const maxLen = Math.max(2, Math.floor(maxWidth / (fontSize * 0.55)));
+  return s.length > maxLen ? s.slice(0, maxLen - 1) + "…" : s;
+}
+
+function spin() {
+  if (spinning || ITEMS.length < 1) return;
+  spinning = true;
+  spinBtn.disabled = true;
+  resultEl.textContent = "转动中…";
+
+  const extraTurns = 5 + Math.random() * 5;
+  const targetSlice = Math.floor(Math.random() * ITEMS.length);
+  // 让目标扇区的中线对准顶部指针（-PI/2 处）
+  const targetMid = currentAngle + targetSlice * slice();
+  const targetAngle = -(Math.PI / 2) - (targetMid + slice() / 2);
+  let delta = targetAngle - currentAngle;
+  while (delta <= 0) delta += 2 * Math.PI;
+  delta += extraTurns * 2 * Math.PI;
+
+  const start = currentAngle;
+  const total = delta;
+  const duration = 4200;
+  const t0 = performance.now();
+
+  function easeOutCubic(t) { return 1 - Math.pow(1 - t, 3); }
+
+  function step(now) {
+    const p = Math.min((now - t0) / duration, 1);
+    currentAngle = start + total * easeOutCubic(p);
+    draw();
+    if (p < 1) {
+      requestAnimationFrame(step);
+    } else {
+      currentAngle = currentAngle % (2 * Math.PI);
+      spinning = false;
+      spinBtn.disabled = false;
+      const item = ITEMS[targetSlice];
+      const ruleText = item.rule ? "　" + item.rule : "";
+      resultEl.innerHTML = "🎉 抽中：<span class='hit'>" + escapeHtml(item.name)
+        + (item.amount ? "　" + escapeHtml(item.amount) : "")
+        + "</span>" + escapeHtml(ruleText);
+    }
+  }
+  requestAnimationFrame(step);
+}
+
+function escapeHtml(s) {
+  return s.replace(/[&<>"']/g, m => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+  }[m]));
+}
+
+spinBtn.addEventListener("click", spin);
+window.addEventListener("resize", resize);
+resize();
+</script>
+</body>
+</html>

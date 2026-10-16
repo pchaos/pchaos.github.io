@@ -27,7 +27,7 @@
     font-family: system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
     padding: 24px;
   }
-  .wheel-wrap { position: relative; width: min(72vw, 420px); aspect-ratio: 1; }
+  .wheel-wrap { position: relative; width: min(79.2vw, 462px); aspect-ratio: 1; }
   canvas#wheel { width: 100%; height: 100%; display: block; filter: drop-shadow(0 8px 24px rgba(0,0,0,.45)); }
   /* 顶部指针 */
   .pointer {
@@ -56,6 +56,40 @@
     letter-spacing: .04em;
   }
   #result .hit { color: var(--accent); }
+  /* 幸运星附体提示 */
+  #lucky {
+    position: fixed; inset: 0; z-index: 50;
+    display: none;
+    align-items: center; justify-content: center;
+    flex-direction: column; gap: 10px;
+    background: rgba(10, 10, 30, .72);
+    backdrop-filter: blur(3px);
+    text-align: center;
+  }
+  #lucky.show { display: flex; }
+  #lucky .star {
+    font-size: clamp(3.5rem, 10vw, 6rem);
+    animation: star-pulse 1.1s ease-in-out infinite;
+  }
+  #lucky .msg {
+    font-size: clamp(1.6rem, 5vw, 2.6rem);
+    font-weight: 800;
+    color: #ffd700;
+    letter-spacing: .1em;
+    text-shadow: 0 0 24px rgba(255, 215, 0, .6);
+  }
+  #lucky.bad .msg {
+    color: #ff4d4d;
+    text-shadow: 0 0 24px rgba(255, 77, 77, .7);
+  }
+  #lucky .sub {
+    font-size: clamp(.9rem, 2.5vw, 1.1rem);
+    color: var(--muted);
+  }
+  @keyframes star-pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.25); }
+  }
   button#spin {
     padding: 14px 48px;
     font-size: 1.2rem;
@@ -71,6 +105,47 @@
   button#spin:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(255,94,94,.45); }
   button#spin:active { transform: translateY(0); }
   button#spin:disabled { opacity: .5; cursor: default; transform: none; }
+  .controls { display: flex; gap: 14px; align-items: center; }
+  button#historyBtn {
+    padding: 7px 12px;
+    font-size: 0.6rem;
+    font-weight: 700;
+    border: 2px solid var(--panel-border);
+    border-radius: 20px;
+    background: var(--panel);
+    color: var(--text);
+    cursor: pointer;
+    transition: transform .12s ease, border-color .12s ease;
+  }
+  button#historyBtn:hover { transform: translateY(-2px); border-color: var(--accent); }
+  #historyPanel {
+    width: min(90vw, 420px);
+    max-height: 46vh;
+    overflow-y: auto;
+    background: var(--panel);
+    border: 2px solid var(--panel-border);
+    border-radius: 14px;
+    padding: 16px 18px;
+    box-shadow: 0 10px 30px rgba(0,0,0,.5);
+  }
+  #historyPanel.hidden { display: none; }
+  #historyPanel .history-title {
+    font-weight: 800;
+    font-size: 1.05rem;
+    margin-bottom: 10px;
+    color: var(--accent);
+  }
+  #historyList { list-style: none; display: flex; flex-direction: column; gap: 6px; }
+  #historyList li {
+    display: flex; justify-content: space-between; gap: 10px;
+    font-size: .95rem;
+    padding: 6px 10px;
+    background: rgba(255,255,255,.05);
+    border-radius: 8px;
+  }
+  #historyList li .h-time { color: var(--muted); font-size: .8rem; white-space: nowrap; }
+  #historyList li .h-item { font-weight: 600; }
+  #historyList li .h-note { color: var(--muted); font-size: .82rem; }
 </style>
 </head>
 <body>
@@ -82,7 +157,23 @@
   </div>
 
   <div id="result">点击「开转」开始</div>
-  <button id="spin">开转</button>
+  <div class="controls">
+    <button id="spin">开转</button>
+    <button id="historyBtn" title="最近 10 次抽奖记录">🕘 历史</button>
+  </div>
+
+  <!-- 历史面板 -->
+  <div id="historyPanel" class="hidden">
+    <div class="history-title">最近 10 次抽奖</div>
+    <ul id="historyList"></ul>
+  </div>
+
+  <!-- 幸运星附体提示 -->
+  <div id="lucky">
+    <div class="star">⭐</div>
+    <div class="msg">幸运星附体</div>
+    <div class="sub">连续抽中优惠券效果累乘（8折↔12折），自动开转下一轮</div>
+  </div>
 
 <script>
 /* ===== 条目：动作名 / 数量 / 规则说明 ===== */
@@ -95,7 +186,9 @@ const ITEMS = [
   { name: "深蹲",     amount: "50个",  rule: "" },
   { name: "马步",     amount: "60秒",  rule: "大腿与地面保持平行，小腿与地面保持垂直，身体笔直垂直于地面" },
   { name: "独立思考", amount: "600秒", rule: "自己翻书或者查看资料，独立思考" },
-  { name: "观看相关视频", amount: "",  rule: "" },
+  { name: "观看教学视频", amount: "",  rule: "" },
+  { name: "8折优惠券", amount: "", rule: "下一轮抽奖执行数量打8折", factor: 0.8 },
+  { name: "12折优惠券", amount: "", rule: "下一轮抽奖执行数量加收12折", factor: 1.2 },
 ];
 
 const COLORS = [
@@ -105,7 +198,6 @@ const COLORS = [
 
 const canvas = document.getElementById("wheel");
 const ctx = canvas.getContext("2d");
-const hub = document.getElementById("hub");
 const resultEl = document.getElementById("result");
 const spinBtn = document.getElementById("spin");
 
@@ -113,6 +205,10 @@ let dpr = Math.min(window.devicePixelRatio || 1, 2);
 let size = 0;
 let currentAngle = 0; // 当前扇区0的中线指向的角度（rad）
 let spinning = false;
+let couponFactor = 1; // 连续优惠券累乘：<1 打折、>1 加量；抽到普通项目后恢复 1
+let luckyStreak = 0;  // 连续抽中 8折券次数（12折券打断）
+let freePass = false; // 连续 3 次 8折赠送「免做一次大礼」：下一轮普通项目免做
+let spinHistory = [];  // 最近 10 次抽奖记录 [{time, item, note}]
 
 function resize() {
   size = canvas.parentElement.clientWidth;
@@ -137,7 +233,9 @@ function draw() {
     ctx.moveTo(c, c);
     ctx.arc(c, c, r, start, start + slice());
     ctx.closePath();
-    ctx.fillStyle = COLORS[i % COLORS.length];
+    ctx.fillStyle = item.factor
+      ? (item.factor < 1 ? "#f5c518" : "#c0392b")
+      : COLORS[i % COLORS.length];
     ctx.fill();
     ctx.strokeStyle = "rgba(255,255,255,.35)";
     ctx.lineWidth = 2;
@@ -184,12 +282,17 @@ function spin() {
   spinBtn.disabled = true;
   resultEl.textContent = "转动中…";
 
-  const extraTurns = 5 + Math.random() * 5;
+  // 上轮（或连续多轮）抽中优惠券的累计系数；本轮抽到普通项目后即恢复原值
+  const usingCoupon = couponFactor !== 1;
+  const factor = usingCoupon ? couponFactor : 1;
+
+  // 圈数必须是整数：小数圈会把多余角度留在最终位置，导致指针与结果错位
+  const extraTurns = 5 + Math.floor(Math.random() * 5); // 5-9 整圈
   const targetSlice = Math.floor(Math.random() * ITEMS.length);
-  // 让目标扇区的中线对准顶部指针（-PI/2 处）
-  const targetMid = currentAngle + targetSlice * slice();
-  const targetAngle = -(Math.PI / 2) - (targetMid + slice() / 2);
-  let delta = targetAngle - currentAngle;
+  // 目标扇区中线相对轮盘 0° 的偏移，最终让该中线对准顶部指针（-PI/2）
+  const sliceMidOffset = targetSlice * slice() + slice() / 2;
+  const targetFinal = -(Math.PI / 2) - sliceMidOffset;
+  let delta = targetFinal - currentAngle;
   while (delta <= 0) delta += 2 * Math.PI;
   delta += extraTurns * 2 * Math.PI;
 
@@ -211,10 +314,75 @@ function spin() {
       spinning = false;
       spinBtn.disabled = false;
       const item = ITEMS[targetSlice];
+      // 优惠券系数：数量数值部分 ×factor（<1 折扣、>1 加收），保留原有单位（秒/个）
+      let amountText = item.amount;
+      let couponNote = "";
+      if (usingCoupon && !item.factor && item.amount) {
+        const orig = item.amount;
+        const m = orig.match(/^([\d.]+)(.*)$/);
+        if (m) {
+          const calc = Math.round(parseFloat(m[1]) * factor);
+          if (calc !== parseFloat(m[1])) {
+            amountText = calc + m[2];
+            const label = factor < 1
+              ? (factor === 0.8 ? "8折" : (Math.round(factor * 1000) / 100) + "折")
+              : (factor === 1.2 ? "12折" : (Math.round(factor * 1000) / 100) + "折");
+            couponNote = "（" + label + "：" + orig + " → " + amountText + "）";
+          }
+        }
+      }
+      // 普通项目消费优惠后恢复原值（无数量项目同样清零）；同时打断 8折连击
+      if (!item.factor) {
+        couponFactor = 1;
+        luckyStreak = 0;
+      }
+      if (item.factor) {
+        couponFactor *= item.factor;
+        // 连击计数：8折券 +1，12折券清零
+        if (item.factor < 1) {
+          luckyStreak++;
+        } else {
+          luckyStreak = 0;
+        }
+        // 结果区记录本次抽中优惠券
+        resultEl.innerHTML = "🎉 抽中：<span class='hit'>" + escapeHtml(item.name)
+          + "</span>　" + escapeHtml(item.rule);
+        // 幸运星/霉运附体：显示提示并自动触发下一轮
+        const lucky = document.getElementById("lucky");
+        const isLucky = item.factor < 1;
+        lucky.classList.toggle("bad", !isLucky);
+        lucky.querySelector(".star").textContent = isLucky ? "⭐" : "☠️";
+        lucky.querySelector(".msg").textContent = isLucky ? "幸运星附体" : "霉运上身";
+        lucky.classList.add("show");
+        setTimeout(() => {
+          lucky.classList.remove("show");
+          spin();
+        }, 1500);
+        // 连续 3 张 8折券：赠送免做一次大礼
+        if (item.factor < 1 && luckyStreak >= 3) {
+          freePass = true;
+          luckyStreak = 0; // 免做奖励后连击重新计数
+          resultEl.innerHTML += "<br>🎁 <span style='color:#ffd700'>免做一次大礼！</span>下一轮抽中项目自动免做";
+          recordHistory(item.name, "大礼·免做一次");
+        } else {
+          recordHistory(item.name, item.factor < 1 ? "8折" : "12折");
+        }
+        return;
+      }
+      // 免做：连续 3 张 8折券赠送，本轮普通项目直接豁免
+      if (freePass) {
+        freePass = false;
+        recordHistory(item.name + (item.amount ? " " + item.amount : ""), "免做");
+        resultEl.innerHTML = "🛡 <span class='hit'>免做：</span>" + escapeHtml(item.name)
+          + (item.amount ? "　" + escapeHtml(item.amount) : "")
+          + "　<em>大礼生效，本轮无需执行</em>";
+        return;
+      }
       const ruleText = item.rule ? "　" + item.rule : "";
+      recordHistory(item.name + (amountText ? " " + amountText : ""), couponNote.replace(/[（）]/g, ""));
       resultEl.innerHTML = "🎉 抽中：<span class='hit'>" + escapeHtml(item.name)
-        + (item.amount ? "　" + escapeHtml(item.amount) : "")
-        + "</span>" + escapeHtml(ruleText);
+        + (amountText ? "　" + escapeHtml(amountText) : "")
+        + "</span>" + escapeHtml(ruleText) + escapeHtml(couponNote);
     }
   }
   requestAnimationFrame(step);
@@ -225,6 +393,46 @@ function escapeHtml(s) {
     "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
   }[m]));
 }
+
+// 记录最近 10 次抽奖（最新在前）
+function recordHistory(item, note) {
+  const now = new Date();
+  const time = now.toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+  spinHistory.unshift({ time, item, note });
+  if (spinHistory.length > 10) spinHistory.pop();
+  renderHistory();
+}
+
+function renderHistory() {
+  const list = document.getElementById("historyList");
+  list.innerHTML = "";
+  for (const h of spinHistory) {
+    const li = document.createElement("li");
+    const left = document.createElement("span");
+    left.className = "h-item";
+    left.textContent = h.item;
+    const right = document.createElement("span");
+    right.className = "h-note";
+    right.textContent = (h.note ? h.note + " · " : "") + h.time;
+    li.appendChild(left);
+    li.appendChild(right);
+    list.appendChild(li);
+  }
+}
+
+const historyBtn = document.getElementById("historyBtn");
+const historyPanel = document.getElementById("historyPanel");
+historyBtn.addEventListener("click", () => {
+  historyPanel.classList.toggle("hidden");
+});
+// 点击面板外部关闭
+document.addEventListener("click", (e) => {
+  if (!historyPanel.classList.contains("hidden") &&
+      !historyPanel.contains(e.target) &&
+      !historyBtn.contains(e.target)) {
+    historyPanel.classList.add("hidden");
+  }
+});
 
 spinBtn.addEventListener("click", spin);
 window.addEventListener("resize", resize);

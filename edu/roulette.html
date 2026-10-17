@@ -120,6 +120,22 @@
   button#countdownBtn:active:not(:disabled) { transform: translateY(0); }
   button#countdownBtn:disabled { opacity: .5; cursor: default; transform: none; }
   button#countdownBtn:not(.ready):not(.running) { display: none; }
+  button#regretBtn {
+    padding: 14px 20px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    border: 2px solid var(--panel-border);
+    border-radius: 40px;
+    background: var(--panel);
+    color: var(--text);
+    cursor: pointer;
+    transition: transform .12s ease, border-color .12s ease, opacity .12s ease;
+    display: none;
+  }
+  button#regretBtn.show { display: inline-block; }
+  button#regretBtn:hover:not(:disabled) { transform: translateY(-2px); border-color: #ffd700; }
+  button#regretBtn:active:not(:disabled) { transform: translateY(0); }
+  button#regretBtn:disabled { opacity: .5; cursor: default; transform: none; }
   /* 转盘中央倒计时浮层 */
   #countdown {
     position: absolute; inset: 0; z-index: 3;
@@ -208,6 +224,7 @@
   <div class="controls">
     <button id="spin">开转</button>
     <button id="countdownBtn" title="抽中带时间的项目后，点击此处从 3 开始倒计时">⏱ 倒计时</button>
+    <button id="regretBtn" title="使用反悔机会，跳过本次结果重新开转">↩️ 反悔重开</button>
     <button id="historyBtn" title="最近 10 次抽奖记录">🕘 历史</button>
   </div>
 
@@ -236,6 +253,7 @@ const ITEMS = [
   { name: "马步",     amount: "60秒",  rule: "大腿与地面保持平行，小腿与地面保持垂直，身体笔直垂直于地面" },
   { name: "独立思考", amount: "600秒", rule: "自己翻书或者查看资料，独立思考" },
   { name: "观看教学视频", amount: "",  rule: "" },
+  { name: "反悔一次的机会", amount: "", rule: "获得一次反悔机会：下次抽中不想执行的项目，可点「反悔重开」跳过并重新开转（不叠加）", regret: true },
   { name: "8折优惠券", amount: "", rule: "下一轮抽奖执行数量打8折", factor: 0.8 },
   { name: "12折优惠券", amount: "", rule: "下一轮抽奖执行数量加收12折", factor: 1.2 },
 ];
@@ -257,6 +275,7 @@ let spinning = false;
 let couponFactor = 1; // 连续优惠券累乘：<1 打折、>1 加量；抽到普通项目后恢复 1
 let luckyStreak = 0;  // 连续抽中 8折券次数（12折券打断）
 let freePass = false; // 连续 3 次 8折赠送「免做一次大礼」：下一轮普通项目免做
+let regretChance = false; // 反悔一次的机会：抽中道具后获得，跳过下次不想执行的项目
 let spinHistory = [];  // 最近 10 次抽奖记录 [{time, item, note}]
 let countdownSeconds = 0; // 当前待倒计时项目时长（秒）
 let countdownRunning = false; // 倒计时进行中
@@ -334,6 +353,11 @@ function spin() {
   resultEl.textContent = "转动中…";
   // 新一轮开转，清掉上一轮的待倒计时状态
   resetCountdownReady();
+  // 反悔机会持有期间按钮常驻；转动中禁用防误点
+  if (regretChance) {
+    regretBtn.classList.add("show");
+  }
+  regretBtn.disabled = true;
 
   // 上轮（或连续多轮）抽中优惠券的累计系数；本轮抽到普通项目后即恢复原值
   const usingCoupon = couponFactor !== 1;
@@ -389,6 +413,15 @@ function spin() {
         couponFactor = 1;
         luckyStreak = 0;
       }
+      // 反悔道具：获得一次反悔机会（不叠加），显示提示后继续可开转
+      if (item.regret) {
+        regretChance = true;
+        recordHistory(item.name, "获得反悔机会");
+        resultEl.innerHTML = "↩️ 抽中：<span class='hit'>" + escapeHtml(item.name)
+          + "</span>　" + escapeHtml(item.rule);
+        updateRegretBtn(); // 机会刚获得，按钮立即可用
+        return;
+      }
       if (item.factor) {
         couponFactor *= item.factor;
         // 连击计数：8折券 +1，12折券清零
@@ -407,10 +440,16 @@ function spin() {
         lucky.querySelector(".star").textContent = isLucky ? "⭐" : "☠️";
         lucky.querySelector(".msg").textContent = isLucky ? "幸运星附体" : "霉运上身";
         lucky.classList.add("show");
-        setTimeout(() => {
-          lucky.classList.remove("show");
-          spin();
-        }, 1500);
+        // 持有反悔机会：不自动重开，由用户自主决定反悔或手动开转
+        if (regretChance) {
+          setTimeout(() => lucky.classList.remove("show"), 1500);
+          updateRegretBtn();
+        } else {
+          setTimeout(() => {
+            lucky.classList.remove("show");
+            spin();
+          }, 1500);
+        }
         // 连续 3 张 8折券：赠送免做一次大礼
         if (item.factor < 1 && luckyStreak >= 3) {
           freePass = true;
@@ -437,6 +476,7 @@ function spin() {
       if (secMatch) {
         armCountdown(item.name, Math.round(parseFloat(secMatch[1])));
       }
+      updateRegretBtn(); // 结果已定，反悔按钮恢复可点
       recordHistory(item.name + (amountText ? " " + amountText : ""), couponNote.replace(/[（）]/g, ""));
       resultEl.innerHTML = "🎉 抽中：<span class='hit'>" + escapeHtml(item.name)
         + (amountText ? "　" + escapeHtml(amountText) : "")
@@ -454,6 +494,7 @@ function escapeHtml(s) {
 
 /* ===== 倒计时 ===== */
 const countdownBtn = document.getElementById("countdownBtn");
+const regretBtn = document.getElementById("regretBtn");
 const countdownEl = document.getElementById("countdown");
 const cdNumEl = countdownEl.querySelector(".cd-num");
 const cdNameEl = countdownEl.querySelector(".cd-name");
@@ -598,6 +639,33 @@ function resumeCountdown() {
   startTickLoop();
 }
 
+// 反悔机会持有 → 显示并启用按钮；否则隐藏
+function updateRegretBtn() {
+  if (regretChance) {
+    regretBtn.classList.add("show");
+    regretBtn.disabled = false;
+  } else {
+    regretBtn.classList.remove("show");
+    regretBtn.disabled = true;
+  }
+}
+
+// 反悔：消费一次反悔机会，跳过本次结果重新开转
+function useRegret() {
+  if (!regretChance || spinning) return;
+  regretChance = false;
+  regretBtn.classList.remove("show");
+  regretBtn.disabled = true;
+  // 最新一条历史标注「反悔跳过」
+  if (spinHistory.length) {
+    const h = spinHistory[0];
+    h.note = (h.note ? h.note + " · " : "") + "反悔跳过";
+    renderHistory();
+  }
+  resetCountdownReady(); // 清掉为被跳过项目准备的倒计时
+  spin();
+}
+
 // 记录最近 10 次抽奖（最新在前）
 function recordHistory(item, note) {
   const now = new Date();
@@ -639,6 +707,7 @@ document.addEventListener("click", (e) => {
 });
 
 spinBtn.addEventListener("click", spin);
+regretBtn.addEventListener("click", useRegret);
 countdownBtn.addEventListener("click", () => {
   if (countdownRunning) {
     // 运行中：按钮 = 暂停/继续

@@ -105,6 +105,50 @@
   button#spin:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(255,94,94,.45); }
   button#spin:active { transform: translateY(0); }
   button#spin:disabled { opacity: .5; cursor: default; transform: none; }
+  button#countdownBtn {
+    padding: 14px 20px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    border: 2px solid var(--panel-border);
+    border-radius: 40px;
+    background: var(--panel);
+    color: var(--text);
+    cursor: pointer;
+    transition: transform .12s ease, border-color .12s ease, opacity .12s ease;
+  }
+  button#countdownBtn:hover:not(:disabled) { transform: translateY(-2px); border-color: var(--accent); }
+  button#countdownBtn:active:not(:disabled) { transform: translateY(0); }
+  button#countdownBtn:disabled { opacity: .5; cursor: default; transform: none; }
+  button#countdownBtn:not(.ready):not(.running) { display: none; }
+  /* 转盘中央倒计时浮层 */
+  #countdown {
+    position: absolute; inset: 0; z-index: 3;
+    display: none;
+    align-items: center; justify-content: center;
+    flex-direction: column; gap: 10px;
+    background: rgba(15, 15, 38, .82);
+    backdrop-filter: blur(2px);
+    border-radius: 50%;
+    text-align: center;
+    pointer-events: none;
+  }
+  #countdown.show { display: flex; }
+  #countdown .cd-num {
+    font-size: clamp(3rem, 13vw, 6.5rem);
+    font-weight: 900; line-height: 1;
+    color: var(--accent);
+    text-shadow: 0 0 30px rgba(255, 94, 94, .55);
+    font-variant-numeric: tabular-nums;
+    pointer-events: auto;
+    cursor: pointer;
+    user-select: none;
+  }
+  #countdown .cd-num:hover { filter: brightness(1.25); }
+  #countdown .cd-name {
+    font-size: clamp(.85rem, 2.8vw, 1.05rem);
+    color: var(--muted);
+    max-width: 82%;
+  }
   .controls { display: flex; gap: 14px; align-items: center; }
   button#historyBtn {
     padding: 7px 12px;
@@ -154,11 +198,16 @@
     <div class="pointer"></div>
     <canvas id="wheel"></canvas>
     <div class="center-hub" id="hub">GO</div>
+    <div id="countdown">
+      <div class="cd-num">3</div>
+      <div class="cd-name"></div>
+    </div>
   </div>
 
   <div id="result">点击「开转」开始</div>
   <div class="controls">
     <button id="spin">开转</button>
+    <button id="countdownBtn" title="抽中带时间的项目后，点击此处从 3 开始倒计时">⏱ 倒计时</button>
     <button id="historyBtn" title="最近 10 次抽奖记录">🕘 历史</button>
   </div>
 
@@ -209,6 +258,8 @@ let couponFactor = 1; // 连续优惠券累乘：<1 打折、>1 加量；抽到�
 let luckyStreak = 0;  // 连续抽中 8折券次数（12折券打断）
 let freePass = false; // 连续 3 次 8折赠送「免做一次大礼」：下一轮普通项目免做
 let spinHistory = [];  // 最近 10 次抽奖记录 [{time, item, note}]
+let countdownSeconds = 0; // 当前待倒计时项目时长（秒）
+let countdownRunning = false; // 倒计时进行中
 
 function resize() {
   size = canvas.parentElement.clientWidth;
@@ -281,6 +332,8 @@ function spin() {
   spinning = true;
   spinBtn.disabled = true;
   resultEl.textContent = "转动中…";
+  // 新一轮开转，清掉上一轮的待倒计时状态
+  resetCountdownReady();
 
   // 上轮（或连续多轮）抽中优惠券的累计系数；本轮抽到普通项目后即恢复原值
   const usingCoupon = couponFactor !== 1;
@@ -379,6 +432,11 @@ function spin() {
         return;
       }
       const ruleText = item.rule ? "　" + item.rule : "";
+      // 抽中带「秒」的项目：激活倒计时按钮（时长按优惠券换算后的数值）
+      const secMatch = amountText.match(/^([\d.]+)秒$/);
+      if (secMatch) {
+        armCountdown(item.name, Math.round(parseFloat(secMatch[1])));
+      }
       recordHistory(item.name + (amountText ? " " + amountText : ""), couponNote.replace(/[（）]/g, ""));
       resultEl.innerHTML = "🎉 抽中：<span class='hit'>" + escapeHtml(item.name)
         + (amountText ? "　" + escapeHtml(amountText) : "")
@@ -392,6 +450,152 @@ function escapeHtml(s) {
   return s.replace(/[&<>"']/g, m => ({
     "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
   }[m]));
+}
+
+/* ===== 倒计时 ===== */
+const countdownBtn = document.getElementById("countdownBtn");
+const countdownEl = document.getElementById("countdown");
+const cdNumEl = countdownEl.querySelector(".cd-num");
+const cdNameEl = countdownEl.querySelector(".cd-name");
+let countdownItemName = ""; // 当前待倒计时项目名称
+
+let countdownTimer = null; // 当前倒计时的定时器（null 且在运行中 = 暂停）
+let countdownPaused = false; // 是否处于暂停状态
+let cdRemaining = 3;    // 倒数三秒阶段剩余值
+let cdNow = 0;          // 项目倒计时剩余秒数
+let cdProject = false;  // 是否已进入项目倒计时阶段
+
+/* ===== 结束提示音 ===== */
+let audioCtx = null;
+
+// 在用户点击「倒计时」的手势内创建/恢复音频上下文（浏览器自动播放策略要求）
+function ensureAudio() {
+  if (!audioCtx) {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (AC) audioCtx = new AC();
+  }
+  if (audioCtx && audioCtx.state === "suspended") audioCtx.resume();
+}
+
+// 结束提示音：三声上升音（660→880→1320Hz），每声 0.18s，间隔 0.22s
+function playEndBeep() {
+  if (!audioCtx) return;
+  const t0 = audioCtx.currentTime;
+  const freqs = [660, 880, 1320];
+  for (let i = 0; i < freqs.length; i++) {
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = "sine";
+    osc.frequency.value = freqs[i];
+    gain.gain.setValueAtTime(0.001, t0 + i * 0.4);
+    gain.gain.exponentialRampToValueAtTime(0.4, t0 + i * 0.4 + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.001, t0 + i * 0.4 + 0.18);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start(t0 + i * 0.4);
+    osc.stop(t0 + i * 0.4 + 0.2);
+  }
+}
+
+function resetCountdownReady() {
+  if (countdownTimer) {
+    clearInterval(countdownTimer);
+    countdownTimer = null;
+  }
+  countdownPaused = false;
+  countdownRunning = false;
+  countdownSeconds = 0;
+  countdownItemName = "";
+  countdownEl.classList.remove("show");
+  countdownBtn.classList.remove("ready");
+  countdownBtn.classList.remove("running");
+  countdownBtn.textContent = "⏱ 倒计时";
+  countdownBtn.disabled = true;
+}
+
+// 抽中带时间的项目后，激活「倒计时」按钮
+function armCountdown(name, seconds) {
+  countdownItemName = name;
+  countdownSeconds = seconds;
+  countdownBtn.classList.add("ready");
+  countdownBtn.disabled = false;
+}
+
+// 点击「倒计时」：先在转盘位置倒数 3 秒，随后每秒递减显示项目剩余时长
+function startCountdown() {
+  if (countdownRunning || countdownSeconds <= 0 || spinning) return;
+  ensureAudio(); // 用户手势内激活音频上下文，倒计时结束才能响铃
+  countdownRunning = true;
+  countdownPaused = false;
+  countdownBtn.disabled = true;
+  countdownBtn.classList.remove("ready");
+  countdownBtn.classList.add("running");
+  countdownBtn.textContent = "⏸ 暂停";
+  const total = countdownSeconds;
+  cdRemaining = 3;
+  cdNow = total;
+  cdProject = false;
+  cdNumEl.textContent = cdRemaining;
+  cdNameEl.textContent = "";
+  countdownEl.classList.add("show");
+  startTickLoop();
+}
+
+// 每秒递减一次；pauseCountdown() 会清掉定时器并记录暂停状态
+function startTickLoop() {
+  countdownTimer = setInterval(() => {
+    if (countdownPaused) return; // 防御：理论上暂停时定时器已清
+    if (!cdProject) {
+      // 倒数三秒：3 → 2 → 1
+      cdRemaining--;
+      if (cdRemaining === 0) {
+        // 倒数结束，从项目完整时长开始计时
+        cdProject = true;
+        cdNumEl.textContent = cdNow;
+        cdNameEl.textContent = "剩余 " + countdownItemName + " " + countdownSeconds + " 秒";
+      } else {
+        cdNumEl.textContent = cdRemaining;
+      }
+      return;
+    }
+    // 项目倒计时中
+    cdNow--;
+    if (cdNow <= 0) {
+      clearInterval(countdownTimer);
+      countdownTimer = null;
+      playEndBeep();       // 计时结束：声音提醒
+      resetCountdownReady();
+      return;
+    }
+    cdNumEl.textContent = cdNow;
+  }, 1000);
+}
+
+// 暂停：停表并冻结当前显示
+function pauseCountdown() {
+  if (!countdownRunning || countdownPaused) return;
+  if (countdownTimer) {
+    clearInterval(countdownTimer);
+    countdownTimer = null;
+  }
+  countdownPaused = true;
+  countdownBtn.textContent = "▶ 继续";
+  countdownBtn.disabled = false;
+  cdNameEl.textContent = "已暂停 · " + (cdProject ? "剩余 " + countdownItemName + " " + cdNow + " 秒" : "倒计时待开始");
+}
+
+// 恢复：从暂停位置继续走表
+function resumeCountdown() {
+  if (!countdownRunning || !countdownPaused) return;
+  countdownPaused = false;
+  countdownBtn.disabled = true;
+  countdownBtn.textContent = "⏸ 暂停";
+  if (cdProject) {
+    cdNameEl.textContent = "剩余 " + countdownItemName + " " + countdownSeconds + " 秒";
+  } else {
+    cdNameEl.textContent = "";
+  }
+  startTickLoop();
 }
 
 // 记录最近 10 次抽奖（最新在前）
@@ -435,6 +639,19 @@ document.addEventListener("click", (e) => {
 });
 
 spinBtn.addEventListener("click", spin);
+countdownBtn.addEventListener("click", () => {
+  if (countdownRunning) {
+    // 运行中：按钮 = 暂停/继续
+    countdownPaused ? resumeCountdown() : pauseCountdown();
+  } else {
+    startCountdown();
+  }
+});
+// 双击倒计时数字同样暂停/继续
+cdNumEl.addEventListener("dblclick", () => {
+  if (!countdownRunning) return;
+  countdownPaused ? resumeCountdown() : pauseCountdown();
+});
 window.addEventListener("resize", resize);
 resize();
 </script>

@@ -251,23 +251,52 @@
   </div>
 
 <script>
-/* ===== 条目：动作名 / 数量 / 规则说明 ===== */
-const ITEMS = [
-  { name: "金鸡独立", amount: "60秒",  rule: "单脚支撑，除了支撑脚，肢体不能触碰任何外物" },
-  { name: "弓步",     amount: "60秒",  rule: "大腿和地面平行，手不能接触外物，身体笔直垂直于地面" },
-  { name: "仰卧起坐", amount: "45个",  rule: "每次头碰膝盖，背部要着地" },
-  { name: "俯卧撑",   amount: "30个",  rule: "身体平直，起来时手臂伸直，下去时胸部离地面五厘米以内" },
-  { name: "平板支撑", amount: "60秒",  rule: "身体平直，保持不动" },
-  { name: "仰卧推起成桥", amount: "60秒", rule: "仰卧，用手推起身体成桥状，保持姿势" },
-  { name: "深蹲",     amount: "50个",  rule: "" },
-  { name: "马步",     amount: "60秒",  rule: "大腿与地面保持平行，小腿与地面保持垂直，身体笔直垂直于地面" },
-  { name: "独立思考", amount: "600秒", rule: "自己翻书或者查看资料，独立思考" },
-  { name: "观看教学视频", amount: "",  rule: "" },
-  { name: "找错字", amount: "", rule: "在文章/文字中找出所有错别字" },
-  { name: "反悔一次的机会", amount: "", rule: "获得一次反悔机会：下次抽中不想执行的项目，可点「反悔重开」跳过并重新开转（不叠加）", regret: true },
-  { name: "8折优惠券", amount: "", rule: "下一轮抽奖执行数量打8折", factor: 0.8 },
-  { name: "12折优惠券", amount: "", rule: "下一轮抽奖执行数量加收12折", factor: 1.2 },
-];
+/* ===== 条目：从 options.js 加载（每行：名称|数量|规则，支持 ,regret / ,factor:0.8 修饰符） ===== */
+const ITEMS = (function () {
+  const fallback = [
+    { name: "金鸡独立", amount: "60秒",  rule: "单脚支撑，除了支撑脚，肢体不能触碰任何外物" },
+    { name: "弓步",     amount: "60秒",  rule: "大腿和地面平行，手不能接触外物，身体笔直垂直于地面" },
+    { name: "仰卧起坐", amount: "45个",  rule: "每次头碰膝盖，背部要着地" },
+    { name: "俯卧撑",   amount: "30个",  rule: "身体平直，起来时手臂伸直，下去时胸部离地面五厘米以内" },
+    { name: "平板支撑", amount: "60秒",  rule: "身体平直，保持不动" },
+    { name: "仰卧推起成桥", amount: "60秒", rule: "仰卧，用手推起身体成桥状，保持姿势" },
+    { name: "深蹲",     amount: "50个",  rule: "" },
+    { name: "马步",     amount: "60秒",  rule: "大腿与地面保持平行，小腿与地面保持垂直，身体笔直垂直于地面" },
+    { name: "独立思考", amount: "600秒", rule: "自己翻书或者查看资料，独立思考" },
+    { name: "观看教学视频", amount: "",  rule: "" },
+    { name: "找错字", amount: "", rule: "在文章/文字中找出所有错别字" },
+    { name: "反悔一次的机会", amount: "", rule: "获得一次反悔机会：下次抽中不想执行的项目，可点「反悔重开」跳过并重新开转（不叠加）", regret: true },
+    { name: "8折优惠券", amount: "", rule: "下一轮抽奖执行数量打8折", factor: 0.8 },
+    { name: "12折优惠券", amount: "", rule: "下一轮抽奖执行数量加收12折", factor: 1.2 },
+  ];
+  try {
+    const req = new XMLHttpRequest();
+    req.open("GET", "options.js", false); // 同步加载，保证页面渲染前 ITEMS 就绪
+    req.send(null);
+    if (req.status !== 200) return fallback;
+    const items = [];
+    for (const line of req.responseText.split("\n")) {
+      const l = line.trim();
+      if (!l || l.startsWith("#") || l.startsWith("//")) continue;
+      const parts = l.split("|");
+      if (parts.length < 1) continue;
+      const name = (parts[0] || "").trim();
+      if (!name) continue;
+      const amount = parts.length > 1 ? parts[1].trim() : "";
+      let rule = parts.length > 2 ? parts[2].trim() : "";
+      const item = { name, amount, rule };
+      // 修饰符：rule 尾部 ,regret / ,factor:0.8 / ,factor:1.2
+      const m = rule.match(/,factor:([\d.]+)$/);
+      if (m) { item.factor = parseFloat(m[1]); rule = rule.slice(0, m.index); }
+      if (/,regret$/.test(rule)) { item.regret = true; rule = rule.replace(/,regret$/, ""); }
+      item.rule = rule.trim();
+      items.push(item);
+    }
+    return items.length ? items : fallback;
+  } catch (e) {
+    return fallback; // file:// 或文件缺失时兜底
+  }
+})();
 
 const COLORS = [
   "#ff6b6b", "#ffa94d", "#ffd43b", "#51cf66",

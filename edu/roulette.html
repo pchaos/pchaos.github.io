@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>轮盘赌</title>
+<title>挑战轮盘</title>
 <link rel="icon" href="data:,">
 <style>
   :root {
@@ -165,7 +165,10 @@
     color: var(--muted);
     max-width: 82%;
   }
-  .controls { display: flex; gap: 14px; align-items: center; }
+  .controls { display: grid; grid-template-columns: 1fr auto 1fr; gap: 14px; align-items: center; }
+  .controls .spin-cell { grid-column: 2; justify-self: center; display: flex; gap: 14px; align-items: center; }
+  .controls .left-cell { grid-column: 1; justify-self: end; display: flex; gap: 14px; align-items: center; }
+  .controls .right-cell { grid-column: 3; justify-self: start; display: flex; gap: 14px; align-items: center; }
   button#historyBtn {
     padding: 7px 12px;
     font-size: 0.6rem;
@@ -222,10 +225,16 @@
 
   <div id="result">点击「开转」开始</div>
   <div class="controls">
-    <button id="spin">开转</button>
-    <button id="countdownBtn" title="抽中带时间的项目后，点击此处从 3 开始倒计时">⏱ 倒计时</button>
-    <button id="regretBtn" title="使用反悔机会，跳过本次结果重新开转">↩️ 反悔重开</button>
-    <button id="historyBtn" title="最近 10 次抽奖记录">🕘 历史</button>
+    <div class="left-cell">
+      <button id="countdownBtn" title="抽中带时间的项目后，点击此处从 3 开始倒计时">⏱ 倒计时</button>
+    </div>
+    <div class="spin-cell">
+      <button id="spin">开转</button>
+      <button id="regretBtn" title="使用反悔机会，跳过本次结果重新开转">↩️ 反悔重开</button>
+    </div>
+    <div class="right-cell">
+      <button id="historyBtn" title="最近 10 次抽奖记录">🕘 历史</button>
+    </div>
   </div>
 
   <!-- 历史面板 -->
@@ -249,6 +258,7 @@ const ITEMS = [
   { name: "仰卧起坐", amount: "45个",  rule: "每次头碰膝盖，背部要着地" },
   { name: "俯卧撑",   amount: "30个",  rule: "身体平直，起来时手臂伸直，下去时胸部离地面五厘米以内" },
   { name: "平板支撑", amount: "60秒",  rule: "身体平直，保持不动" },
+  { name: "仰卧推起成桥", amount: "60秒", rule: "仰卧，用手推起身体成桥状，保持姿势" },
   { name: "深蹲",     amount: "50个",  rule: "" },
   { name: "马步",     amount: "60秒",  rule: "大腿与地面保持平行，小腿与地面保持垂直，身体笔直垂直于地面" },
   { name: "独立思考", amount: "600秒", rule: "自己翻书或者查看资料，独立思考" },
@@ -365,8 +375,11 @@ function spin() {
   const factor = usingCoupon ? couponFactor : 1;
 
   // 圈数必须是整数：小数圈会把多余角度留在最终位置，导致指针与结果错位
-  const extraTurns = 5 + Math.floor(Math.random() * 5); // 5-9 整圈
-  const targetSlice = Math.floor(Math.random() * ITEMS.length);
+  // 加密安全随机数（crypto.getRandomValues），替代 Math.random 伪随机
+  const randU32 = new Uint32Array(2);
+  crypto.getRandomValues(randU32);
+  const extraTurns = 5 + (randU32[0] % 5); // 5-9 整圈
+  const targetSlice = randU32[1] % ITEMS.length;
   // 目标扇区中线相对轮盘 0° 的偏移，最终让该中线对准顶部指针（-PI/2）
   const sliceMidOffset = targetSlice * slice() + slice() / 2;
   const targetFinal = -(Math.PI / 2) - sliceMidOffset;

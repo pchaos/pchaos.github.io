@@ -548,6 +548,7 @@ let countdownPaused = false; // 是否处于暂停状态
 let cdRemaining = 3;    // 倒数三秒阶段剩余值
 let cdNow = 0;          // 项目倒计时剩余秒数
 let cdProject = false;  // 是否已进入项目倒计时阶段
+let cdPhaseStart = 0;   // 当前阶段起始的墙钟时间（ms），用于锁屏恢复后重算剩余
 
 /* ===== 结束提示音 ===== */
 let audioCtx = null;
@@ -611,10 +612,11 @@ function startCountdown() {
   ensureAudio(); // 用户手势内激活音频上下文，倒计时结束才能响铃
   countdownRunning = true;
   countdownPaused = false;
-  countdownBtn.disabled = true;
+  countdownBtn.disabled = false; // 运行中可点：作为暂停控制
   countdownBtn.classList.remove("ready");
   countdownBtn.classList.add("running");
   countdownBtn.textContent = "⏸ 暂停";
+  cdPhaseStart = Date.now();
   const total = countdownSeconds;
   cdRemaining = 3;
   cdNow = total;
@@ -625,16 +627,22 @@ function startCountdown() {
   startTickLoop();
 }
 
-// 每秒递减一次；pauseCountdown() 会清掉定时器并记录暂停状态
+// 每秒重算一次；基于墙钟时间差（elapsed），锁屏/恢复后一次 tick 补上全部冻结时间
 function startTickLoop() {
-  countdownTimer = setInterval(() => {
+  const tick = () => {
     if (countdownPaused) return; // 防御：理论上暂停时定时器已清
+    const elapsed = Math.floor((Date.now() - cdPhaseStart) / 1000);
+    if (elapsed < 1) return; // 未满 1 秒
+    // 消耗 elapsed 秒：clamp 到剩余值，避免负数贯穿
     if (!cdProject) {
-      // 倒数三秒：3 → 2 → 1
-      cdRemaining--;
+      // 倒数三秒阶段：剩余 cdRemaining（3→2→1）
+      const consumed = Math.min(elapsed, cdRemaining);
+      cdRemaining -= consumed;
+      cdPhaseStart += consumed * 1000;
       if (cdRemaining === 0) {
         // 倒数结束，从项目完整时长开始计时
         cdProject = true;
+        cdPhaseStart = Date.now();
         cdNumEl.textContent = cdNow;
         cdNameEl.textContent = "剩余 " + countdownItemName + " " + countdownSeconds + " 秒";
       } else {
@@ -642,8 +650,10 @@ function startTickLoop() {
       }
       return;
     }
-    // 项目倒计时中
-    cdNow--;
+    // 项目倒计时阶段：剩余 cdNow
+    const consumed = Math.min(elapsed, cdNow);
+    cdNow -= consumed;
+    cdPhaseStart += consumed * 1000;
     if (cdNow <= 0) {
       clearInterval(countdownTimer);
       countdownTimer = null;
@@ -652,8 +662,23 @@ function startTickLoop() {
       return;
     }
     cdNumEl.textContent = cdNow;
-  }, 1000);
+  };
+  tick(); // 立即重算一次（锁屏恢复时定时器被冻结，恢复后第一次回调会滞后，用 tick 兜底）
+  // tick() 内若已结束（resetCountdownReady 会置 countdownRunning=false），不再创建定时器
+  if (countdownRunning) {
+    countdownTimer = setInterval(tick, 1000);
+  }
 }
+
+// 页面重新可见（如解锁）时立即按墙钟重算，不等下一次 interval 回调
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible" && countdownRunning && !countdownPaused && countdownTimer) {
+    // 手动触发一轮 tick：直接取当前 interval 回调执行
+    clearInterval(countdownTimer);
+    countdownTimer = null;
+    startTickLoop();
+  }
+});
 
 // 暂停：停表并冻结当前显示
 function pauseCountdown() {
@@ -672,8 +697,9 @@ function pauseCountdown() {
 function resumeCountdown() {
   if (!countdownRunning || !countdownPaused) return;
   countdownPaused = false;
-  countdownBtn.disabled = true;
+  countdownBtn.disabled = false; // 运行中可再暂停
   countdownBtn.textContent = "⏸ 暂停";
+  cdPhaseStart = Date.now(); // 暂停时间不计入，恢复时重新起算
   if (cdProject) {
     cdNameEl.textContent = "剩余 " + countdownItemName + " " + countdownSeconds + " 秒";
   } else {

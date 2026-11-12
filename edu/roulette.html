@@ -483,8 +483,8 @@ function spin() {
         lucky.querySelector(".star").textContent = isLucky ? "⭐" : "☠️";
         lucky.querySelector(".msg").textContent = isLucky ? "幸运星附体" : "霉运上身";
         lucky.classList.add("show");
-        // 持有反悔机会：不自动重开，由用户自主决定反悔或手动开转
-        if (regretChance) {
+        // 8折（幸运）一律自动重开；仅 12折（霉运）且持有反悔机会时暂停，让用户决定是否反悔跳过
+        if (regretChance && !isLucky) {
           setTimeout(() => lucky.classList.remove("show"), 1500);
           updateRegretBtn();
         } else {
@@ -565,20 +565,28 @@ function ensureAudio() {
 // 结束提示音：三声上升音（660→880→1320Hz），每声 0.18s，间隔 0.22s
 function playEndBeep() {
   if (!audioCtx) return;
-  const t0 = audioCtx.currentTime;
-  const freqs = [660, 880, 1320];
-  for (let i = 0; i < freqs.length; i++) {
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
-    osc.type = "sine";
-    osc.frequency.value = freqs[i];
-    gain.gain.setValueAtTime(0.001, t0 + i * 0.4);
-    gain.gain.exponentialRampToValueAtTime(0.4, t0 + i * 0.4 + 0.02);
-    gain.gain.exponentialRampToValueAtTime(0.001, t0 + i * 0.4 + 0.18);
-    osc.connect(gain);
-    gain.connect(audioCtx.destination);
-    osc.start(t0 + i * 0.4);
-    osc.stop(t0 + i * 0.4 + 0.2);
+  const fire = () => {
+    // currentTime 在 resume 完成后才取，避免排到过去而无声
+    const t0 = audioCtx.currentTime + 0.03;
+    const freqs = [660, 880, 1320];
+    for (let i = 0; i < freqs.length; i++) {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = "sine";
+      osc.frequency.value = freqs[i];
+      gain.gain.setValueAtTime(0.001, t0 + i * 0.4);
+      gain.gain.exponentialRampToValueAtTime(0.35, t0 + i * 0.4 + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, t0 + i * 0.4 + 0.18);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start(t0 + i * 0.4);
+      osc.stop(t0 + i * 0.4 + 0.2);
+    }
+  };
+  if (audioCtx.state === "suspended") {
+    audioCtx.resume().then(fire, fire); // 锁屏/切后台恢复后立刻响
+  } else {
+    fire();
   }
 }
 
